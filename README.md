@@ -4,7 +4,7 @@
 
 效果如下 （并非真实数据）：
 
-![image.png](https://intranetproxy.alipay.com/skylark/lark/0/2020/png/804/1595663126711-27da7281-8137-4b94-9009-6832a47e9738.png?x-oss-process=image%2Fresize%2Cw_1500)
+![image.png](./sample.png)
 
 
 
