@@ -130,7 +130,7 @@ export default {
       });
     },
     stockCellStyle({ row, column, rowIndex, columnIndex }) {
-      if (columnIndex === 2) {
+      if (columnIndex === 3) {
         return this.cellStyle(row["offsetToday"]);
       }
       if (columnIndex === 7) {
