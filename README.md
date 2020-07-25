@@ -4,7 +4,7 @@
 
 效果如下 （并非真实数据）：
 
-![image.png](./sample.png)
+![image.png](https://s1.ax1x.com/2020/07/25/UzLj7q.png)
 
 
 
