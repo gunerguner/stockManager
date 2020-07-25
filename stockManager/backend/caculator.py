@@ -56,7 +56,6 @@ class Caculator(object):
         current_offset_ratio = (float(single_real_time[1]) - current_hold_cost) / current_hold_cost if current_hold_cost > 0 else 0
         to_return['offsetCurrentRatio'] = "%.2f%%" % (current_offset_ratio * 100) #浮动盈亏率
 
-
         to_return['offsetTotal'] = float(single_real_time[1]) * current_hold_count - current_overall #累计盈亏额
 
         to_return['operationList'] = self.__caculate_single_operation_list(single_operation_list)

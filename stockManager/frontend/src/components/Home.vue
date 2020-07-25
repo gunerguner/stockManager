@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     showStocks() {
-      this.$axios.get("http://127.0.0.1:8000").then(res => {
+      this.$axios.get("http://127.0.0.1:8000/api/").then(res => {
         var response = res.data;
         this.stockList = response.stocks;
         this.stockList.sort(function(a, b) {

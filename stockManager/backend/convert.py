@@ -6,6 +6,7 @@ import math
 from .models import Operation
 
 def import_excel(path):
+    #解析交易记录文件，这块不具有通用性
     lg = bs.login()
     current_dir = os.path.abspath(os.path.dirname(__file__))
     df=pd.read_csv(current_dir+'/'+path,header=None)
