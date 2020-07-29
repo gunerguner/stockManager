@@ -44,12 +44,6 @@ class Caculator(object):
         yesterday_hold_count = self.__caculate_single_holdCount(single_operation_list,1)
         to_return['totalValueYesterday'] = float(single_real_time[4]) * yesterday_hold_count #昨日市值，不显示
 
-        total_offset_today = 0
-        if (to_return['totalValueYesterday'] - 0) < 0.1:
-            total_offset_today = (float(single_real_time[1]) - current_hold_cost) * current_hold_count - self.__caculate_single_today_input(single_operation_list)
-        else :
-            total_offset_today = float(single_real_time[1]) * current_hold_count - float(single_real_time[4]) * yesterday_hold_count - self.__caculate_single_today_input(single_operation_list)
-        to_return['totalOffsetToday'] = total_offset_today #今日盈亏，不显示
 
         current_offset = (float(single_real_time[1]) - current_hold_cost) * current_hold_count
         to_return['offsetCurrent'] = current_offset #浮动盈亏额
@@ -59,6 +53,14 @@ class Caculator(object):
         to_return['offsetTotal'] = float(single_real_time[1]) * current_hold_count - current_overall #累计盈亏额
 
         to_return['operationList'] = self.__caculate_single_operation_list(single_operation_list)
+
+        total_offset_today = 0
+        if to_return['totalValueYesterday'] < 0.1:
+            total_offset_today = current_offset #今天新买的，今日盈亏等于浮动盈亏
+        else :
+            total_offset_today = float(single_real_time[1]) * current_hold_count - float(single_real_time[4]) * yesterday_hold_count - self.__caculate_single_today_input(single_operation_list)
+        
+        to_return['totalOffsetToday'] = total_offset_today #今日盈亏，不显示
 
         return to_return
 
@@ -192,7 +194,7 @@ class Caculator(object):
 当日盈亏额 = (现市值 - 昨收市值 + 当日∑卖出 - 当日∑买入)
 当日盈亏率 = 当日盈亏额 / (昨市值 + 当日∑买入 + 当日∑卖空)
 昨日市值 = 0
-当日盈亏额 = (现价 - 持仓成本) * 股数 + 当日∑卖出 - 当日∑买入
+当日盈亏额 = (现价 - 持仓成本) * 股数
 当日盈亏率 = 当日盈亏额 / 当日∑买入
 
 现金 = 本金+累计盈亏-市值
