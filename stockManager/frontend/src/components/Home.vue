@@ -30,6 +30,7 @@
     </el-row>
     <el-row type="flex" style="margin-bottom: 20px" justify="end">
       <el-button @click="resetHide" style="margin-right: 20px">{{hideStr}}市值为零的股票</el-button>
+      <el-button @click="refreshDivident" style="margin-right: 20px">更新除权除息记录</el-button>
     </el-row>
     <el-row>
       <el-table
@@ -112,18 +113,20 @@ export default {
       stockList: [],
       overall: [],
       hideState: true,
-      hideStr: "显示"
+      hideStr: "显示",
+      targetUrl: "http://127.0.0.1:8000",
     };
   },
-  mounted: function() {
+  mounted: function () {
     this.showStocks();
   },
   methods: {
     showStocks() {
-      this.$axios.get("http://127.0.0.1:8000/api/").then(res => {
+      var url = this.targetUrl;
+      this.$axios.get(url + "/api/").then((res) => {
         var response = res.data;
         this.stockList = response.stocks;
-        this.stockList.sort(function(a, b) {
+        this.stockList.sort(function (a, b) {
           return b["totalValue"] - a["totalValue"];
         });
         this.overall.push(response.overall);
@@ -171,8 +174,50 @@ export default {
     },
     sortTotalValue(obj1, obj2) {
       return parseFloat(obj1) < parseFloat(obj2);
-    }
-  }
+    },
+    refreshDivident() {
+      var codeList = [];
+      var newStockList = this.stockList.filter(function (item, index) {
+        return item["totalValue"] > 0.1;
+      });
+
+      for (var singleStock of newStockList) {
+        var singleCode = {};
+        singleCode.code = singleStock.code;
+
+        let length = singleStock.operationList.length;
+        let firstYesr = singleStock.operationList[length - 1].date.substr(0, 4);
+
+        singleCode.first_year = firstYesr;
+        codeList.push(singleCode);
+
+      }
+
+      var data = { data: codeList };
+
+      var url = this.targetUrl
+
+      var loadingInstance = this.$loading({ fullscreen: true})
+      this.$axios
+        .post(url+"/api/divident", codeList)
+        .then((res) => {
+          loadingInstance.close()
+          if (Object.keys(res.data).length == 0) {
+            this.$alert("刷新失败", "请求错误", {
+              confirmButtonText: "确定",
+              callback: (action) => {},
+            });
+          }
+          else {
+            let num = res.data.number
+            this.$alert("更新了"+num+"条记录", "请求成功", {
+              confirmButtonText: "确定",
+              callback: (action) => {},
+            });
+          }
+        });
+    },
+  },
 };
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->

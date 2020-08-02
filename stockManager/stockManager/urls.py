@@ -21,5 +21,5 @@ from django.conf.urls import url, include
 urlpatterns = [
     url(r'^$', TemplateView.as_view(template_name="index.html")),
     re_path(r'^api/', include('backend.urls')),
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls)
 ]
