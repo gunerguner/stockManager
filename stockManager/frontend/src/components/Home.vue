@@ -77,7 +77,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="priceNow" label="现价"></el-table-column>
-        <el-table-column prop="offsetToday" label="涨跌">
+        <el-table-column prop="offsetTodayRatio" label="涨跌" sortable>
           <template
             slot-scope="scope"
           >{{scope.row.offsetToday.toFixed(3) + " (" + scope.row.offsetTodayRatio + ")"}}</template>
