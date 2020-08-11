@@ -114,7 +114,7 @@ export default {
       overall: [],
       hideState: true,
       hideStr: "显示",
-      targetUrl: "http://127.0.0.1:8000",
+      targetUrl: "https://127.0.0.1:8000",
     };
   },
   mounted: function () {
