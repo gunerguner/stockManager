@@ -30,7 +30,7 @@
     </el-row>
     <el-row type="flex" style="margin-bottom: 20px" justify="end">
       <el-button @click="resetHide" style="margin-right: 20px">{{hideStr}}市值为零的股票</el-button>
-      <el-button @click="refreshDivident" style="margin-right: 20px">更新除权除息记录</el-button>
+      <!-- <el-button @click="refreshDivident" style="margin-right: 20px">更新除权除息记录</el-button> -->
     </el-row>
     <el-row>
       <el-table
@@ -114,7 +114,7 @@ export default {
       overall: [],
       hideState: true,
       hideStr: "显示",
-      targetUrl: "https://127.0.0.1:8000",
+      targetUrl: "http://127.0.0.1:8000",
     };
   },
   mounted: function () {

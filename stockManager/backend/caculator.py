@@ -1,7 +1,7 @@
 import datetime
 
 class Caculator(object):
-    originCash = 193608.00 #初始资金，这里写死
+    originCash =208608.00 #初始资金，这里写死
     def __init__(self,operation_list,realtime_list):
         self.operation_list = operation_list
         self.realtime_list = realtime_list

@@ -4,6 +4,7 @@
   "description": "A Vue.js project",
   "author": "Zhicheng Zhang <robin.zhangzc@koubei.com>",
   "private": true,
+  
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
