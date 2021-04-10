@@ -7,7 +7,7 @@ import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
 import type { ResponseError } from 'umi-request';
 import { currentUser as queryCurrentUser } from './services/ant-design-pro/api';
-import { BookOutlined, LinkOutlined } from '@ant-design/icons';
+import { LinkOutlined } from '@ant-design/icons';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
@@ -28,13 +28,10 @@ export async function getInitialState(): Promise<{
   
   const fetchUserInfo = async () => {
     try {
-      console.log('zzczzc')
       const currentUser = await queryCurrentUser();
       return currentUser;
     } catch (error) {
-      console.log('zzc')
       // history.push(loginPath);
-      return {}
     }
     return undefined;
   };
@@ -66,7 +63,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       const { location } = history;
       // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && location.pathname !== loginPath) {
-        history.push(loginPath);
+        // history.push(loginPath);
       }
     },
     links: isDev
@@ -74,10 +71,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
           <Link to="/umi/plugin/openapi" target="_blank">
             <LinkOutlined />
             <span>openAPI 文档</span>
-          </Link>,
-          <Link to="/~docs">
-            <BookOutlined />
-            <span>业务组件文档</span>
           </Link>,
         ]
       : [],

@@ -11,7 +11,6 @@ from .models import Operation
 from .utils import *
 from .convert import *
 
-
 # Create your views here.
 
 def index(request):  

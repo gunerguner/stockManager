@@ -16,14 +16,20 @@
     ],
   },
   {
+    name: '持仓盈亏',
+    icon: 'table',
+    path: '/list',
+    component: './TableList',
+  },
+  {
     path: '/welcome',
-    name: 'welcome',
+    name: '收益归因',
     icon: 'smile',
     component: './Welcome',
   },
   {
     path: '/admin',
-    name: 'admin',
+    name: '后台管理',
     icon: 'crown',
     access: 'canAdmin',
     component: './Admin',
@@ -35,12 +41,6 @@
         component: './Welcome',
       },
     ],
-  },
-  {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
   },
   {
     path: '/',
