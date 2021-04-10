@@ -14,7 +14,7 @@ const Settings: LayoutSettings & {
   colorWeak: false,
   title: 'Stock Manager',
   pwa: false,
-  logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+  logo: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png',
   iconfontUrl: '',
 };
 

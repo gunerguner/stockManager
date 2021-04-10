@@ -13,7 +13,7 @@ from .convert import *
 
 # Create your views here.
 
-def index(request):  
+def hello(request):  
     return HttpResponse("Hello world! ")
 
 def show_stocks(request):

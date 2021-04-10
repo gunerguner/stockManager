@@ -22,10 +22,10 @@
     component: './TableList',
   },
   {
-    path: '/welcome',
-    name: '收益归因',
-    icon: 'smile',
-    component: './Welcome',
+    path: '/data',
+    name: '数据分析',
+    icon: 'database',
+    component: './Data',
   },
   {
     path: '/admin',
@@ -33,18 +33,11 @@
     icon: 'crown',
     access: 'canAdmin',
     component: './Admin',
-    routes: [
-      {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        icon: 'smile',
-        component: './Welcome',
-      },
-    ],
+    
   },
   {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/TableList',
   },
   {
     component: './404',

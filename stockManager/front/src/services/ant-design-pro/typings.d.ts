@@ -29,10 +29,7 @@ declare namespace API {
     currentAuthority?: string;
   };
 
-  type PageParams = {
-    current?: number;
-    pageSize?: number;
-  };
+  
 
   type RuleListItem = {
     key?: number;
@@ -54,11 +51,6 @@ declare namespace API {
     /** 列表的内容总数 */
     total?: number;
     success?: boolean;
-  };
-
-  type FakeCaptcha = {
-    code?: number;
-    status?: string;
   };
 
   type LoginParams = {

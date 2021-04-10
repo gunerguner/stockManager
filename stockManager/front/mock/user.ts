@@ -8,10 +8,6 @@ const waitTime = (time: number = 100) => {
   });
 };
 
-async function getFakeCaptcha(req: Request, res: Response) {
-  await waitTime(2000);
-  return res.json('captcha-xxx');
-}
 
 const { ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION } = process.env;
 
@@ -196,5 +192,4 @@ export default {
     });
   },
 
-  'GET  /api/login/captcha': getFakeCaptcha,
 };

@@ -43,35 +43,7 @@
       },
       "x-swagger-router-controller": "api"
     },
-    "/api/login/captcha": {
-      "post": {
-        "description": "发送验证码",
-        "operationId": "getFakeCaptcha",
-        "tags": ["login"],
-        "parameters": [
-          {
-            "name": "phone",
-            "in": "query",
-            "description": "手机号",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FakeCaptcha"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
+    
     "/api/login/outLogin": {
       "post": {
         "description": "登录接口",
@@ -477,18 +449,7 @@
           }
         }
       },
-      "FakeCaptcha": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
+      
       "LoginParams": {
         "type": "object",
         "properties": {
