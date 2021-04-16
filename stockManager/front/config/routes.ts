@@ -1,19 +1,9 @@
 ﻿export default [
+   
   {
-    path: '/user',
+    path: '/login',
+    component: './Login',
     layout: false,
-    routes: [
-      {
-        path: '/user',
-        routes: [
-          {
-            name: 'login',
-            path: '/user/login',
-            component: './user/Login',
-          },
-        ],
-      },
-    ],
   },
   {
     name: '持仓盈亏',

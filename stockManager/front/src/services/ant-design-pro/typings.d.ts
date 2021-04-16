@@ -2,6 +2,11 @@
 /* eslint-disable */
 
 declare namespace API {
+  type UserResult = {
+    status?: number;
+    info?: CurrentUser;
+  }
+
   type CurrentUser = {
     name?: string;
     avatar?: string;
@@ -24,8 +29,7 @@ declare namespace API {
   };
 
   type LoginResult = {
-    status?: string;
-    type?: string;
+    status?: number;
     currentAuthority?: string;
   };
 
@@ -57,7 +61,6 @@ declare namespace API {
     username?: string;
     password?: string;
     autoLogin?: boolean;
-    type?: string;
   };
 
   type ErrorResponse = {

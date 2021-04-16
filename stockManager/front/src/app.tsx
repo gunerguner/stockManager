@@ -10,7 +10,7 @@ import { currentUser as queryCurrentUser } from './services/ant-design-pro/api';
 import { LinkOutlined } from '@ant-design/icons';
 
 const isDev = process.env.NODE_ENV === 'development';
-const loginPath = '/user/login';
+const loginPath = '/login';
 
 /** 获取用户信息比较慢的时候会展示一个 loading */
 export const initialStateConfig = {
@@ -28,10 +28,13 @@ export async function getInitialState(): Promise<{
   
   const fetchUserInfo = async () => {
     try {
-      const currentUser = await queryCurrentUser();
-      return currentUser;
+      const result = await queryCurrentUser();
+      if (result.status == 1) {
+        return result.info;
+      }
+      history.push(loginPath);
     } catch (error) {
-      // history.push(loginPath);
+      history.push(loginPath);
     }
     return undefined;
   };
@@ -62,8 +65,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     onPageChange: () => {
       const { location } = history;
       // 如果没有登录，重定向到 login
+      console.log(initialState?.currentUser);
       if (!initialState?.currentUser && location.pathname !== loginPath) {
-        // history.push(loginPath);
+        history.push(loginPath);
       }
     },
     links: isDev
@@ -75,8 +79,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         ]
       : [],
     menuHeaderRender: undefined,
-    // 自定义 403 页面
-    // unAccessible: <div>unAccessible</div>,
     ...initialState?.settings,
   };
 };
@@ -127,4 +129,5 @@ const errorHandler = (error: ResponseError) => {
 // https://umijs.org/zh-CN/plugins/plugin-request
 export const request: RequestConfig = {
   errorHandler,
+  credentials:"include"
 };

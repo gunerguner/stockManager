@@ -14,6 +14,7 @@ export default defineConfig({
   dva: {
     hmr: true,
   },
+  mock: false,
   publicPath: '/static/',
   layout: {
     // https://umijs.org/zh-CN/plugins/plugin-layout

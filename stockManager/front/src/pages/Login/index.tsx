@@ -1,7 +1,7 @@
-import { LockOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, message } from 'antd';
 import React, { useState } from 'react';
-import ProForm, { ProFormCheckbox, ProFormText } from '@ant-design/pro-form';
+import ProForm, { ProFormText } from '@ant-design/pro-form';
 import { Link, history, useModel } from 'umi';
 import Footer from '@/components/Footer';
 import { login } from '@/services/ant-design-pro/api';
@@ -34,7 +34,6 @@ const goto = () => {
 const Login: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type, setType] = useState<string>('account');
   const { initialState, setInitialState } = useModel('@@initialState');
 
   const fetchUserInfo = async () => {
@@ -51,8 +50,8 @@ const Login: React.FC = () => {
     setSubmitting(true);
     try {
       // 登录
-      const msg = await login({ ...values, type });
-      if (msg.status === 'ok') {
+      const msg = await login({ ...values });
+      if (msg.status == 1) {
         message.success('登录成功！');
         await fetchUserInfo();
         goto();
@@ -65,7 +64,7 @@ const Login: React.FC = () => {
     }
     setSubmitting(false);
   };
-  const { status, type: loginType } = userLoginState;
+  const { status } = userLoginState;
 
   return (
     <div className={styles.container}>
@@ -98,10 +97,10 @@ const Login: React.FC = () => {
               handleSubmit(values as API.LoginParams);
             }}
           >
-            {status === 'error' && loginType === 'account' && (
+            {status == 0 && (
               <LoginMessage content="账户或密码错误" />
             )}
-            {type === 'account' && (
+            {(
               <>
                 <ProFormText
                   name="username"
@@ -135,29 +134,6 @@ const Login: React.FC = () => {
               </>
             )}
 
-            {status === 'error' && loginType === 'mobile' && <LoginMessage content="验证码错误" />}
-            {type === 'mobile' && (
-              <>
-                <ProFormText
-                  fieldProps={{
-                    size: 'large',
-                    prefix: <MobileOutlined className={styles.prefixIcon} />,
-                  }}
-                  name="mobile"
-                  placeholder="手机号"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请输入手机号！',
-                    },
-                    {
-                      pattern: /^1\d{10}$/,
-                      message: '手机号格式错误！',
-                    },
-                  ]}
-                />
-              </>
-            )}
           </ProForm>
         </div>
       </div>

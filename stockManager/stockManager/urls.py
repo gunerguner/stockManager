@@ -4,7 +4,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
 Examples:
 Function views
-    1. Add an import:  from my_app import views
+    1. Add an import: from my_app import views
     2. Add a URL to urlpatterns:  path('', views.home, name='home')
 Class-based views
     1. Add an import:  from other_app.views import Home
@@ -20,8 +20,10 @@ from django.conf.urls import url, include
 from django.contrib.staticfiles.views import serve
 
 urlpatterns = [
-    url(r'^$', TemplateView.as_view(template_name="index.html")),
     re_path(r'^api/', include('backend.urls')),
     path('admin/', admin.site.urls),
-    path('favicon.ico', serve, {'path': 'static/favicon.ico'}),     
+    path('favicon.ico', serve, {'path': 'static/favicon.ico'}),    
+    url(r'^', TemplateView.as_view(template_name="index.html")),
+    url(r'^user/', TemplateView.as_view(template_name="index.html")),
+   
 ]
