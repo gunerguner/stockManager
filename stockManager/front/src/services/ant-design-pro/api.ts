@@ -2,7 +2,8 @@
 /* eslint-disable */
 import { request } from 'umi';
 
-const url = 'http://127.0.0.1:8000';
+
+const url = REACT_APP_ENV ? 'http://127.0.0.1:8000' : '';
 
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
