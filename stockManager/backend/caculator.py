@@ -31,8 +31,12 @@ class Caculator(object):
         to_return['code'] = key
         to_return['name'] = single_real_time[0]  #名称
         to_return['priceNow'] = single_real_time[1]  #现价
-        to_return['offsetToday'] = single_real_time[2] #今日股价涨跌
-        to_return['offsetTodayRatio'] = single_real_time[3] #今日涨跌率
+        if  float(to_return['priceNow']) < 0.001:
+            to_return['offsetToday'] = 0 #今日股价涨跌
+            to_return['offsetTodayRatio'] = '0%' #今日涨跌率
+        else :
+            to_return['offsetToday'] = single_real_time[2] #今日股价涨跌
+            to_return['offsetTodayRatio'] = single_real_time[3] #今日涨跌率
         
         current_hold_count = self.__caculate_single_holdCount(single_operation_list)
         to_return['holdCount'] = current_hold_count #持股数

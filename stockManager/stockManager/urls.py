@@ -21,7 +21,7 @@ from django.contrib.staticfiles.views import serve
 
 urlpatterns = [
     re_path(r'^api/', include('backend.urls')),
-    path('admin/', admin.site.urls),
+    path('sys/admin', admin.site.urls),
     path('favicon.ico', serve, {'path': 'static/favicon.ico'}),    
     url(r'^', TemplateView.as_view(template_name="index.html")),
     url(r'^user/', TemplateView.as_view(template_name="index.html")),

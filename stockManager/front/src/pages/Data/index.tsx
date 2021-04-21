@@ -1,12 +1,11 @@
 import React from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import ProTable from '@ant-design/pro-table';
+import ProCard from '@ant-design/pro-card';
 
 export default (): React.ReactNode => {
 
   return (
-    <PageContainer>
-    
-    </PageContainer>
+
+    <ProCard  gutter={[0, 16]}></ProCard>
+
   );
 };

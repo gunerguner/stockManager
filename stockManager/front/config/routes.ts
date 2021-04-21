@@ -27,7 +27,7 @@
   },
   {
     path: '/',
-    redirect: '/TableList',
+    redirect: '/list',
   },
   {
     component: './404',

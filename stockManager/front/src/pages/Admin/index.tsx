@@ -1,15 +1,21 @@
 import React from 'react';
 
-import { Card, Typography, Alert } from 'antd';
-import { PageHeaderWrapper } from '@ant-design/pro-layout';
+import { Alert, Button } from 'antd';
+
+import ProCard from '@ant-design/pro-card';
 
 export default (): React.ReactNode => {
-
   return (
-    <PageHeaderWrapper
-      
-    >
-      
-    </PageHeaderWrapper>
+
+      <ProCard  gutter={[0, 16]}>
+        <Button type = 'primary'
+          style={{
+            margin: 8,
+          }}
+        >
+          更新除权信息
+        </Button>
+      </ProCard>
+
   );
 };

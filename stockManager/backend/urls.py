@@ -11,5 +11,4 @@ urlpatterns = [
     path('login', userViews.login, name='login'),
     path('logout', userViews.logout, name='logout'),
 
-    
 ]

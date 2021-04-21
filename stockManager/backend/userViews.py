@@ -31,10 +31,6 @@ def currentUser(request):
     info = {
         "name": "溯宁",
         "avatar": "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png",
-        "userid": "00000001",
         "access":"admin",
-        "email": "antdesign@alipay.com",
-        "signature": "海纳百川，有容乃大",
-        "title": "无线专家",
     }
     return JsonResponse({"status": 1,"info":info}, safe=False)

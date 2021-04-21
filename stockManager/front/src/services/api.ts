@@ -2,7 +2,6 @@
 /* eslint-disable */
 import { request } from 'umi';
 
-
 const url = REACT_APP_ENV ? 'http://127.0.0.1:8000' : '';
 
 /** 获取当前的用户 GET /api/currentUser */
@@ -33,3 +32,9 @@ export async function login(body: API.LoginParams, options?: { [key: string]: an
   });
 }
 
+export async function fetch(options?: { [key: string]: any }) {
+  return request<API.StockResult>(url+'/api/', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}

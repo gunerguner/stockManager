@@ -33,30 +33,6 @@ declare namespace API {
     currentAuthority?: string;
   };
 
-  
-
-  type RuleListItem = {
-    key?: number;
-    disabled?: boolean;
-    href?: string;
-    avatar?: string;
-    name?: string;
-    owner?: string;
-    desc?: string;
-    callNo?: number;
-    status?: number;
-    updatedAt?: string;
-    createdAt?: string;
-    progress?: number;
-  };
-
-  type RuleList = {
-    data?: RuleListItem[];
-    /** 列表的内容总数 */
-    total?: number;
-    success?: boolean;
-  };
-
   type LoginParams = {
     username?: string;
     password?: string;
@@ -72,25 +48,52 @@ declare namespace API {
     success?: boolean;
   };
 
-  type NoticeIconList = {
-    data?: NoticeIconItem[];
-    /** 列表的内容总数 */
-    total?: number;
-    success?: boolean;
+  type StockResult = {
+    status?: number;
+    data?: StockData;
   };
 
-  type NoticeIconItemType = 'notification' | 'message' | 'event';
+  type StockData = {
+    stocks: Stock[];
+    overall: Overall;
+  }
 
-  type NoticeIconItem = {
-    id?: string;
-    extra?: string;
-    key?: string;
-    read?: boolean;
-    avatar?: string;
-    title?: string;
-    status?: string;
-    datetime?: string;
-    description?: string;
-    type?: NoticeIconItemType;
-  };
+  type Overall = {
+    offsetCurrent: number,
+    offsetTotal: number,
+    totalValue: number,
+    offsetCurrentRatio: string,
+    offsetToday: number,
+    totalCash: number,
+    originCash: number,
+  }
+
+  type Stock = {
+    code: string,
+    name: string,
+    priceNow: string,
+    offsetToday: number,
+    offsetTodayRatio: string,
+    holdCount: number,
+    holdCost: number,
+    overallCost: number,
+    totalValue: number,
+    totalValueYesterday: number,
+    offsetCurrent: number,
+    offsetCurrentRatio: string,
+    offsetTotal:number,
+    operationList: Operation[],
+    totalOffsetToday: number
+  }
+
+  type Operation = {
+    date: string,
+    type: string,
+    price: number,
+    count: number,
+    fee: number,
+    sum: number,
+    comment: string,
+  }
+
 }
