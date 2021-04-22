@@ -1,21 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import { Alert, Button } from 'antd';
+import { Modal, Button, Row } from 'antd';
+
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 import ProCard from '@ant-design/pro-card';
+import { history } from 'umi';
+import { updateDivident } from '../../services/api';
 
 export default (): React.ReactNode => {
-  return (
+  const [dividentLoading, setDividentLoading] = useState(false);
 
-      <ProCard  gutter={[0, 16]}>
-        <Button type = 'primary'
+  const dividentClick = () => {
+    Modal.confirm({
+      title: '确定更新除权信息？',
+      icon: <ExclamationCircleOutlined />,
+      async onOk() {
+        setDividentLoading(true);
+        const response = await updateDivident();
+        if (response.status == 1 && !!response.data) {
+          Modal.info({
+            title: '有更新股票',
+            content: (
+              <>
+                {response.data.map((divident: string) => (
+                  <Row>{divident}</Row>
+                ))}
+              </>
+            ),
+          });
+        } else if (response.status == 302) {
+          history.push('/login');
+        }
+        setDividentLoading(false);
+      },
+    });
+  };
+
+  return (
+    <>
+      <ProCard gutter={[0, 16]}>
+        <Button
+          type="primary"
           style={{
             margin: 8,
           }}
+          onClick={dividentClick}
+          loading={dividentLoading}
         >
           更新除权信息
         </Button>
       </ProCard>
-
+    </>
   );
 };

@@ -7,7 +7,6 @@ import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
 import type { ResponseError } from 'umi-request';
 import { currentUser as queryCurrentUser } from './services/api';
-import { LinkOutlined } from '@ant-design/icons';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/login';
@@ -25,14 +24,14 @@ export async function getInitialState(): Promise<{
   currentUser?: API.CurrentUser;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
-  
   const fetchUserInfo = async () => {
     try {
       const result = await queryCurrentUser();
       if (result.status == 1) {
         return result.info;
+      } else if (result.status == 302) {
+        history.push(loginPath);
       }
-      history.push(loginPath);
     } catch (error) {
       history.push(loginPath);
     }
@@ -70,7 +69,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         history.push(loginPath);
       }
     },
-    
+
     menuHeaderRender: undefined,
     ...initialState?.settings,
   };
@@ -122,5 +121,5 @@ const errorHandler = (error: ResponseError) => {
 // https://umijs.org/zh-CN/plugins/plugin-request
 export const request: RequestConfig = {
   errorHandler,
-  credentials:"include"
+  credentials: 'include',
 };

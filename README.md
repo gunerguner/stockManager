@@ -4,7 +4,7 @@
 
 效果如下 （并非真实数据）：
 
-![image.png](https://s1.ax1x.com/2020/07/25/UzLj7q.png)
+![image.png](https://ftp.bmp.ovh/imgs/2021/04/01d5e29392695622.jpg)
 
 
 
@@ -36,11 +36,9 @@
 
 #### 前端
 
-前端采用Vue + element-ui的方案，其实stockManager的前端就一个页面，相对比较简单。同时因为django前后端分离的架构设计，以后如果想要切换成例如react + antd这样的方案也很简单。
+初版中前端采用Vue + element-ui的方案，后续切换到了umijs + antd 的方式。
 
-
-
-我之前的前端代码写得不多，在实际编码的时候，还是花了一点时间去学习框架和处理交互视觉问题。
+我之前的前端代码写得不多，在实际编码的时候，还是花了一点时间去学习框架和处理交互视觉问题。二期工作中主要重点也在前端，优化了页面的视觉和体验。
 
 
 
@@ -117,10 +115,10 @@
 
 1.  安装Python3，pip，git。
 2.  使用pip安装django，baoStock，pandas等模块。
-3.  依次安装node，npm，vue，element ui，axios等前端依赖。
+3.  依次安装node，npm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
-5.  进入frontend目录， `npm install` 前端部分的依赖。
-6.  在frontend目录，`npm run build` 生成目标文件。
+5.  进入front目录， `npm install` 前端部分的依赖。
+6.  在front目录，`npm run build` 生成目标文件。
 7.  在主目录下`python manage.py migrate` 生成数据库（或者直接copy数据库文件）。
 8.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
 9.  在主目录下，`python manage.py runserver`。 

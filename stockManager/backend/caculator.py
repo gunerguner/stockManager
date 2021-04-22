@@ -1,74 +1,188 @@
 import datetime
-
+import baostock as bs
+from .models import Operation
 class Caculator(object):
-    originCash =208608.00 #初始资金，这里写死
-    def __init__(self,operation_list,realtime_list):
-        self.operation_list = operation_list
-        self.realtime_list = realtime_list
+    def __init__(self, operation_list, realtime_list, origin_cash):
+        self.operation_list = operation_list  # 交易列表
+        self.realtime_list = realtime_list  # 实时价格
+        self.origin_cash = origin_cash  # 本金
 
+    # 聚合接口，所有的股票数据+总和
     def caculate_target(self):
         to_return = {}
         stock_list = []
-        #个股指标
+        # 个股指标
         for key in self.operation_list.keys():
             single_target = self.__caculate_single_target(key)
             stock_list.append(single_target)
 
-        to_return['stocks'] = stock_list
+        to_return["stocks"] = stock_list
 
-        #整体指标
-        to_return['overall'] = self.__caculate_overall_target(stock_list)
+        # 整体指标
+        to_return["overall"] = self.__caculate_overall_target(stock_list)
 
         return to_return
 
-    #计算个股指标
-    def __caculate_single_target(self,key):
+    def generate_divident(self):
+
+        hold_stocks = self.all_stocks(True)
+
+        to_return = []
+        bs.login()
+        for single_code in hold_stocks:
+            code = self.__generate_divident_single(single_code)
+            if len(code) > 0:
+                to_return.append(code)
+
+        bs.logout()
+
+        return to_return
+
+    # 现有持仓
+    def all_stocks(self, hold=False):
+
+        overall_stocks = list(self.operation_list.keys())
+        if hold == False:
+            return overall_stocks
+
+        hold_stocks = list(
+            filter(
+                lambda x: self.__caculate_single_holdCount(self.operation_list[x]) > 0,
+                overall_stocks,
+            )
+        )
+
+        return hold_stocks
+
+    # 生成个股除权除息
+    def __generate_divident_single(self, code):
+        if code is None:
+            return ''
+            
+        to_return = 0
+        single_operation_list = self.operation_list[code]
+        exist_dv_operations = list(filter(lambda x: x.operationType == 'DV' ,single_operation_list))
+        date_array = list(map(lambda x: str(x.date),exist_dv_operations))
+
+        first_year = single_operation_list[0].date.year
+
+        year_now = datetime.date.today().year
+        new_code = code[0:2]+'.'+code[2:]
+
+        for year in range(int(first_year),int(year_now)+1,1):
+            rs = bs.query_dividend_data(code=new_code, year=str(year), yearType="operate")
+            while (rs.error_code == '0') & rs.next():
+                data = rs.get_row_data()    
+                date = data[6]
+                cash = 0 if data[9] == '' else float(data[9])
+                reserve = 0 if data[11] == '' else float(data[11])
+                stock = 0 if data[13] == '' else float(data[13])
+
+                find = False
+                for exist_date in date_array:
+                    if exist_date == date:
+                        find = True
+
+                if find == False:
+                    Operation.objects.create(date=date,code = code,operationType = 'DV',cash = cash,reserve = reserve,stock = stock)
+                    to_return += 1
+
+        
+        operations = Operation.objects.filter(code = code).order_by('date')
+        current_hold = 0
+        for operation in operations:
+            if operation.operationType == 'BUY':
+                current_hold += operation.count
+            elif operation.operationType == 'SELL':
+                current_hold -= operation.count
+            elif operation.operationType == 'DV':
+                if current_hold == 0:
+                    operation.delete()
+                    to_return -= 1
+                else :
+                    operation.count = current_hold
+                    operation.save()
+                    current_hold += current_hold * (operation.reserve + operation.stock)
+
+        if to_return > 0:
+            return code
+        else: 
+            return ''
+    
+
+    # 计算个股指标
+    def __caculate_single_target(self, key):
+        if key is None:
+            return ''
         to_return = {}
 
         single_operation_list = self.operation_list[key]
         single_real_time = self.realtime_list[key]
 
-        to_return['code'] = key
-        to_return['name'] = single_real_time[0]  #名称
-        to_return['priceNow'] = single_real_time[1]  #现价
-        if  float(to_return['priceNow']) < 0.001:
-            to_return['offsetToday'] = 0 #今日股价涨跌
-            to_return['offsetTodayRatio'] = '0%' #今日涨跌率
-        else :
-            to_return['offsetToday'] = single_real_time[2] #今日股价涨跌
-            to_return['offsetTodayRatio'] = single_real_time[3] #今日涨跌率
-        
+        to_return["code"] = key
+        to_return["name"] = single_real_time[0]  # 名称
+        to_return["priceNow"] = single_real_time[1]  # 现价
+        if float(to_return["priceNow"]) < 0.001:
+            to_return["offsetToday"] = 0  # 今日股价涨跌
+            to_return["offsetTodayRatio"] = "0%"  # 今日涨跌率
+        else:
+            to_return["offsetToday"] = single_real_time[2]  # 今日股价涨跌
+            to_return["offsetTodayRatio"] = single_real_time[3]  # 今日涨跌率
+
         current_hold_count = self.__caculate_single_holdCount(single_operation_list)
-        to_return['holdCount'] = current_hold_count #持股数
+        to_return["holdCount"] = current_hold_count  # 持股数
         current_hold_cost = self.__caculate_single_hold_cost(single_operation_list)
-        to_return['holdCost'] = current_hold_cost #持仓成本
-        current_overall = self.__caculate_single_overall(single_operation_list) 
-        to_return['overallCost'] = current_overall / current_hold_count if current_hold_cost > 0 else 0 #摊薄成本
-        to_return['totalValue'] = float(single_real_time[1]) * current_hold_count #今日市值
-        yesterday_hold_count = self.__caculate_single_holdCount(single_operation_list,1)
-        to_return['totalValueYesterday'] = float(single_real_time[4]) * yesterday_hold_count #昨日市值，不显示
+        to_return["holdCost"] = current_hold_cost  # 持仓成本
+        current_overall = self.__caculate_single_overall(single_operation_list)
+        to_return["overallCost"] = (
+            current_overall / current_hold_count if current_hold_cost > 0 else 0
+        )  # 摊薄成本
+        to_return["totalValue"] = (
+            float(single_real_time[1]) * current_hold_count
+        )  # 今日市值
+        yesterday_hold_count = self.__caculate_single_holdCount(
+            single_operation_list, 1
+        )
+        to_return["totalValueYesterday"] = (
+            float(single_real_time[4]) * yesterday_hold_count
+        )  # 昨日市值，不显示
 
+        current_offset = (
+            float(single_real_time[1]) - current_hold_cost
+        ) * current_hold_count
+        to_return["offsetCurrent"] = current_offset  # 浮动盈亏额
+        current_offset_ratio = (
+            (float(single_real_time[1]) - current_hold_cost) / current_hold_cost
+            if current_hold_cost > 0
+            else 0
+        )
+        to_return["offsetCurrentRatio"] = "%.2f%%" % (
+            current_offset_ratio * 100
+        )  # 浮动盈亏率
 
-        current_offset = (float(single_real_time[1]) - current_hold_cost) * current_hold_count
-        to_return['offsetCurrent'] = current_offset #浮动盈亏额
-        current_offset_ratio = (float(single_real_time[1]) - current_hold_cost) / current_hold_cost if current_hold_cost > 0 else 0
-        to_return['offsetCurrentRatio'] = "%.2f%%" % (current_offset_ratio * 100) #浮动盈亏率
+        to_return["offsetTotal"] = (
+            float(single_real_time[1]) * current_hold_count - current_overall
+        )  # 累计盈亏额
 
-        to_return['offsetTotal'] = float(single_real_time[1]) * current_hold_count - current_overall #累计盈亏额
-
-        to_return['operationList'] = self.__caculate_single_operation_list(single_operation_list)
+        to_return["operationList"] = self.__caculate_single_operation_list(
+            single_operation_list
+        )
 
         total_offset_today = 0
-        if to_return['totalValueYesterday'] < 0.1:
-            total_offset_today = current_offset #今天新买的，今日盈亏等于浮动盈亏
-        else :
-            total_offset_today = float(single_real_time[1]) * current_hold_count - float(single_real_time[4]) * yesterday_hold_count - self.__caculate_single_today_input(single_operation_list)
-        
-        to_return['totalOffsetToday'] = total_offset_today #今日盈亏，不显示
+        if to_return["totalValueYesterday"] < 0.1:
+            total_offset_today = current_offset  # 今天新买的，今日盈亏等于浮动盈亏
+        else:
+            total_offset_today = (
+                float(single_real_time[1]) * current_hold_count
+                - float(single_real_time[4]) * yesterday_hold_count
+                - self.__caculate_single_today_input(single_operation_list)
+            )
+
+        to_return["totalOffsetToday"] = total_offset_today  # 今日盈亏，不显示
 
         return to_return
 
-    def __caculate_single_operation_list(self,single_operation_list):
+    def __caculate_single_operation_list(self, single_operation_list):
         to_return = []
         for single_operation in single_operation_list:
             to_return.append(single_operation.to_dict())
@@ -76,104 +190,131 @@ class Caculator(object):
         to_return.reverse()
         return to_return
 
-    def __caculate_single_holdCount(self,single_operation_list,yesterday = 0):
-        #某个股票当前持股数，这里假设已经按照时间排好序了，算是个小坑
+    def __caculate_single_holdCount(self, single_operation_list, yesterday=0):
+        # 某个股票当前持股数，这里假设已经按照时间排好序了，算是个小坑
         current_hold = 0
         for single_operation in single_operation_list:
             today = datetime.date.today()
             if yesterday == 1:
-                #只计算到昨天的持仓
+                # 只计算到昨天的持仓
                 if single_operation.date >= today:
                     continue
 
-            if single_operation.operationType == 'BUY':
+            if single_operation.operationType == "BUY":
                 current_hold += single_operation.count
-            elif single_operation.operationType == 'SELL':
+            elif single_operation.operationType == "SELL":
                 current_hold -= single_operation.count
-            elif single_operation.operationType == 'DV':
-                current_hold += current_hold * (single_operation.reserve + single_operation.stock)
+            elif single_operation.operationType == "DV":
+                current_hold += current_hold * (
+                    single_operation.reserve + single_operation.stock
+                )
 
         return current_hold
 
-    def __caculate_single_hold_cost(self,single_operation_list):
-        #某个股票的持仓成本
+    def __caculate_single_hold_cost(self, single_operation_list):
+        # 某个股票的持仓成本
         total_pay = 0
         current_hold = 0
         total_count = 0
         for single_operation in single_operation_list:
-            if single_operation.operationType == 'BUY':
+            if single_operation.operationType == "BUY":
                 current_hold += single_operation.count
-                total_pay += (single_operation.count * single_operation.price + single_operation.fee)
+                total_pay += (
+                    single_operation.count * single_operation.price
+                    + single_operation.fee
+                )
                 total_count += single_operation.count
-            elif single_operation.operationType == 'SELL':
+            elif single_operation.operationType == "SELL":
                 current_hold -= single_operation.count
-            elif single_operation.operationType == 'DV':
-                total_count += total_count * (single_operation.reserve + single_operation.stock)
-                current_hold += current_hold * (single_operation.reserve + single_operation.stock)
+            elif single_operation.operationType == "DV":
+                total_count += total_count * (
+                    single_operation.reserve + single_operation.stock
+                )
+                current_hold += current_hold * (
+                    single_operation.reserve + single_operation.stock
+                )
 
             if current_hold == 0:
-                #这里有个大坑，如果清仓了就不算，重头算起
+                # 这里有个大坑，如果清仓了就不算，重头算起
                 total_pay = 0
                 total_count = 0
 
-        return total_pay / total_count if total_count > 0 else 0 
+        return total_pay / total_count if total_count > 0 else 0
 
-    def __caculate_single_overall(self,single_operation_list):
-        #某个股票的摊薄成本
+    def __caculate_single_overall(self, single_operation_list):
+        # 某个股票的摊薄成本
         current_hold = 0
         current_sum = 0
         for single_operation in single_operation_list:
-            if single_operation.operationType == 'BUY':
+            if single_operation.operationType == "BUY":
                 current_hold += single_operation.count
-                current_sum += (single_operation.count * single_operation.price + single_operation.fee)
-            elif single_operation.operationType == 'SELL':
+                current_sum += (
+                    single_operation.count * single_operation.price
+                    + single_operation.fee
+                )
+            elif single_operation.operationType == "SELL":
                 current_hold -= single_operation.count
-                current_sum -= (single_operation.count * single_operation.price - single_operation.fee)
-            elif single_operation.operationType == 'DV':
-                current_sum -= (current_hold * single_operation.cash)
-                current_hold += current_hold * (single_operation.reserve + single_operation.stock)
-                 
+                current_sum -= (
+                    single_operation.count * single_operation.price
+                    - single_operation.fee
+                )
+            elif single_operation.operationType == "DV":
+                current_sum -= current_hold * single_operation.cash
+                current_hold += current_hold * (
+                    single_operation.reserve + single_operation.stock
+                )
+
         return current_sum
 
-    def __caculate_single_today_input(self,single_operation_list):
-        #某个股票今天的净投入
+    def __caculate_single_today_input(self, single_operation_list):
+        # 某个股票今天的净投入
         today_operation = 0
         for single_operation in single_operation_list:
             today = datetime.date.today()
-            #只计算今天的持仓
+            # 只计算今天的持仓
             if single_operation.date != today:
                 continue
-            if single_operation.operationType == 'BUY':
-                today_operation += (single_operation.count * single_operation.price + single_operation.fee)
-            elif single_operation.operationType == 'SELL':
-                today_operation -= (single_operation.count * single_operation.price + single_operation.fee)
+            if single_operation.operationType == "BUY":
+                today_operation += (
+                    single_operation.count * single_operation.price
+                    + single_operation.fee
+                )
+            elif single_operation.operationType == "SELL":
+                today_operation -= (
+                    single_operation.count * single_operation.price
+                    + single_operation.fee
+                )
 
         return today_operation
-        
-    def __caculate_overall_target(self,single_target_list):
+
+    def __caculate_overall_target(self, single_target_list):
         to_return = {}
         current_offset = 0
         total_offset = 0
         total_value = 0
         total_offset_today = 0
         for single_target in single_target_list:
-            current_offset += single_target['offsetCurrent']
-            total_offset += single_target['offsetTotal']
-            total_value += single_target['totalValue']
-            total_offset_today += single_target['totalOffsetToday']
-            
-        to_return['offsetCurrent'] = current_offset #浮动盈亏
-        to_return['offsetTotal'] = total_offset #累计盈亏
-        to_return['totalValue'] = total_value #总市值
-        to_return['offsetCurrentRatio'] = "%.2f%%" % ((current_offset / total_value * 100) if total_value > 0 else 0)#浮动盈亏率
-        to_return['offsetToday'] = total_offset_today #今日盈亏
+            current_offset += single_target["offsetCurrent"]
+            total_offset += single_target["offsetTotal"]
+            total_value += single_target["totalValue"]
+            total_offset_today += single_target["totalOffsetToday"]
 
-        to_return['totalCash'] = self.originCash + total_offset - total_value  #本金
-        to_return['originCash'] = self.originCash #本金
+        to_return["offsetCurrent"] = current_offset  # 浮动盈亏
+        to_return["offsetTotal"] = total_offset  # 累计盈亏
+        to_return["totalValue"] = total_value  # 总市值
+        to_return["offsetCurrentRatio"] = "%.2f%%" % (
+            (current_offset / total_value * 100) if total_value > 0 else 0
+        )  # 浮动盈亏率
+        to_return["offsetToday"] = total_offset_today  # 今日盈亏
+
+        to_return["totalCash"] = self.origin_cash + total_offset - total_value  # 总现金
+
+        to_return["originCash"] = self.origin_cash  # 本金
 
         return to_return
-        
-'''
+
+
+"""
 计算公式：
 
 1、成本价
@@ -208,4 +349,4 @@ code, name，priceNow，offsetToday，offsetTodayRatio，totalValue，holdCount�
 
 整体指标
 offsetToday，offsetCurrent，offsetCurrentRatio，offsetTotal，totalValue，totalCash，originCash
-'''
+"""

@@ -2,10 +2,13 @@
 /* eslint-disable */
 
 declare namespace API {
-  type UserResult = {
+  type BaseResult = {
     status?: number;
+  };
+
+  type UserResult = BaseResult & {
     info?: CurrentUser;
-  }
+  };
 
   type CurrentUser = {
     name?: string;
@@ -28,8 +31,7 @@ declare namespace API {
     phone?: string;
   };
 
-  type LoginResult = {
-    status?: number;
+  type LoginResult = BaseResult & {
     currentAuthority?: string;
   };
 
@@ -39,61 +41,54 @@ declare namespace API {
     autoLogin?: boolean;
   };
 
-  type ErrorResponse = {
-    /** 业务约定的错误码 */
-    errorCode: string;
-    /** 业务上的错误信息 */
-    errorMessage?: string;
-    /** 业务上的请求是否成功 */
-    success?: boolean;
-  };
-
-  type StockResult = {
-    status?: number;
+  type StockResult = BaseResult & {
     data?: StockData;
   };
 
   type StockData = {
     stocks: Stock[];
     overall: Overall;
-  }
+  };
 
   type Overall = {
-    offsetCurrent: number,
-    offsetTotal: number,
-    totalValue: number,
-    offsetCurrentRatio: string,
-    offsetToday: number,
-    totalCash: number,
-    originCash: number,
-  }
+    offsetCurrent: number;
+    offsetTotal: number;
+    totalValue: number;
+    offsetCurrentRatio: string;
+    offsetToday: number;
+    totalCash: number;
+    originCash: number;
+  };
 
   type Stock = {
-    code: string,
-    name: string,
-    priceNow: string,
-    offsetToday: number,
-    offsetTodayRatio: string,
-    holdCount: number,
-    holdCost: number,
-    overallCost: number,
-    totalValue: number,
-    totalValueYesterday: number,
-    offsetCurrent: number,
-    offsetCurrentRatio: string,
-    offsetTotal:number,
-    operationList: Operation[],
-    totalOffsetToday: number
-  }
+    code: string;
+    name: string;
+    priceNow: string;
+    offsetToday: number;
+    offsetTodayRatio: string;
+    holdCount: number;
+    holdCost: number;
+    overallCost: number;
+    totalValue: number;
+    totalValueYesterday: number;
+    offsetCurrent: number;
+    offsetCurrentRatio: string;
+    offsetTotal: number;
+    operationList: Operation[];
+    totalOffsetToday: number;
+  };
 
   type Operation = {
-    date: string,
-    type: string,
-    price: number,
-    count: number,
-    fee: number,
-    sum: number,
-    comment: string,
-  }
+    date: string;
+    type: string;
+    price: number;
+    count: number;
+    fee: number;
+    sum: number;
+    comment: string;
+  };
 
+  type DividentResult = BaseResult & {
+    data?: string[];
+  };
 }

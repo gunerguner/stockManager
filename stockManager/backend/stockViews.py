@@ -2,47 +2,77 @@
 # -*- coding: UTF-8 -*-
 
 from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
-import json,logging,sys
+import json, logging, sys
 
-from .models import Operation
+from .models import Operation, Info
 from .utils import *
 from .convert import *
+from .integrate import Integrate
 
 # Create your views here.
 
-def hello(request):  
+def hello(request):
     return HttpResponse("Hello world! ")
+
 
 def show_stocks(request):
 
-    if not request.session.get("is_login", None):
-        return JsonResponse({"status": 0})
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": 302})
 
-    logging.info(sys._getframe().f_code.co_name+" "+get_ip(request))
+    logging.info(sys._getframe().f_code.co_name + " " + get_ip(request))
 
-    operations = Operation.objects.all().order_by('date')  #获取所有操作记录
-    new_operation_list = format_operations(operations)   #操作记录格式化
+    stock_caculator = Integrate.caculator(request.user.username,True)
+    merged_data = stock_caculator.caculate_target()
 
-    realtime_price_list = query_realtime_price(list(new_operation_list.keys()))  #持仓股票的现价
-    merged_data = caculate_target(new_operation_list,realtime_price_list)
-
-    return JsonResponse({"status": 1, "data": merged_data},safe=False, json_dumps_params={'ensure_ascii':False})
+    return JsonResponse(
+        {"status": 1, "data": merged_data},
+        safe=False,
+        json_dumps_params={"ensure_ascii": False},
+    )
 
 def convert_from_excel(request):
-    import_excel('xueqiu.csv')
+    import_excel("xueqiu.csv")
 
     return HttpResponse()
 
+
+@csrf_exempt
+def update_origin_cash(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": 302})
+
+    try:
+        cash = json.loads(request.body).get("cash")
+        Info.objects.filter(key="originCash").update(value=cash)
+    except:
+        return JsonResponse({"status": 0})
+
+    return JsonResponse({"status": 1})
+
+
 @csrf_exempt
 def refresh_divident(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": 302})
 
-    json_result = json.loads(request.body)
-    num = generate_divident(json_result)
-        
-    response = {'number':num}
-    return JsonResponse(response,safe=False, json_dumps_params={'ensure_ascii':False})
+    stock_caculator = Integrate.caculator(request.user.username,False)
+    codes = stock_caculator.generate_divident()
 
+    # codes = Operation.objects.distinct().values("code")
+    # codes = list(map(lambda x: x["code"], codes))
 
+    return JsonResponse(
+        {"status": 1, "data": codes},
+        safe=False,
+        json_dumps_params={"ensure_ascii": False},
+    )
+
+    # json_result = json.loads(request.body)
+    # num = generate_divident(json_result)
+
+    # response = {'number':num}
+    # return JsonResponse(response,safe=False, json_dumps_params={'ensure_ascii':False})
