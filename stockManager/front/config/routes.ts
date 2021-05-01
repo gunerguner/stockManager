@@ -26,6 +26,10 @@
     
   },
   {
+    path: '/account',
+    component: './Account',
+  },
+  {
     path: '/',
     redirect: '/list',
   },

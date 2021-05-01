@@ -17,6 +17,12 @@ export default () => (
         href: 'https://github.com/gunerguner/stockManager',
         blankTarget: true,
       },
+      {
+        key: 'icp',
+        title: '沪ICP备2020026170号',
+        href: 'https://beian.miit.gov.cn/',
+        blankTarget: true,
+      },
     ]}
   />
 );

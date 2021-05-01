@@ -8,6 +8,7 @@ from django.contrib import auth
 
 import json, logging, sys
 
+
 @csrf_exempt
 def login(request):
     if request.user.is_authenticated:  # 不允许重复登录
@@ -16,13 +17,13 @@ def login(request):
         username = json.loads(request.body).get("username")
         password = json.loads(request.body).get("password")
         user_obj = auth.authenticate(username=username, password=password)
-        
+
         if user_obj is not None:
             auth.login(request, user_obj)
             return JsonResponse({"status": 1}, safe=False)
-        else :
+        else:
             return JsonResponse({"status": 0})
-        
+
 
 @csrf_exempt
 def logout(request):
@@ -39,14 +40,14 @@ def currentUser(request):
 
     if request.user.is_authenticated:
         info = {
+            "username": request.user.username,
             "name": request.user.first_name,
             "avatar": "https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png",
-            "access": "admin" if request.user.is_superuser else "",
+            "access": "admin"
+            if request.user.is_superuser
+            else ("staff" if request.user.is_staff else ""),
         }
         return JsonResponse({"status": 1, "info": info}, safe=False)
 
     else:
         return JsonResponse({"status": 0}, safe=False)
-
-
-    
