@@ -19,8 +19,9 @@ export default (): React.ReactNode => {
         setDividentLoading(true);
         const response = await updateDivident();
         if (response.status == 1 && !!response.data) {
+          const modalTitle = response.data.length > 0 ? '有' : '无' + '更新股票';
           Modal.info({
-            title: '有更新股票',
+            title: modalTitle,
             content: (
               <>
                 {response.data.map((divident: string) => (

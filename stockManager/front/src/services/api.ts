@@ -45,7 +45,18 @@ export async function updateOriginCash(cash: number, options?: { [key: string]: 
     headers: {
       'Content-Type': 'application/json',
     },
-    data: { cash: cash },
+    data: { cash },
+    ...(options || {}),
+  });
+}
+
+export async function updateIncomeCash(incomeCash: number, options?: { [key: string]: any }) {
+  return request<API.BaseResult>(url + '/api/updateIncomeCash', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: { incomeCash },
     ...(options || {}),
   });
 }

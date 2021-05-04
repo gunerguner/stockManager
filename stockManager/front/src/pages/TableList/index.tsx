@@ -1,28 +1,32 @@
-import { Table, Button, Row, Col, Modal, Input, Form, InputNumber } from 'antd';
+import { Table, Button, Row, Col, Modal, Input, Form } from 'antd';
 
 import React, { useState, useEffect } from 'react';
 
 import ProCard from '@ant-design/pro-card';
 
-import { history } from 'umi';
-import { fetch, updateOriginCash } from '../../services/api';
+import { history, useModel } from 'umi';
+import { fetch, updateOriginCash, updateIncomeCash } from '../../services/api';
 
-// import { Columns, ColumnsOverAll, ColumnsOperation } from '../../types/tableList';
 import { ColumnsType } from 'antd/lib/table';
 
 import './index.less';
 
 const TableList: React.FC = () => {
-  const [overAllData, setOverallData] = useState({} as API.Overall);
-  const [stockData, setStockData] = useState([] as API.Stock[]);
-
   const [showAll, setShowAll] = useState(false);
+  const { stock, setStockData } = useModel('stocks');
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const ColumnsOverAll: ColumnsType<API.Overall> = [
+    {
+      title: '总资产',
+      dataIndex: 'totalAsset',
+      render: (item: number) => {
+        return <div style={{ fontWeight: 'bold' }}>{item?.toFixed(2)}</div>;
+      },
+    },
     {
       title: '当日盈亏',
       dataIndex: 'offsetToday',
@@ -60,6 +64,51 @@ const TableList: React.FC = () => {
       dataIndex: 'totalCash',
       render: (item: number) => {
         return <div>{item?.toFixed(2)}</div>;
+      },
+    },
+    {
+      title: '其它现金收入',
+      dataIndex: 'incomeCash',
+      render: (item: number) => {
+        const [form] = Form.useForm();
+        return (
+          <Row>
+            <Col span={15}>
+              <div>{item?.toFixed(2)}</div>
+            </Col>
+            <Col>
+              <a
+                onClick={() => {
+                  Modal.confirm({
+                    title: '编辑现金收入',
+                    content: (
+                      <Form
+                        style={{ marginTop: '30px' }}
+                        form={form}
+                        layout="vertical"
+                        name="incomeCash"
+                      >
+                        <Form.Item
+                          name="incomeCash"
+                          rules={[{ required: true, message: '请输入现金收入' }]}
+                        >
+                          <Input type="number" defaultValue={item} />
+                        </Form.Item>
+                      </Form>
+                    ),
+                    onOk: async () => {
+                      const { incomeCash } = await form.validateFields();
+
+                      await updateIncome(incomeCash);
+                    },
+                  });
+                }}
+              >
+                编辑
+              </a>
+            </Col>
+          </Row>
+        );
       },
     },
     {
@@ -227,8 +276,9 @@ const TableList: React.FC = () => {
   const fetchData = async () => {
     const response = await fetch();
     if (response.status == 1 && !!response.data) {
-      setOverallData(response.data?.overall);
-      setStockData(response.data?.stocks);
+      // setOverallData(response.data?.overall);
+      // setStockData(response.data?.stocks);
+      setStockData(response.data);
     } else if (response.status == 302) {
       history.push('/login');
     }
@@ -236,7 +286,16 @@ const TableList: React.FC = () => {
 
   const updateBase = async (cash: number) => {
     const response = await updateOriginCash(cash);
-    if (response.status == 1 ) {
+    if (response.status == 1) {
+      fetchData();
+    } else if (response.status == 302) {
+      history.push('/login');
+    }
+  };
+
+  const updateIncome = async (income: number) => {
+    const response = await updateIncomeCash(income);
+    if (response.status == 1) {
       fetchData();
     } else if (response.status == 302) {
       history.push('/login');
@@ -264,7 +323,7 @@ const TableList: React.FC = () => {
   return (
     <ProCard direction="column" ghost gutter={[0, 8]}>
       <ProCard colSpan={24}>
-        <Table columns={ColumnsOverAll} dataSource={[overAllData]} bordered pagination={false} />
+        <Table columns={ColumnsOverAll} dataSource={[stock.overall]} bordered pagination={false} />
       </ProCard>
       <ProCard colSpan={24}>
         <Row>
@@ -279,7 +338,7 @@ const TableList: React.FC = () => {
             <Table
               rowKey="code"
               columns={Columns}
-              dataSource={stockData}
+              dataSource={stock.stocks}
               bordered
               pagination={false}
               rowClassName={rowClassName}

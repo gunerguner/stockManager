@@ -43,7 +43,9 @@ declare namespace API {
     offsetCurrentRatio: string;
     offsetToday: number;
     totalCash: number;
+    incomeCash: number;
     originCash: number;
+    totalAsset: number;
   };
 
   type Stock = {
@@ -62,6 +64,8 @@ declare namespace API {
     offsetTotal: number;
     operationList: Operation[];
     totalOffsetToday: number;
+    isNew:boolean;
+    stockType: string;
   };
 
   type Operation = {

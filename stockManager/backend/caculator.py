@@ -1,16 +1,20 @@
 import datetime
 import baostock as bs
-from .models import Operation
+from .models import Operation, Info, StockMeta
+
+
 class Caculator(object):
-    def __init__(self, operation_list, realtime_list, origin_cash):
+    def __init__(self, operation_list, realtime_list):
         self.operation_list = operation_list  # 交易列表
         self.realtime_list = realtime_list  # 实时价格
-        self.origin_cash = origin_cash  # 本金
+
+        self.stockMeta = StockMeta.objects.all()
 
     # 聚合接口，所有的股票数据+总和
     def caculate_target(self):
         to_return = {}
         stock_list = []
+
         # 个股指标
         for key in self.operation_list.keys():
             single_target = self.__caculate_single_target(key)
@@ -30,9 +34,9 @@ class Caculator(object):
         to_return = []
         bs.login()
         for single_code in hold_stocks:
-            code = self.__generate_divident_single(single_code)
-            if len(code) > 0:
-                to_return.append(code)
+            name = self.__generate_divident_single(single_code)
+            if len(name) > 0:
+                to_return.append(name)
 
         bs.logout()
 
@@ -57,26 +61,33 @@ class Caculator(object):
     # 生成个股除权除息
     def __generate_divident_single(self, code):
         if code is None:
-            return ''
-            
+            return ""
+
         to_return = 0
         single_operation_list = self.operation_list[code]
-        exist_dv_operations = list(filter(lambda x: x.operationType == 'DV' ,single_operation_list))
-        date_array = list(map(lambda x: str(x.date),exist_dv_operations))
+        single_real_time = self.realtime_list[code]
+        name = single_real_time[0]
+
+        exist_dv_operations = list(
+            filter(lambda x: x.operationType == "DV", single_operation_list)
+        )
+        date_array = list(map(lambda x: str(x.date), exist_dv_operations))
 
         first_year = single_operation_list[0].date.year
 
         year_now = datetime.date.today().year
-        new_code = code[0:2]+'.'+code[2:]
+        new_code = code[0:2] + "." + code[2:]
 
-        for year in range(int(first_year),int(year_now)+1,1):
-            rs = bs.query_dividend_data(code=new_code, year=str(year), yearType="operate")
-            while (rs.error_code == '0') & rs.next():
-                data = rs.get_row_data()    
+        for year in range(int(first_year), int(year_now) + 1, 1):
+            rs = bs.query_dividend_data(
+                code=new_code, year=str(year), yearType="operate"
+            )
+            while (rs.error_code == "0") & rs.next():
+                data = rs.get_row_data()
                 date = data[6]
-                cash = 0 if data[9] == '' else float(data[9])
-                reserve = 0 if data[11] == '' else float(data[11])
-                stock = 0 if data[13] == '' else float(data[13])
+                cash = 0 if data[9] == "" else float(data[9])
+                reserve = 0 if data[11] == "" else float(data[11])
+                stock = 0 if data[13] == "" else float(data[13])
 
                 find = False
                 for exist_date in date_array:
@@ -84,37 +95,48 @@ class Caculator(object):
                         find = True
 
                 if find == False:
-                    Operation.objects.create(date=date,code = code,operationType = 'DV',cash = cash,reserve = reserve,stock = stock)
+                    Operation.objects.create(
+                        date=date,
+                        code=code,
+                        operationType="DV",
+                        cash=cash,
+                        reserve=reserve,
+                        stock=stock,
+                    )
                     to_return += 1
 
-        
-        operations = Operation.objects.filter(code = code).order_by('date')
+        operations = Operation.objects.filter(code=code).order_by("date")
         current_hold = 0
         for operation in operations:
-            if operation.operationType == 'BUY':
+            if operation.operationType == "BUY":
                 current_hold += operation.count
-            elif operation.operationType == 'SELL':
+            elif operation.operationType == "SELL":
                 current_hold -= operation.count
-            elif operation.operationType == 'DV':
+            elif operation.operationType == "DV":
                 if current_hold == 0:
                     operation.delete()
                     to_return -= 1
-                else :
+                else:
                     operation.count = current_hold
                     operation.save()
                     current_hold += current_hold * (operation.reserve + operation.stock)
 
         if to_return > 0:
-            return code
-        else: 
-            return ''
-    
+            return name
+        else:
+            return ""
 
     # 计算个股指标
     def __caculate_single_target(self, key):
         if key is None:
-            return ''
+            return ""
         to_return = {}
+
+        #带上股票的标签
+        stockType = list(filter(lambda x: x.code == key, self.stockMeta))
+        if len(stockType) > 0:
+            to_return["stockType"] = stockType[0].stockType
+            to_return["isNew"] = stockType[0].isNew
 
         single_operation_list = self.operation_list[key]
         single_real_time = self.realtime_list[key]
@@ -293,6 +315,10 @@ class Caculator(object):
         total_offset = 0
         total_value = 0
         total_offset_today = 0
+
+        origin_cash = float(Info.objects.get(key="originCash").value)
+        income_cash = float(Info.objects.get(key="incomeCash").value)
+
         for single_target in single_target_list:
             current_offset += single_target["offsetCurrent"]
             total_offset += single_target["offsetTotal"]
@@ -300,16 +326,20 @@ class Caculator(object):
             total_offset_today += single_target["totalOffsetToday"]
 
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
-        to_return["offsetTotal"] = total_offset  # 累计盈亏
+        to_return["offsetTotal"] = total_offset + income_cash  # 累计盈亏
         to_return["totalValue"] = total_value  # 总市值
         to_return["offsetCurrentRatio"] = "%.2f%%" % (
             (current_offset / total_value * 100) if total_value > 0 else 0
         )  # 浮动盈亏率
         to_return["offsetToday"] = total_offset_today  # 今日盈亏
 
-        to_return["totalCash"] = self.origin_cash + total_offset - total_value  # 总现金
+        to_return["totalCash"] = (
+            origin_cash + total_offset + income_cash - total_value
+        )  # 总现金
+        to_return["totalAsset"] = origin_cash + total_offset + income_cash  # 总资产
 
-        to_return["originCash"] = self.origin_cash  # 本金
+        to_return["incomeCash"] = income_cash  # 逆回购等收入
+        to_return["originCash"] = origin_cash  # 本金
 
         return to_return
 

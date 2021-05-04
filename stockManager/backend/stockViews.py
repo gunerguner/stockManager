@@ -9,14 +9,12 @@ import json, logging, sys
 
 from .models import Operation, Info
 from .utils import *
-from .convert import *
 from .integrate import Integrate
 
 # Create your views here.
 
 def hello(request):
     return HttpResponse("Hello world! ")
-
 
 def show_stocks(request):
 
@@ -34,12 +32,6 @@ def show_stocks(request):
         json_dumps_params={"ensure_ascii": False},
     )
 
-def convert_from_excel(request):
-    import_excel("xueqiu.csv")
-
-    return HttpResponse()
-
-
 @csrf_exempt
 def update_origin_cash(request):
     if not request.user.is_authenticated:
@@ -53,6 +45,18 @@ def update_origin_cash(request):
 
     return JsonResponse({"status": 1})
 
+@csrf_exempt
+def update_income_cash(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": 302})
+
+    try:
+        incomeCash = json.loads(request.body).get("incomeCash")
+        Info.objects.filter(key="incomeCash").update(value=incomeCash)
+    except:
+        return JsonResponse({"status": 0})
+
+    return JsonResponse({"status": 1})
 
 @csrf_exempt
 def refresh_divident(request):
@@ -62,17 +66,9 @@ def refresh_divident(request):
     stock_caculator = Integrate.caculator(request.user.username,False)
     codes = stock_caculator.generate_divident()
 
-    # codes = Operation.objects.distinct().values("code")
-    # codes = list(map(lambda x: x["code"], codes))
-
     return JsonResponse(
         {"status": 1, "data": codes},
         safe=False,
         json_dumps_params={"ensure_ascii": False},
     )
 
-    # json_result = json.loads(request.body)
-    # num = generate_divident(json_result)
-
-    # response = {'number':num}
-    # return JsonResponse(response,safe=False, json_dumps_params={'ensure_ascii':False})
