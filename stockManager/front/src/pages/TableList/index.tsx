@@ -6,7 +6,7 @@ import ProCard from '@ant-design/pro-card';
 
 import { history, useModel } from 'umi';
 import { fetch, updateOriginCash, updateIncomeCash } from '../../services/api';
-
+import { ReloadOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/lib/table';
 
 import './index.less';
@@ -21,18 +21,11 @@ const TableList: React.FC = () => {
 
   const ColumnsOverAll: ColumnsType<API.Overall> = [
     {
-      title: '总资产',
-      dataIndex: 'totalAsset',
-      render: (item: number) => {
-        return <div style={{ fontWeight: 'bold' }}>{item?.toFixed(2)}</div>;
-      },
-    },
-    {
       title: '当日盈亏',
       dataIndex: 'offsetToday',
       render: (item: number) => {
         const color = item > 0 ? 'red' : item < 0 ? 'green' : 'black';
-        return <div style={{ color: color }}>{item?.toFixed(2)}</div>;
+        return <div style={{ color: color, fontWeight: 'bold' }}>{item?.toFixed(2)}</div>;
       },
     },
     {
@@ -151,6 +144,13 @@ const TableList: React.FC = () => {
             </Col>
           </Row>
         );
+      },
+    },
+    {
+      title: '总资产',
+      dataIndex: 'totalAsset',
+      render: (item: number) => {
+        return <div style={{ fontWeight: 'bold' }}>{item?.toFixed(2)}</div>;
       },
     },
   ];
@@ -276,8 +276,6 @@ const TableList: React.FC = () => {
   const fetchData = async () => {
     const response = await fetch();
     if (response.status == 1 && !!response.data) {
-      // setOverallData(response.data?.overall);
-      // setStockData(response.data?.stocks);
       setStockData(response.data);
     } else if (response.status == 302) {
       history.push('/login');
@@ -327,7 +325,10 @@ const TableList: React.FC = () => {
       </ProCard>
       <ProCard colSpan={24}>
         <Row>
-          <Col offset={20} span={6}>
+          <Col span={2} offset={18}>
+            <Button onClick={fetchData} icon={<ReloadOutlined />} />
+          </Col>
+          <Col span={4}>
             <Button type="primary" onClick={() => setShowAll(!showAll)}>
               {(showAll ? '隐藏' : '显示') + '市值为零的股票'}
             </Button>
