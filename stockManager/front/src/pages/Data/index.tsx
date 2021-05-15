@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ProCard from '@ant-design/pro-card';
 
 import { Tabs, Table } from 'antd';
-import { history, useModel } from 'umi';
-
-import { ColumnsType } from 'antd/lib/table';
+import { useModel } from 'umi';
 
 const { TabPane } = Tabs;
 
-import { analysisModel } from '../../types/data';
+import { analysisModel, analysisColumn } from '../../types/data';
 
 export default (): React.ReactNode => {
   const { stock, setStockData } = useModel('stocks');
@@ -165,51 +163,6 @@ export default (): React.ReactNode => {
 
     setAnalysisList(analysis);
   };
-
-  const analysisColumn: ColumnsType<any> = [
-    {
-      title: '类型',
-      dataIndex: 'type',
-      render: (item: number) => {
-        return <div style={{ fontWeight: 'bold' }}>{item}</div>;
-      },
-    },
-    {
-      title: '数量',
-      dataIndex: 'count',
-    },
-    {
-      title: '获利',
-      dataIndex: 'profit',
-      render: (item: number) => {
-        return <div style={{ color: 'red' }}>{item?.toFixed(2)}</div>;
-      },
-      sorter: (a: analysisModel, b: analysisModel) => {
-        return a.profit - b.profit;
-      },
-    },
-    {
-      title: '亏损',
-      dataIndex: 'loss',
-      render: (item: number) => {
-        return <div style={{ color: 'green' }}>{item?.toFixed(2)}</div>;
-      },
-      sorter: (a: analysisModel, b: analysisModel) => {
-        return a.loss - b.loss;
-      },
-    },
-    {
-      title: '净收益',
-      dataIndex: 'netIncome',
-      render: (item: number) => {
-        const color = item > 0 ? 'red' : item < 0 ? 'green' : 'black';
-        return <div style={{ color: color }}>{item?.toFixed(2)}</div>;
-      },
-      sorter: (a: analysisModel, b: analysisModel) => {
-        return a.netIncome - b.netIncome;
-      },
-    },
-  ];
 
   return (
     <ProCard gutter={[0, 16]}>
