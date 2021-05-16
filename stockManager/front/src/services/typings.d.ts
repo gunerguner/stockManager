@@ -46,6 +46,7 @@ declare namespace API {
     incomeCash: number;
     originCash: number;
     totalAsset: number;
+    totalCost: number;
   };
 
   type Stock = {

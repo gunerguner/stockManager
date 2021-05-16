@@ -132,7 +132,7 @@ class Caculator(object):
             return ""
         to_return = {}
 
-        #带上股票的标签
+        # 带上股票的标签
         stockType = list(filter(lambda x: x.code == key, self.stockMeta))
         if len(stockType) > 0:
             to_return["stockType"] = stockType[0].stockType
@@ -186,9 +186,14 @@ class Caculator(object):
             float(single_real_time[1]) * current_hold_count - current_overall
         )  # 累计盈亏额
 
+        to_return["totalCost"] = self.__caculate_single_fee(single_operation_list)
+        # 所有费用
+
         to_return["operationList"] = self.__caculate_single_operation_list(
             single_operation_list
         )
+
+       
 
         total_offset_today = 0
         if to_return["totalValueYesterday"] < 0.1:
@@ -309,12 +314,20 @@ class Caculator(object):
 
         return today_operation
 
+    def __caculate_single_fee(self, single_target_list):
+        current_sum = 0
+        for single_operation in single_target_list:
+            current_sum += single_operation.fee
+
+        return current_sum
+
     def __caculate_overall_target(self, single_target_list):
         to_return = {}
         current_offset = 0
         total_offset = 0
         total_value = 0
         total_offset_today = 0
+        total_cost = 0
 
         origin_cash = float(Info.objects.get(key="originCash").value)
         income_cash = float(Info.objects.get(key="incomeCash").value)
@@ -324,6 +337,7 @@ class Caculator(object):
             total_offset += single_target["offsetTotal"]
             total_value += single_target["totalValue"]
             total_offset_today += single_target["totalOffsetToday"]
+            total_cost += single_target["totalCost"]
 
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
         to_return["offsetTotal"] = total_offset + income_cash  # 累计盈亏
@@ -337,6 +351,7 @@ class Caculator(object):
             origin_cash + total_offset + income_cash - total_value
         )  # 总现金
         to_return["totalAsset"] = origin_cash + total_offset + income_cash  # 总资产
+        to_return["totalCost"] = total_cost  # 总费用
 
         to_return["incomeCash"] = income_cash  # 逆回购等收入
         to_return["originCash"] = origin_cash  # 本金
