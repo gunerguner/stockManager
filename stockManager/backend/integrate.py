@@ -1,8 +1,6 @@
 from .caculator import Caculator
-from .models import Operation, Info
+from .models import Operation, StockMeta
 from .utils import format_operations, query_realtime_price
-
-
 class Integrate(object):
 
     caculator_map = {}
@@ -11,8 +9,6 @@ class Integrate(object):
     def caculator(cls, username, realtime):
         operations = Operation.objects.all().order_by("date")  # 获取所有操作记录
         new_operation_list = format_operations(operations)  # 操作记录格式化
-
-        
 
         to_return = cls.caculator_map.get(username)
 
@@ -30,5 +26,6 @@ class Integrate(object):
         else:
             to_return.operation_list = new_operation_list
             to_return.realtime_list = realtime_price_list
+            to_return.stockMeta = StockMeta.objects.all()
 
         return to_return
