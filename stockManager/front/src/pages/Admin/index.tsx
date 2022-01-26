@@ -38,6 +38,10 @@ export default (): React.ReactNode => {
     });
   };
 
+  const gotoSysAdmin = () => {
+    location.href = 'sys/admin'
+  }
+
   return (
     <>
       <ProCard gutter={[0, 16]}>
@@ -50,6 +54,15 @@ export default (): React.ReactNode => {
           loading={dividentLoading}
         >
           更新除权信息
+        </Button>
+        <Button
+          type="primary"
+          onClick={gotoSysAdmin}
+          style={{
+            margin: 8,
+          }}
+        >
+          管理
         </Button>
       </ProCard>
     </>

@@ -53,7 +53,7 @@ const TableList: React.FC = () => {
         </Row>
         <Row style={{ marginTop: '20px' }}>
           <Col span={24}>
-            <OperationList showAll={showAll} data={stock.stocks} />
+            <OperationList showAll={showAll} data={stock} />
           </Col>
         </Row>
       </ProCard>

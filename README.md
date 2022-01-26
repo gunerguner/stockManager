@@ -44,7 +44,7 @@
 
 #### 数据源
 
-实时的交易指标来自于新浪的接口：http://hq.sinajs.cn/list=sh600000
+实时的交易指标来自于腾讯的接口：http://qt.gtimg.cn/q=
 
 支持多代码查询，支持股票、场内基金等产品，获取数据后做个简单的处理即可。
 
@@ -114,7 +114,7 @@
 
 
 1.  安装Python3，pip，git。
-2.  使用pip安装django，baoStock，pandas等模块。
+2.  使用pip安装django，baoStock，pandas，django-cors-headers，django-extensions，django-werkzeug-debugger-runserver 等模块。
 3.  依次安装node，npm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `npm install` 前端部分的依赖。

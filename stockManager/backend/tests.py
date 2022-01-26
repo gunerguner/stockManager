@@ -14,6 +14,3 @@ class UtilTests(TestCase):
         # operations = Operation.objects.all()
         # new_list = format_operations(operations)
         # print(new_list)
-
-   
-       

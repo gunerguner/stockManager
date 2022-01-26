@@ -5,7 +5,7 @@ import { ColumnsType } from 'antd/lib/table';
 import { colorFromValue } from '../../utils';
 
 export type OperationListProps = {
-  data: API.Stock[];
+  data: API.StockData;
   showAll: boolean;
 };
 
@@ -67,13 +67,12 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
         return a.totalValue - b.totalValue;
       },
       render: (value: any, record: API.Stock, index: number) => {
-        const totalOffsetToday = record.offsetToday * record.holdCount;
-
-        return (
-          <Tooltip title={totalOffsetToday.toFixed(2)} color={colorFromValue(totalOffsetToday)}>
-            <div>{record?.totalValue.toFixed(2)}</div>
+        const ratio = ((record.totalValue / props.data.overall.totalValue)*100).toFixed(2) + '%'
+        return ( <Tooltip title={ratio} >
+          <div>{record?.totalValue.toFixed(2)}</div>
           </Tooltip>
-        );
+        )
+       
       },
     },
     {
@@ -81,7 +80,6 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
       dataIndex: 'holdCount',
     },
     {
-      title: '摊薄成本/持仓成本',
       dataIndex: 'overallCost',
       render: (value: any, record: API.Stock, index: number) => {
         return <div>{record?.overallCost.toFixed(2) + '/' + record?.holdCost.toFixed(2)}</div>;
@@ -93,8 +91,14 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
       sorter: (a: API.Stock, b: API.Stock) => {
         return a.offsetCurrent - b.offsetCurrent;
       },
-      render: (item: number) => {
-        return <div style={{ color: colorFromValue(item) }}>{item?.toFixed(2)}</div>;
+      render: (value: any, record: API.Stock, index: number) => {
+        const totalOffsetToday = record.offsetToday * record.holdCount;
+        const item = record.offsetCurrent;
+        return (
+          <Tooltip title={totalOffsetToday.toFixed(2)} color={colorFromValue(totalOffsetToday)}>
+            <div style={{ color: colorFromValue(item) }}>{item?.toFixed(2)}</div>
+          </Tooltip>
+        );
       },
     },
     {
@@ -153,7 +157,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
     <Table
       rowKey="code"
       columns={Columns}
-      dataSource={props.data}
+      dataSource={props.data.stocks}
       bordered
       pagination={false}
       rowClassName={rowClassName}
