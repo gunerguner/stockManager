@@ -80,6 +80,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
       dataIndex: 'holdCount',
     },
     {
+      title: '摊薄成本/持仓成本',
       dataIndex: 'overallCost',
       render: (value: any, record: API.Stock, index: number) => {
         return <div>{record?.overallCost.toFixed(2) + '/' + record?.holdCost.toFixed(2)}</div>;

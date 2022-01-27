@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 
 import { ColumnsType } from 'antd/lib/table';
@@ -18,6 +18,8 @@ export type AnalysisListProps = {
 
 export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListProps) => {
   const [analysisList, setAnalysisList] = useState([] as analysisModel[]);
+  const [totalProfit, setTotalProfit] = useState(0);
+  const [totalLoss, setTotaLoss] = useState(0);
 
   useEffect(() => {
     initializeAnalysis();
@@ -92,6 +94,21 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
         stock.stockType == 'SH688' && !stock.isNew && stock.offsetTotal < 0 ? stock.offsetTotal : 0;
       sh688Count += stock.stockType == 'SH688' && !stock.isNew ? 1 : 0;
     }
+
+    setTotalProfit(
+      isNewProfit +
+        fundABProfit +
+        fundInProfit +
+        convProfit +
+        sh60Profit +
+        sz00Profit +
+        sz300Profit +
+        sh688Profit,
+    );
+
+    setTotaLoss(
+      isNewLoss + fundABLoss + fundInLoss + convLoss + sh60Loss + sz00Loss + sz300Loss + sh688Loss,
+    );
 
     analysis.push({
       type: '新股',
@@ -184,7 +201,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
       title: '获利',
       dataIndex: 'profit',
       render: (item: number) => {
-        return <div style={{ color: 'red' }}>{item?.toFixed(2)}</div>;
+        const ratio = ((item / totalProfit) * 100).toFixed(2) + '%';
+        return (
+          <Tooltip title={ratio} color="red">
+            <div style={{ color: 'red' }}>{item?.toFixed(2)}</div>
+          </Tooltip>
+        );
       },
       sorter: (a: analysisModel, b: analysisModel) => {
         return a.profit - b.profit;
@@ -194,7 +216,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
       title: '亏损',
       dataIndex: 'loss',
       render: (item: number) => {
-        return <div style={{ color: 'green' }}>{item?.toFixed(2)}</div>;
+        const ratio = ((item / totalLoss) * 100).toFixed(2) + '%';
+        return (
+          <Tooltip title={ratio} color="green">
+            <div style={{ color: 'green' }}>{item?.toFixed(2)}</div>
+          </Tooltip>
+        );
       },
       sorter: (a: analysisModel, b: analysisModel) => {
         return a.loss - b.loss;
