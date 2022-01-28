@@ -38,10 +38,6 @@ export default (): React.ReactNode => {
     });
   };
 
-  const gotoSysAdmin = () => {
-    location.href = 'sys/admin'
-  }
-
   return (
     <>
       <ProCard gutter={[0, 16]}>
@@ -57,7 +53,9 @@ export default (): React.ReactNode => {
         </Button>
         <Button
           type="primary"
-          onClick={gotoSysAdmin}
+          onClick={() => {
+            window.open('/sys/admin', '_blank');
+          }}
           style={{
             margin: 8,
           }}
