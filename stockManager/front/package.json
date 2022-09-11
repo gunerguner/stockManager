@@ -58,7 +58,7 @@
     "antd": "^4.18.5",
     "classnames": "^2.2.6",
     "lodash": "^4.17.11",
-    "moment": "^2.29.4",
+    "moment": "^2.25.3",
     "omit.js": "^2.0.2",
     "react": "^17.0.0",
     "react-dev-inspector": "^1.1.1",
