@@ -27,15 +27,12 @@ const GlobalHeaderRight: React.FC = () => {
   }
   return (
     <Space className={className}>
-      
-    
-      <Avatar menu/>
+      <Avatar menu />
       {REACT_APP_ENV && (
         <span>
           <Tag color={ENVTagColor[REACT_APP_ENV]}>{REACT_APP_ENV}</Tag>
         </span>
       )}
-      
     </Space>
   );
 };

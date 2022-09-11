@@ -51,7 +51,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
       sz300Count = 0,
       sh688Profit = 0,
       sh688Loss = 0,
-      sh688Count = 0;
+      sh688Count = 0,
+      bjProfit = 0,
+      bjLoss = 0,
+      bjCount = 0;
 
     for (const stock of props.data) {
       isNewProfit += stock.isNew && stock.offsetTotal > 0 ? stock.offsetTotal : 0;
@@ -93,6 +96,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
       sh688Loss +=
         stock.stockType == 'SH688' && !stock.isNew && stock.offsetTotal < 0 ? stock.offsetTotal : 0;
       sh688Count += stock.stockType == 'SH688' && !stock.isNew ? 1 : 0;
+
+      bjProfit +=
+        stock.stockType == 'BJ' && !stock.isNew && stock.offsetTotal > 0 ? stock.offsetTotal : 0;
+      bjLoss +=
+        stock.stockType == 'BJ' && !stock.isNew && stock.offsetTotal < 0 ? stock.offsetTotal : 0;
+      bjCount += stock.stockType == 'BJ' && !stock.isNew ? 1 : 0;
     }
 
     setTotalProfit(
@@ -103,11 +112,20 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
         sh60Profit +
         sz00Profit +
         sz300Profit +
-        sh688Profit,
+        sh688Profit +
+        bjProfit,
     );
 
     setTotaLoss(
-      isNewLoss + fundABLoss + fundInLoss + convLoss + sh60Loss + sz00Loss + sz300Loss + sh688Loss,
+      isNewLoss +
+        fundABLoss +
+        fundInLoss +
+        convLoss +
+        sh60Loss +
+        sz00Loss +
+        sz300Loss +
+        sh688Loss +
+        bjLoss,
     );
 
     analysis.push({
@@ -148,6 +166,14 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
       profit: sh688Profit,
       loss: sh688Loss,
       netIncome: sh688Profit + sh688Loss,
+    });
+
+    analysis.push({
+      type: '北交所（非新股）',
+      count: bjCount,
+      profit: bjProfit,
+      loss: bjLoss,
+      netIncome: bjProfit + bjLoss,
     });
 
     analysis.push({

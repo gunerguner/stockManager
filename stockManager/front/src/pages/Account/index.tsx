@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Card } from 'antd';
 
 import ProCard from '@ant-design/pro-card';
-import { history, useModel } from 'umi';
+import { useModel } from 'umi';
 
 export default (): React.ReactNode => {
   const { initialState, setInitialState } = useModel('@@initialState');

@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import type { ResponseError } from 'umi-request';
 import { currentUser as queryCurrentUser } from './services/api';
 
-const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/login';
 
 /** 获取用户信息比较慢的时候会展示一个 loading */

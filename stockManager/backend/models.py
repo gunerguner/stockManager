@@ -75,9 +75,11 @@ class StockMeta(models.Model):
         SZ00 = "SZ00", _("深市")
         SZ300 = "SZ300", _("创业板")
         SH688 = "SH688", _("科创板")
+        BJ = "BJ", _("北交所")
         CONV = "CONV", _("可转债")
         FUNDIN = "FUNDIN", _("场内基金")
         FUNDAB = "FUNDAB", _("分级基金")
+        
         OTHER = "OTHER", _("其它")
 
     code = models.CharField(max_length=200)
