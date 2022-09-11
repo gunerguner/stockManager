@@ -12,6 +12,7 @@ export type OverallBoardProps = {
 };
 
 export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardProps) => {
+  const [form] = Form.useForm();
   const ColumnsOverAll: ColumnsType<API.Overall> = [
     {
       title: '当日盈亏',
@@ -54,7 +55,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
       title: '其它现金收入',
       dataIndex: 'incomeCash',
       render: (item: number) => {
-        const [form] = Form.useForm();
+       
         return (
           <Row>
             <Col span={15}>
@@ -101,7 +102,6 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
       title: '本金',
       dataIndex: 'originCash',
       render: (item: number) => {
-        const [form] = Form.useForm();
         return (
           <Row>
             <Col span={15}>
