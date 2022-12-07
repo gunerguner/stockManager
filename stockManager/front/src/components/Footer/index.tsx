@@ -1,4 +1,4 @@
-import { GithubOutlined } from '@ant-design/icons';
+import { GithubOutlined, AntDesignOutlined } from '@ant-design/icons';
 import { DefaultFooter } from '@ant-design/pro-layout';
 
 export default () => (
@@ -6,9 +6,15 @@ export default () => (
     copyright="2020-2022 溯宁出品"
     links={[
       {
-        key: 'Ant Design Pro',
-        title: 'Ant Design Pro',
-        href: 'https://pro.ant.design',
+        key: 'UmiJS',
+        title: 'UmiJS',
+        href: 'https://umijs.org',
+        blankTarget: true,
+      },
+      {
+        key: 'Ant Design',
+        title: <AntDesignOutlined />,
+        href: 'https://ant.design',
         blankTarget: true,
       },
       {

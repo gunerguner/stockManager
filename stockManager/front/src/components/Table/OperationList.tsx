@@ -7,11 +7,15 @@ import { colorFromValue } from '../../utils';
 export type OperationListProps = {
   data: API.StockData;
   showAll: boolean;
+  showConv: boolean;
 };
 
 export const OperationList: React.FC<OperationListProps> = (props: OperationListProps) => {
   const rowClassName = (record: API.Stock, index: number): string => {
-    return record.totalValue < 0.1 && !props.showAll ? 'hide' : '';
+    return (record.totalValue < 0.1 && !props.showAll) ||
+      (record.stockType == 'CONV' && !props.showConv)
+      ? 'hide'
+      : '';
   };
 
   const expandedRowRender = (record: API.Stock) => {
@@ -67,12 +71,12 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
         return a.totalValue - b.totalValue;
       },
       render: (value: any, record: API.Stock, index: number) => {
-        const ratio = ((record.totalValue / props.data.overall.totalValue)*100).toFixed(2) + '%'
-        return ( <Tooltip title={ratio} >
-          <div>{record?.totalValue.toFixed(2)}</div>
+        const ratio = ((record.totalValue / props.data.overall.totalValue) * 100).toFixed(2) + '%';
+        return (
+          <Tooltip title={ratio}>
+            <div>{record?.totalValue.toFixed(2)}</div>
           </Tooltip>
-        )
-       
+        );
       },
     },
     {
