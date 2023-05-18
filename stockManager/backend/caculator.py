@@ -329,8 +329,11 @@ class Caculator(object):
         total_offset_today = 0
         total_cost = 0
 
-        origin_cash = float(Info.objects.get(key="originCash").value)
-        income_cash = float(Info.objects.get(key="incomeCash").value)
+        origin_cash_set = Info.objects.filter(key="originCash").first()
+        income_cash_set = Info.objects.filter(key="income_cash").first()
+        
+        origin_cash = float(origin_cash_set.value) if origin_cash_set is not None else 0.0
+        income_cash = float(income_cash_set.value) if income_cash_set is not None else 0.0
 
         for single_target in single_target_list:
             current_offset += single_target["offsetCurrent"]
