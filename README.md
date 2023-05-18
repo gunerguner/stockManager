@@ -52,11 +52,11 @@
 
 离线交易指标来自baoStock：http://baostock.com/baostock/index.php
 
-主要用来获取历史除权除息的数据。
+主要用来获取历史除权除息的数据。但貌似现在相关数据停止更新了，暂时也没有更好的替代方案。
 
 
 
-之前也调研过Tushare，历史除权数据好像要积分才能查询...整个数据拉取工作，比较坑爹的地方是新浪的返回数据竟然是gb18030的编码...
+之前也调研过Tushare，历史除权数据好像要积分才能查询...整个数据拉取工作，比较坑爹的地方是接口的返回数据竟然是gb18030的编码...
 
 
 
@@ -120,5 +120,10 @@
 5.  进入front目录， `npm install` 前端部分的依赖。
 6.  在front目录，`npm run build` 生成目标文件。
 7.  在主目录下`python manage.py migrate` 生成数据库（或者直接copy数据库文件）。
-8.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
-9.  在主目录下，`python manage.py runserver`。 
+8.  在主目录下`pytho3 manage.py createsuperuser`生成管理密码。
+9.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
+10.  在主目录下，`python manage.py runserver`。 
+
+
+### 部署方式
+1.  服务层我使用了Nginx+uwsgi，在云服务器部署。
