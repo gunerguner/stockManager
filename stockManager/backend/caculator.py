@@ -330,7 +330,7 @@ class Caculator(object):
         total_cost = 0
 
         origin_cash_set = Info.objects.filter(key="originCash").first()
-        income_cash_set = Info.objects.filter(key="income_cash").first()
+        income_cash_set = Info.objects.filter(key="incomeCash").first()
         
         origin_cash = float(origin_cash_set.value) if origin_cash_set is not None else 0.0
         income_cash = float(income_cash_set.value) if income_cash_set is not None else 0.0
