@@ -27,14 +27,14 @@ class Caculator(object):
 
         return to_return
 
-    def generate_divident(self):
+    def generate_dividend(self):
 
         hold_stocks = self.all_stocks(True)
 
         to_return = []
         bs.login()
         for single_code in hold_stocks:
-            name = self.__generate_divident_single(single_code)
+            name = self.__generate_dividend_single(single_code)
             if len(name) > 0:
                 to_return.append(name)
 
@@ -59,7 +59,7 @@ class Caculator(object):
         return hold_stocks
 
     # 生成个股除权除息
-    def __generate_divident_single(self, code):
+    def __generate_dividend_single(self, code):
         if code is None:
             return ""
 

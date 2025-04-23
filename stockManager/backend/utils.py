@@ -56,7 +56,7 @@ def get_ip(request):
     return ip
 
 
-def generate_divident_single(code,first_year):
+def generate_dividend_single(code,first_year):
 
     if (code is None) or (first_year is None):
         return 0
@@ -106,18 +106,3 @@ def generate_divident_single(code,first_year):
         return code
     else: 
         return ''
-
-#自动生成除权记录
-# def generate_divident(code_list):
-#     to_return = []
-#     bs.login()
-#     for single_code in code_list:
-#         code = generate_divident_single(single_code['code'],single_code['first_year'])
-#         if len(code) > 0:
-#             to_return.append(code) 
-
-#     bs.logout()
-#     return to_return
-
-
- 

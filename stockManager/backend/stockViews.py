@@ -64,7 +64,7 @@ def refresh_divident(request):
         return JsonResponse({"status": 302})
 
     stock_caculator = Integrate.caculator(request.user.username,False)
-    codes = stock_caculator.generate_divident()
+    codes = stock_caculator.generate_dividend()
 
     return JsonResponse(
         {"status": 1, "data": codes},

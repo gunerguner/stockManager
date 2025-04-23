@@ -3,8 +3,8 @@ import baostock as bs
 import os, datetime
 import math
 
-from .models import Operation, Info, StockMeta
-from .utils import generate_divident_single
+from .models import Operation, StockMeta
+
 
 
 def import_excel(path):
@@ -41,8 +41,6 @@ def import_excel(path):
                 fee=fee,
             )
 
-    # for k,v in first_year_map.items():
-    # generate_divident_single(k,v)
 
     bs.logout()
 
