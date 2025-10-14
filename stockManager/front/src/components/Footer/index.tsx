@@ -3,7 +3,7 @@ import { DefaultFooter } from '@ant-design/pro-layout';
 
 export default () => (
   <DefaultFooter
-    copyright="2020-2024 溯宁出品"
+    copyright="2020-2025 溯宁出品"
     links={[
       {
         key: 'UmiJS',

@@ -74,7 +74,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   };
 };
 
-const codeMessage = {
+const codeMessage: Record<number, string> = {
   200: '服务器成功返回请求的数据。',
   201: '新建或修改数据成功。',
   202: '一个请求已经进入后台排队（异步任务）。',
@@ -92,6 +92,7 @@ const codeMessage = {
   503: '服务不可用，服务器暂时过载或维护。',
   504: '网关超时。',
 };
+
 
 /** 异常处理程序
  * @see https://beta-pro.ant.design/docs/request-cn

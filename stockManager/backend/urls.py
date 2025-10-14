@@ -2,7 +2,6 @@ from django.urls import path
 
 from . import stockViews
 from . import userViews
-from . import tempViews
 
 urlpatterns = [
     path('', stockViews.show_stocks, name='index'),
@@ -14,5 +13,4 @@ urlpatterns = [
     path('login', userViews.login, name='login'),
     path('logout', userViews.logout, name='logout'),
 
-    # path('makeTag', tempViews.make_tag, name='makeTag'),
 ]

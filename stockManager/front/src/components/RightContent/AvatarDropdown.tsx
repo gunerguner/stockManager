@@ -1,12 +1,13 @@
 import React from 'react';
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
-import { Avatar, Menu, Spin, Dropdown } from 'antd';
+import { Avatar, Spin, Dropdown } from 'antd';
+
 import { history, useModel } from 'umi';
 import { stringify } from 'querystring';
 import styles from './index.less';
 import { outLogin } from '@/services/api';
 
-export type GlobalHeaderRightProps = {};
+export type GlobalHeaderRightProps = Record<string, never>;
 
 /**
  * 退出登录，并且将当前的 url 保存
@@ -51,41 +52,36 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
     return loading;
   }
 
-  const menu = (
-    <Menu
-      className={styles.menu}
-      items={[
-        {
-          key: 'settings',
-          label: '设置',
-          icon: <SettingOutlined />,
-          onClick: () => {
-            history.push(`/account`);
-          },
-        },
-        {
-          key: 'logout',
-          label: '退出',
-          icon: <LogoutOutlined />,
-          onClick: () => {
-            if (initialState) {
-              setInitialState({ ...initialState, currentUser: undefined });
-              loginOut();
-            }
-          },
-        },
-      ]}
-    />
-  );
+  const menuItems = [
+    {
+      key: 'settings',
+      label: '设置',
+      icon: <SettingOutlined />,
+      onClick: () => {
+        history.push(`/account`);
+      },
+    },
+    {
+      key: 'logout',
+      label: '退出',
+      icon: <LogoutOutlined />,
+      onClick: () => {
+        if (initialState) {
+          setInitialState({ ...initialState, currentUser: undefined });
+          loginOut();
+        }
+      },
+    },
+  ];
 
   return (
-    <Dropdown overlay={menu}>
+    <Dropdown menu={{ items: menuItems, className: styles.menu }}>
       <span className={`${styles.action} ${styles.account}`}>
         <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt="avatar" />
         <span className={`${styles.name} anticon`}>{currentUser.name}</span>
       </span>
     </Dropdown>
-  );
+  );  
 };
 
 export default AvatarDropdown;

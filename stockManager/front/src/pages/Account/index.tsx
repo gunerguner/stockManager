@@ -6,10 +6,9 @@ import ProCard from '@ant-design/pro-card';
 import { useModel } from 'umi';
 
 export default (): React.ReactNode => {
-  const { initialState, setInitialState } = useModel('@@initialState');
+  const { initialState } = useModel('@@initialState');
 
   const currentUser = initialState?.currentUser;
-
   return (
     <>
       <ProCard gutter={[0, 16]}>

@@ -1,7 +1,7 @@
 import { Table, Row, Col, Modal, Input, Form } from 'antd';
 import React from 'react';
 
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 import { updateOriginCash, updateIncomeCash } from '../../services/api';
 
 import { colorFromValue } from '../../utils';

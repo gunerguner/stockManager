@@ -5,9 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 from django.contrib import auth
 
-
 import json, logging, sys
-
 
 @csrf_exempt
 def login(request):

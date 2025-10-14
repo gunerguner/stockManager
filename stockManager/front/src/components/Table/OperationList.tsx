@@ -1,7 +1,7 @@
 import { Table, Tooltip } from 'antd';
 import React from 'react';
 
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 import { colorFromValue } from '../../utils';
 
 export type OperationListProps = {
@@ -28,7 +28,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
         tableLayout="fixed"
         dataSource={record.operationList}
         pagination={false}
-      ></Table>
+       />
     );
   };
 
@@ -41,7 +41,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
           <a
             target="_blank"
             href={'https://xueqiu.com/S/' + record.code}
-            style={{ textDecoration: 'none', fontWeight: 'bold', fontSize: '13px' }}
+            style={{ textDecoration: 'none', fontWeight: 'bold', fontSize: '13px' }} rel="noreferrer"
           >
             {record.name + ' (' + record.code + ')'}
           </a>

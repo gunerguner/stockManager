@@ -25,7 +25,7 @@ export default (): React.ReactNode => {
             content: (
               <>
                 {response.data.map((divident: string) => (
-                  <Row>{divident}</Row>
+                  <Row key={divident}>{divident}</Row>
                 ))}
               </>
             ),

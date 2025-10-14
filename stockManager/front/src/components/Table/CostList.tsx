@@ -1,7 +1,7 @@
 import { Table } from 'antd';
 import React, { useState, useEffect } from 'react';
 
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 
 interface CostListModel {
   id: string;
@@ -18,30 +18,26 @@ export type CostListProps = {
 export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
   const [costList, setCostList] = useState([] as CostListModel[]);
 
-  useEffect(() => {
-    initializeCost();
-  }, []);
-
-  const initializeCost = () => {
-    var costs: CostListModel[] = [];
+  const initializeCost = React.useCallback(() => {
+    const costs: CostListModel[] = [];
 
     for (const stock of props.data) {
       //每一个股票
       for (const operation of stock.operationList) {
         //每一个操作
-        if (operation.type == 'DV') continue;
+        if (operation.type === 'DV') continue;
 
-        const year = operation.date.substr(0, 4);
-        const month = operation.date.substr(5, 2);
+        const year = operation.date.substring(0, 4);
+        const month = operation.date.substring(5, 7);
 
-        var yearMap = costs.find((value: CostListModel) => value.id == year);
+        let yearMap = costs.find((value: CostListModel) => value.id === year);
 
         if (!!!yearMap) {
           yearMap = { id: year, normalTradeCount: 0, convTradeCount: 0, fee: 0, subList: [] };
           costs.push(yearMap);
         }
 
-        var monthMap = yearMap.subList?.find((value: CostListModel) => value.id == month);
+        let monthMap = yearMap.subList?.find((value: CostListModel) => value.id === month);
 
         if (!!!monthMap) {
           monthMap = { id: month, normalTradeCount: 0, convTradeCount: 0, fee: 0 };
@@ -57,12 +53,16 @@ export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
     }
 
     costs.sort((a: CostListModel, b: CostListModel) => Number(a.id) - Number(b.id));
-    for (const yearMap of costs) {
-      yearMap.subList?.sort((a: CostListModel, b: CostListModel) => Number(a.id) - Number(b.id));
+    for (const yearItem of costs) {
+      yearItem.subList?.sort((a: CostListModel, b: CostListModel) => Number(a.id) - Number(b.id));
     }
 
     setCostList(costs);
-  };
+  }, [props.data]);
+
+  useEffect(() => {
+    initializeCost();
+  }, [initializeCost]);
 
   const Column: ColumnsType<CostListModel> = [
     {
@@ -100,7 +100,7 @@ export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
         dataSource={record.subList}
         pagination={false}
         showHeader={false}
-      ></Table>
+      />
     );
   };
 

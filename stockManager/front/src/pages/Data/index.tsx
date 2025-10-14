@@ -10,7 +10,7 @@ import { AnalysisList } from '../../components/Table/AnalysisList';
 import { CostList } from '../../components/Table/CostList';
 
 export default (): React.ReactNode => {
-  const { stock, setStockData } = useModel('stocks');
+  const { stock } = useModel('stocks');
 
   return (
     <ProCard gutter={[0, 16]}>

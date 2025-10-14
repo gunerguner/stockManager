@@ -1,7 +1,7 @@
 import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 
 interface analysisModel {
   type: string;
@@ -26,9 +26,9 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props: AnalysisListPro
   }, []);
 
   const initializeAnalysis = () => {
-    var analysis: analysisModel[] = [];
+    const analysis: analysisModel[] = [];
 
-    var isNewProfit = 0,
+    let isNewProfit = 0,
       isNewLoss = 0,
       isNewCount = 0,
       fundABProfit = 0,
