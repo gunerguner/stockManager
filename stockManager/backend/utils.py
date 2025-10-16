@@ -45,17 +45,6 @@ def format_operations(list):
 
     return to_return
 
-
-#获取请求者的IP信息
-def get_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')  # 判断是否使用代理
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]  # 使用代理获取真实的ip
-    else:
-        ip = request.META.get('REMOTE_ADDR')  # 未使用代理获取IP
-    return ip
-
-
 def generate_dividend_single(code,first_year):
 
     if (code is None) or (first_year is None):

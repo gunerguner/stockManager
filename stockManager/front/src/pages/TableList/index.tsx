@@ -1,13 +1,10 @@
 import { Button, Row, Col, Checkbox, BackTop } from 'antd';
-
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useCallback } from 'react';
 import ProCard from '@ant-design/pro-card';
-
 import { history, useModel } from 'umi';
-import { fetch } from '../../services/api';
 import { ReloadOutlined } from '@ant-design/icons';
 
+import { fetch } from '../../services/api';
 import { OverallBoard } from '../../components/Table/OverallBoard';
 import { OperationList } from '../../components/Table/OperationList';
 
@@ -18,22 +15,29 @@ const TableList: React.FC = () => {
   const [showConv, setShowConv] = useState(true);
   const { stock, setStockData } = useModel('stocks');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const response = await fetch();
-    if (response.status == 1 && !!response.data) {
+    if (response.status === 1 && !!response.data) {
       setStockData(response.data);
-    } else if (response.status == 302) {
+    } else if (response.status === 302) {
       history.push('/login');
     }
-  };
+  }, [setStockData]);
 
-  const overallModifyCompeletion = (type: string, success: boolean) => {
-    success ? fetchData() : history.push('/login');
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const overallModifyCompeletion = useCallback(
+    (type: string, success: boolean) => {
+      if (success) {
+        fetchData();
+      } else {
+        history.push('/login');
+      }
+    },
+    [fetchData],
+  );
 
   return (
     <>
@@ -48,14 +52,13 @@ const TableList: React.FC = () => {
               <Button onClick={fetchData} icon={<ReloadOutlined />} />
             </Col>
             <Col span={4} offset={15}>
-              <Checkbox checked={showAll} onClick={() => setShowAll(!showAll)}>
-                {'显示市值为零的股票'}
+              <Checkbox checked={showAll} onChange={(e) => setShowAll(e.target.checked)}>
+                显示市值为零的股票
               </Checkbox>
             </Col>
             <Col span={3}>
-              <Checkbox checked={showConv} onClick={() => setShowConv(!showConv)}>
-                {' '}
-                {'显示可转债'}{' '}
+              <Checkbox checked={showConv} onChange={(e) => setShowConv(e.target.checked)}>
+                显示可转债
               </Checkbox>
             </Col>
           </Row>

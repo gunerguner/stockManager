@@ -10,7 +10,7 @@ class Caculator(object):
 
         self.stockMeta = StockMeta.objects.all()
 
-    # 聚合接口，所有的股票数据+总和
+    # 聚合接口,所有的股票数据+总和
     def caculate_target(self):
         to_return = {}
         stock_list = []
@@ -44,17 +44,16 @@ class Caculator(object):
 
     # 现有持仓
     def all_stocks(self, hold=False):
-
+        """获取所有股票代码，如果 hold=True 则只返回持仓股票"""
         overall_stocks = list(self.operation_list.keys())
-        if hold == False:
+        if not hold:
             return overall_stocks
 
-        hold_stocks = list(
-            filter(
-                lambda x: self.__caculate_single_holdCount(self.operation_list[x]) > 0,
-                overall_stocks,
-            )
-        )
+        hold_stocks = [
+            stock
+            for stock in overall_stocks
+            if self.__caculate_single_holdCount(self.operation_list[stock]) > 0
+        ]
 
         return hold_stocks
 
@@ -88,13 +87,8 @@ class Caculator(object):
                 cash = 0 if data[9] == "" else float(data[9])
                 reserve = 0 if data[11] == "" else float(data[11])
                 stock = 0 if data[13] == "" else float(data[13])
-
-                find = False
-                for exist_date in date_array:
-                    if exist_date == date:
-                        find = True
-
-                if find == False:
+     
+                if date not in date_array:
                     Operation.objects.create(
                         date=date,
                         code=code,
@@ -167,7 +161,7 @@ class Caculator(object):
         )
         to_return["totalValueYesterday"] = (
             float(single_real_time[4]) * yesterday_hold_count
-        )  # 昨日市值，不显示
+        )  # 昨日市值,不显示
 
         current_offset = (
             float(single_real_time[1]) - current_hold_cost
@@ -197,7 +191,7 @@ class Caculator(object):
 
         total_offset_today = 0
         if to_return["totalValueYesterday"] < 0.1:
-            total_offset_today = current_offset  # 今天新买的，今日盈亏等于浮动盈亏
+            total_offset_today = current_offset  # 今天新买的,今日盈亏等于浮动盈亏
         else:
             total_offset_today = (
                 float(single_real_time[1]) * current_hold_count
@@ -205,23 +199,20 @@ class Caculator(object):
                 - self.__caculate_single_today_input(single_operation_list)
             )
 
-        to_return["totalOffsetToday"] = total_offset_today  # 今日盈亏，不显示
+        to_return["totalOffsetToday"] = total_offset_today  # 今日盈亏,不显示
 
         return to_return
 
     def __caculate_single_operation_list(self, single_operation_list):
-        to_return = []
-        for single_operation in single_operation_list:
-            to_return.append(single_operation.to_dict())
-
-        to_return.reverse()
-        return to_return
+        """将操作列表转换为字典列表并反转顺序"""
+        return [op.to_dict() for op in reversed(single_operation_list)]
 
     def __caculate_single_holdCount(self, single_operation_list, yesterday=0):
-        # 某个股票当前持股数，这里假设已经按照时间排好序了，算是个小坑
+        """计算某个股票当前持股数，这里假设已经按照时间排好序了，算是个小坑"""
         current_hold = 0
+        today = datetime.date.today()
+        
         for single_operation in single_operation_list:
-            today = datetime.date.today()
             if yesterday == 1:
                 # 只计算到昨天的持仓
                 if single_operation.date >= today:
@@ -262,7 +253,7 @@ class Caculator(object):
                 )
 
             if current_hold == 0:
-                # 这里有个大坑，如果清仓了就不算，重头算起
+                # 这里有个大坑,如果清仓了就不算,重头算起
                 total_pay = 0
                 total_count = 0
 
@@ -294,10 +285,11 @@ class Caculator(object):
         return current_sum
 
     def __caculate_single_today_input(self, single_operation_list):
-        # 某个股票今天的净投入
+        """计算某个股票今天的净投入"""
         today_operation = 0
+        today = datetime.date.today()
+        
         for single_operation in single_operation_list:
-            today = datetime.date.today()
             # 只计算今天的持仓
             if single_operation.date != today:
                 continue
@@ -315,19 +307,14 @@ class Caculator(object):
         return today_operation
 
     def __caculate_single_fee(self, single_target_list):
-        current_sum = 0
-        for single_operation in single_target_list:
-            current_sum += single_operation.fee
+        """计算总手续费"""
+        return sum(op.fee for op in single_target_list)
 
-        return current_sum
 
+    # genAI_master_start
     def __caculate_overall_target(self, single_target_list):
+        """计算整体指标"""
         to_return = {}
-        current_offset = 0
-        total_offset = 0
-        total_value = 0
-        total_offset_today = 0
-        total_cost = 0
 
         origin_cash_set = Info.objects.filter(key="originCash").first()
         income_cash_set = Info.objects.filter(key="incomeCash").first()
@@ -335,12 +322,12 @@ class Caculator(object):
         origin_cash = float(origin_cash_set.value) if origin_cash_set is not None else 0.0
         income_cash = float(income_cash_set.value) if income_cash_set is not None else 0.0
 
-        for single_target in single_target_list:
-            current_offset += single_target["offsetCurrent"]
-            total_offset += single_target["offsetTotal"]
-            total_value += single_target["totalValue"]
-            total_offset_today += single_target["totalOffsetToday"]
-            total_cost += single_target["totalCost"]
+        # 使用 sum() 简化累加
+        current_offset = sum(target["offsetCurrent"] for target in single_target_list)
+        total_offset = sum(target["offsetTotal"] for target in single_target_list)
+        total_value = sum(target["totalValue"] for target in single_target_list)
+        total_offset_today = sum(target["totalOffsetToday"] for target in single_target_list)
+        total_cost = sum(target["totalCost"] for target in single_target_list)
 
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
         to_return["offsetTotal"] = total_offset + income_cash  # 累计盈亏
@@ -370,16 +357,16 @@ class Caculator(object):
 摊薄成本 = (∑买入金额 - ∑卖出金额 - ∑现金股息) / 持股数
 持仓成本 = ∑买入金额 / (∑买入数量 + ∑红股数量 + ∑拆股所增数量 - ∑合股所减数量) 
 2、浮动盈亏
-浮动盈亏额 ＝ (当前价 - 持仓成本) * 多仓持股数
-浮动盈亏率 ＝ 浮动盈亏额 / (持仓成本价 * 持股数)
-分市场浮动盈亏额 ＝ ∑个股浮动盈亏额
-分市场浮动盈亏率 ＝ 分市场浮动盈亏额 / ∑(个股持仓成本 * 个股持股数)
+浮动盈亏额 = (当前价 - 持仓成本) * 多仓持股数
+浮动盈亏率 = 浮动盈亏额 / (持仓成本价 * 持股数)
+分市场浮动盈亏额 = ∑个股浮动盈亏额
+分市场浮动盈亏率 = 分市场浮动盈亏额 / ∑(个股持仓成本 * 个股持股数)
 3、累计盈亏
-个股累计盈亏额 ＝ 多仓市值 - (∑买入金额 - ∑卖出金额 - ∑现金股息) 
-个股累计盈亏率 ＝ 累计盈亏额 / ∑买入金额
-分市场累计盈亏额 ＝ ∑个股累计盈亏额
+个股累计盈亏额 = 多仓市值 - (∑买入金额 - ∑卖出金额 - ∑现金股息) 
+个股累计盈亏率 = 累计盈亏额 / ∑买入金额
+分市场累计盈亏额 = ∑个股累计盈亏额
 无银转
-分市场累计盈亏率 ＝ 累计盈亏额 / ∑个股买入金额
+分市场累计盈亏率 = 累计盈亏额 / ∑个股买入金额
 有银转
 分市场累计盈亏率 = 累计盈亏额 / ∑转入金额
 4、当日盈亏
@@ -393,8 +380,8 @@ class Caculator(object):
 现金 = 本金+累计盈亏-市值
 
 每个股票对应的指标
-code, name，priceNow，offsetToday，offsetTodayRatio，totalValue，holdCount，holdCost，overallCost，offsetCurrent，offsetCurrentRatio，offsetTotal
+code, name,priceNow,offsetToday,offsetTodayRatio,totalValue,holdCount,holdCost,overallCost,offsetCurrent,offsetCurrentRatio,offsetTotal
 
 整体指标
-offsetToday，offsetCurrent，offsetCurrentRatio，offsetTotal，totalValue，totalCash，originCash
+offsetToday,offsetCurrent,offsetCurrentRatio,offsetTotal,totalValue,totalCash,originCash
 """

@@ -5,8 +5,6 @@ import math
 
 from .models import Operation, StockMeta
 
-
-
 def import_excel(path):
     # 解析交易记录文件，这块不具有通用性
     bs.login()

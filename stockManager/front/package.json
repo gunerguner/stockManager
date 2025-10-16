@@ -41,9 +41,12 @@
     ]
   },
   "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 10"
+    "Chrome >= 90",
+    "Firefox >= 88",
+    "Safari >= 14",
+    "Edge >= 90",
+    "not dead",
+    "not IE 11"
   ],
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
