@@ -6,7 +6,9 @@ import { history } from 'umi';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
 import type { ResponseError } from 'umi-request';
-import { currentUser as queryCurrentUser } from './services/api';
+
+import { getCurrentUser as queryCurrentUser } from './services/api';
+
 
 const loginPath = '/login';
 
@@ -118,8 +120,50 @@ const errorHandler = (error: ResponseError) => {
   throw error;
 };
 
+/**
+ * 响应拦截器：统一处理后端返回的message字段
+ */
+const responseInterceptor = async (response: Response) => {
+  const data = await response.clone().json();
+  
+  // 如果响应中包含message字段，则显示通知
+  if (data && data.message) {
+    const { status, message } = data;
+    
+    // 根据status字段判断通知类型
+    if (status === 1) {
+      // 成功消息
+      notification.success({
+        message: '操作成功',
+        description: message,
+      });
+    } else if (status === 0) {
+      // 失败消息
+      notification.error({
+        message: '操作失败',
+        description: message,
+      });
+    } else if (status === 302) {
+      // 未登录等其他状态，使用info类型
+      notification.info({
+        message: '提示',
+        description: message,
+      });
+    } else {
+      // 其他状态默认使用info
+      notification.info({
+        message: '提示',
+        description: message,
+      });
+    }
+  }
+  
+  return response;
+};
+
 // https://umijs.org/zh-CN/plugins/plugin-request
 export const request: RequestConfig = {
   errorHandler,
   credentials: 'include',
+  responseInterceptors: [responseInterceptor],
 };

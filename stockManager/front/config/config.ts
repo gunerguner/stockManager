@@ -38,9 +38,6 @@ export default defineConfig({
   title: false,
   ignoreMomentLocale: true,
   proxy: proxy[REACT_APP_ENV as keyof typeof proxy || 'dev'],
-  manifest: {
-    basePath: '/',
-  },
   // Fast Refresh 热更新
   fastRefresh: {},
   openAPI: [

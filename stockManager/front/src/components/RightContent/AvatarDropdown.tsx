@@ -5,7 +5,9 @@ import { Avatar, Spin, Dropdown } from 'antd';
 import { history, useModel } from 'umi';
 import { stringify } from 'querystring';
 import styles from './index.less';
-import { outLogin } from '@/services/api';
+
+import { logout } from '@/services/api';
+
 
 export type GlobalHeaderRightProps = Record<string, never>;
 
@@ -13,7 +15,9 @@ export type GlobalHeaderRightProps = Record<string, never>;
  * 退出登录，并且将当前的 url 保存
  */
 const loginOut = async () => {
-  await outLogin();
+  
+  await logout();
+  
   const { query = {}, pathname } = history.location;
   const { redirect } = query;
   // Note: There may be security issues, please note

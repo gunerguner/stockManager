@@ -4,7 +4,9 @@ import ProCard from '@ant-design/pro-card';
 import { history, useModel } from 'umi';
 import { ReloadOutlined } from '@ant-design/icons';
 
-import { fetch } from '../../services/api';
+
+import { getStockList } from '../../services/api';
+
 import { OverallBoard } from '../../components/Table/OverallBoard';
 import { OperationList } from '../../components/Table/OperationList';
 
@@ -16,7 +18,9 @@ const TableList: React.FC = () => {
   const { stock, setStockData } = useModel('stocks');
 
   const fetchData = useCallback(async () => {
-    const response = await fetch();
+    
+    const response = await getStockList();
+    
     if (response.status === 1 && !!response.data) {
       setStockData(response.data);
     } else if (response.status === 302) {

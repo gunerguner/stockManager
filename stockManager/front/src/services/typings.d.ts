@@ -2,8 +2,11 @@
 /* eslint-disable */
 
 declare namespace API {
+
+  // 基础响应结构
   type BaseResult = {
-    status?: number;
+    status: number;
+    message?: string;
   };
 
   type UserResult = BaseResult & {
@@ -22,8 +25,8 @@ declare namespace API {
   };
 
   type LoginParams = {
-    username?: string;
-    password?: string;
+    username: string;
+    password: string;
     autoLogin?: boolean;
   };
 
@@ -65,7 +68,7 @@ declare namespace API {
     offsetTotal: number;
     operationList: Operation[];
     totalOffsetToday: number;
-    isNew:boolean;
+    isNew: boolean;
     stockType: string;
   };
 

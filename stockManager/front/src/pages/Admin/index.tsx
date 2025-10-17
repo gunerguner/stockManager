@@ -6,7 +6,9 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 import ProCard from '@ant-design/pro-card';
 import { history } from 'umi';
-import { updateDivident } from '../../services/api';
+
+import { updateDividend } from '../../services/api';
+
 
 export default (): React.ReactNode => {
   const [dividentLoading, setDividentLoading] = useState(false);
@@ -17,7 +19,9 @@ export default (): React.ReactNode => {
       icon: <ExclamationCircleOutlined />,
       async onOk() {
         setDividentLoading(true);
-        const response = await updateDivident();
+        
+        const response = await updateDividend();
+        
         if (response.status == 1 && !!response.data) {
           const modalTitle = response.data.length > 0 ? '有' : '无' + '更新股票';
           Modal.info({
