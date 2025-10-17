@@ -4,13 +4,14 @@ from . import stockViews
 from . import userViews
 
 urlpatterns = [
+    # 股票相关接口
     path('', stockViews.show_stocks, name='index'),
     path('divident', stockViews.refresh_divident, name='divident'),
-    path('updateOriginCash',stockViews.update_origin_cash, name='updateOriginCash'),
-    path('updateIncomeCash',stockViews.update_income_cash, name='updateIncomeCash'),
+    path('updateOriginCash', stockViews.update_origin_cash, name='updateOriginCash'),
+    path('updateIncomeCash', stockViews.update_income_cash, name='updateIncomeCash'),
     
+    # 用户相关接口
     path('currentUser', userViews.currentUser, name='currentUser'),
     path('login', userViews.login, name='login'),
     path('logout', userViews.logout, name='logout'),
-
 ]

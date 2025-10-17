@@ -1,97 +1,120 @@
-from .models import Operation
-import urllib.request
+"""
+工具函数模块
+提供股票数据查询、操作记录处理和分红信息生成等功能
+"""
+import datetime
 import re
+import urllib.request
+from typing import Dict, List, Optional
 
 import baostock as bs
 
-# 拉取当前数据
-def query_realtime_price(list):
-    to_return = {}
-    if len(list) == 0:
-        return to_return
+from .common import logger
+from .models import Operation
 
-    # url = 'http://hq.sinajs.cn/list='
-    url = 'http://qt.gtimg.cn/q='
-    for code in list:
-        url = url+code+','
-        
-    res_data=urllib.request.urlopen(url).read()
+# 常量定义
+STOCK_PRICE_API_URL = 'http://qt.gtimg.cn/q='
+MIN_RESPONSE_LENGTH = 10
+ENCODING_GB18030 = 'gb18030'
+
+
+def query_realtime_price(code_list: List[str]) -> Dict[str, List]:
+    """
+    查询股票实时价格
     
-    res_array = str(res_data,encoding="gb18030").split(';')
+    Args:
+        code_list: 股票代码列表
+        
+    Returns:
+        Dict[str, List]: 股票代码到实时数据的映射
+        实时数据格式: [名称, 现价, 涨跌额, 涨跌幅, 昨收]
+    """
+    if not code_list:
+        return {}
 
+    try:
+        # 构建请求URL
+        url = STOCK_PRICE_API_URL + ','.join(code_list) + ','
+        
+        # 发送请求并获取响应
+        response_data = urllib.request.urlopen(url, timeout=10).read()
+        response_array = str(response_data, encoding=ENCODING_GB18030).split(';')
 
-    for i,single in enumerate(res_array):
-        if len(single) > 10:
-            content = re.search(r'\"([^\"]*)\"',single).group()
+        result = {}
+        for index, single_response in enumerate(response_array):
+            if len(single_response) <= MIN_RESPONSE_LENGTH:
+                continue
+                
+            # 提取引号内的内容
+            content_match = re.search(r'\"([^\"]*)\"', single_response)
+            if not content_match:
+                continue
+                
+            # 解析股票信息
+            stock_info = content_match.group().strip('"').split('~')
             
-            single_info = eval(content).split('~')
-            offset = float(single_info[3]) - float(single_info[4])
-
-            offset_ratio = "0" if float(single_info[4]) == 0.0 else ("%.2f%%" % (offset/float(single_info[4]) * 100))
+            if len(stock_info) < 5:
+                logger.warning(f"股票 {code_list[index]} 数据格式不完整")
+                continue
             
-            single_real_time = [single_info[1],single_info[3],offset,offset_ratio,single_info[4]] #名称，现价，涨跌额，涨跌幅，昨收
+            # 计算涨跌信息
+            current_price = _safe_float(stock_info[3])
+            yesterday_close = _safe_float(stock_info[4])
+            price_offset = current_price - yesterday_close
             
-            to_return[list[i]] = single_real_time
-    return to_return
-
-# 操作记录的预处理
-def format_operations(list):
-    to_return = {}
-    for operation in list:
-        if (operation.code not in to_return.keys()):
-            to_return[operation.code] = []
+            # 计算涨跌幅
+            offset_ratio = _calculate_offset_ratio(price_offset, yesterday_close)
             
-        to_return[operation.code].append(operation)
+            # 组装返回数据: [名称, 现价, 涨跌额, 涨跌幅, 昨收]
+            result[code_list[index]] = [
+                stock_info[1],
+                stock_info[3],
+                price_offset,
+                offset_ratio,
+                stock_info[4]
+            ]
+            
+        return result
+        
+    except urllib.error.URLError as e:
+        logger.error(f"网络请求失败: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"查询实时价格失败: {e}")
+        return {}
 
-    return to_return
 
-def generate_dividend_single(code,first_year):
+def format_operations(operation_list: List[Operation]) -> Dict[str, List[Operation]]:
+    """
+    格式化操作记录列表,按股票代码分组
+    
+    Args:
+        operation_list: 操作记录列表
+        
+    Returns:
+        Dict[str, List[Operation]]: 股票代码到操作记录列表的映射
+    """
+    result = {}
+    for operation in operation_list:
+        if operation.code not in result:
+            result[operation.code] = []
+        result[operation.code].append(operation)
+    
+    return result
 
-    if (code is None) or (first_year is None):
-        return 0
+# ========== 私有辅助函数 ==========
 
-    to_return = 0
-    exist_operations = Operation.objects.filter(code=code,operationType = 'DV')
-    date_array = list(map(lambda x: str(x.date),exist_operations))
+def _safe_float(value: str, default: float = 0.0) -> float:
+    """安全地将字符串转换为浮点数"""
+    try:
+        return float(value) if value else default
+    except (ValueError, TypeError):
+        return default
 
-    year_now = datetime.date.today().year
-    new_code = code[0:2]+'.'+code[2:]
-    for year in range(int(first_year),int(year_now)+1,1):
-        rs = bs.query_dividend_data(code=new_code, year=str(year), yearType="operate")
-        while (rs.error_code == '0') & rs.next():
-            data = rs.get_row_data()    
-            date = data[6]
-            cash = 0 if data[9] == '' else float(data[9])
-            reserve = 0 if data[11] == '' else float(data[11])
-            stock = 0 if data[13] == '' else float(data[13])
 
-            find = False
-            for exist_date in date_array:
-                if exist_date == date:
-                    find = True
-
-            if find == False:
-                Operation.objects.create(date=date,code = code,operationType = 'DV',cash = cash,reserve = reserve,stock = stock)
-                to_return += 1
-
-    operations = Operation.objects.filter(code = code).order_by('date')
-    current_hold = 0
-    for operation in operations:
-        if operation.operationType == 'BUY':
-            current_hold += operation.count
-        elif operation.operationType == 'SELL':
-            current_hold -= operation.count
-        elif operation.operationType == 'DV':
-            if current_hold == 0:
-                operation.delete()
-                to_return -= 1
-            else :
-                operation.count = current_hold
-                operation.save()
-                current_hold += current_hold * (operation.reserve + operation.stock)
-
-    #如果有更新了除权信息，返回code
-    if to_return > 0:
-        return code
-    else: 
-        return ''
+def _calculate_offset_ratio(offset: float, base_price: float) -> str:
+    """计算涨跌幅百分比"""
+    if base_price == 0.0:
+        return "0"
+    ratio = (offset / base_price) * 100
+    return f"{ratio:.2f}%"
