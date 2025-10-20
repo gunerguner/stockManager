@@ -1,13 +1,14 @@
 import React from 'react';
-
 import { Card } from 'antd';
-
 import ProCard from '@ant-design/pro-card';
 import { useModel } from 'umi';
 
-export default (): React.ReactNode => {
+/**
+ * 账户设置页面
+ * 显示当前登录用户的基本信息
+ */
+const Account: React.FC = () => {
   const { initialState } = useModel('@@initialState');
-
   const currentUser = initialState?.currentUser;
   return (
     <>
@@ -20,3 +21,5 @@ export default (): React.ReactNode => {
     </>
   );
 };
+
+export default Account;

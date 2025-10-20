@@ -68,15 +68,3 @@ export async function updateDividend(options?: RequestOptionsInit) {
   return postRequest<API.DividentResult>('/api/divident', undefined, options);
 }
 
-// 保持向后兼容的别名（建议逐步迁移到新命名）
-/** @deprecated 请使用 getCurrentUser */
-export const currentUser = getCurrentUser;
-
-/** @deprecated 请使用 logout */
-export const outLogin = logout;
-
-/** @deprecated 请使用 getStockList */
-export const fetch = getStockList;
-
-/** @deprecated 请使用 updateDividend */
-export const updateDivident = updateDividend;

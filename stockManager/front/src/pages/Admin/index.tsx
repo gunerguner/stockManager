@@ -1,72 +1,82 @@
-import React, { useState } from 'react';
-
-import { Modal, Button, Row } from 'antd';
-
+import React, { useState, useCallback } from 'react';
+import { Modal, Button, Row, Space } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-
 import ProCard from '@ant-design/pro-card';
 import { history } from 'umi';
-
 import { updateDividend } from '../../services/api';
 
+/**
+ * 管理员页面
+ * 提供更新除权信息和跳转后台管理的功能
+ */
+const Admin: React.FC = () => {
+  const [dividendLoading, setDividendLoading] = useState(false);
 
-export default (): React.ReactNode => {
-  const [dividentLoading, setDividentLoading] = useState(false);
-
-  const dividentClick = () => {
+  /**
+   * 处理更新除权信息
+   */
+  const handleDividendUpdate = useCallback(() => {
     Modal.confirm({
       title: '确定更新除权信息？',
       icon: <ExclamationCircleOutlined />,
       async onOk() {
-        setDividentLoading(true);
-        
-        const response = await updateDividend();
-        
-        if (response.status == 1 && !!response.data) {
-          const modalTitle = response.data.length > 0 ? '有' : '无' + '更新股票';
-          Modal.info({
-            title: modalTitle,
-            content: (
-              <>
-                {response.data.map((divident: string) => (
-                  <Row key={divident}>{divident}</Row>
-                ))}
-              </>
-            ),
+        try {
+          setDividendLoading(true);
+          const response = await updateDividend();
+
+          if (response.status === 1 && response.data) {
+            const hasUpdates = response.data.length > 0;
+            const modalTitle = hasUpdates ? '有更新股票' : '无更新股票';
+
+            Modal.info({
+              title: modalTitle,
+              content: (
+                <>
+                  {response.data.map((dividend: string) => (
+                    <Row key={dividend}>{dividend}</Row>
+                  ))}
+                </>
+              ),
+            });
+          } else if (response.status === 302) {
+            history.push('/login');
+          }
+        } catch (error) {
+          console.error('更新除权信息失败:', error);
+          Modal.error({
+            title: '操作失败',
+            content: '更新除权信息失败，请稍后重试',
           });
-        } else if (response.status == 302) {
-          history.push('/login');
+        } finally {
+          setDividendLoading(false);
         }
-        setDividentLoading(false);
       },
     });
-  };
+  }, []);
+
+  /**
+   * 打开后台管理页面
+   */
+  const handleOpenAdmin = useCallback(() => {
+    window.open('/sys/admin', '_blank');
+  }, []);
 
   return (
-    <>
-      <ProCard gutter={[0, 16]}>
+    <ProCard gutter={[0, 16]}>
+      <Space size="middle">
         <Button
           type="primary"
-          style={{
-            margin: 8,
-          }}
-          onClick={dividentClick}
-          loading={dividentLoading}
+          onClick={handleDividendUpdate}
+          loading={dividendLoading}
         >
           更新除权信息
         </Button>
-        <Button
-          type="primary"
-          onClick={() => {
-            window.open('/sys/admin', '_blank');
-          }}
-          style={{
-            margin: 8,
-          }}
-        >
+        <Button type="primary" onClick={handleOpenAdmin}>
           管理
         </Button>
-      </ProCard>
-    </>
+      </Space>
+    </ProCard>
   );
 };
+
+export default Admin;
