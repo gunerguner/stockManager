@@ -43,5 +43,6 @@ export default defineConfig({
   openAPI: [
     
   ],
-  mfsu:{}
+  // 禁用 MFSU 以兼容 Node 18
+  mfsu: false,
 });
