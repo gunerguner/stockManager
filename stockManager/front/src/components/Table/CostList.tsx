@@ -1,6 +1,5 @@
 import { Table } from 'antd';
 import React, { useState, useEffect } from 'react';
-
 import type { ColumnsType } from 'antd/lib/table';
 
 interface CostListModel {
@@ -15,46 +14,62 @@ export type CostListProps = {
   data: API.Stock[];
 };
 
-export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
-  const [costList, setCostList] = useState([] as CostListModel[]);
+export const CostList: React.FC<CostListProps> = (props) => {
+  const [costList, setCostList] = useState<CostListModel[]>([]);
 
+  /**
+   * 初始化成本统计数据
+   * 统计每年每月的交易次数和费用
+   */
   const initializeCost = React.useCallback(() => {
     const costs: CostListModel[] = [];
 
+    // 遍历所有股票
     for (const stock of props.data) {
-      //每一个股票
+      // 遍历每个股票的操作记录
       for (const operation of stock.operationList) {
-        //每一个操作
+        // 跳过分红操作
         if (operation.type === 'DV') continue;
 
         const year = operation.date.substring(0, 4);
         const month = operation.date.substring(5, 7);
 
-        let yearMap = costs.find((value: CostListModel) => value.id === year);
+        // 查找或创建年份记录
+        let yearMap = costs.find((value) => value.id === year);
 
-        if (!!!yearMap) {
+        if (!yearMap) {
           yearMap = { id: year, normalTradeCount: 0, convTradeCount: 0, fee: 0, subList: [] };
           costs.push(yearMap);
         }
 
-        let monthMap = yearMap.subList?.find((value: CostListModel) => value.id === month);
+        // 查找或创建月份记录
+        let monthMap = yearMap.subList?.find((value) => value.id === month);
 
-        if (!!!monthMap) {
+        if (!monthMap) {
           monthMap = { id: month, normalTradeCount: 0, convTradeCount: 0, fee: 0 };
           yearMap.subList?.push(monthMap);
         }
 
-        stock.stockType == 'CONV' ? monthMap.convTradeCount++ : monthMap.normalTradeCount++;
-        monthMap.fee += operation.fee;
+        // 统计交易次数和费用
+        const isConvertible = stock.stockType === 'CONV';
+        
+        if (isConvertible) {
+          monthMap.convTradeCount++;
+          yearMap.convTradeCount++;
+        } else {
+          monthMap.normalTradeCount++;
+          yearMap.normalTradeCount++;
+        }
 
-        stock.stockType == 'CONV' ? yearMap.convTradeCount++ : yearMap.normalTradeCount++;
+        monthMap.fee += operation.fee;
         yearMap.fee += operation.fee;
       }
     }
 
-    costs.sort((a: CostListModel, b: CostListModel) => Number(a.id) - Number(b.id));
+    // 按时间排序
+    costs.sort((a, b) => Number(a.id) - Number(b.id));
     for (const yearItem of costs) {
-      yearItem.subList?.sort((a: CostListModel, b: CostListModel) => Number(a.id) - Number(b.id));
+      yearItem.subList?.sort((a, b) => Number(a.id) - Number(b.id));
     }
 
     setCostList(costs);
@@ -64,13 +79,11 @@ export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
     initializeCost();
   }, [initializeCost]);
 
-  const Column: ColumnsType<CostListModel> = [
+  const columns: ColumnsType<CostListModel> = [
     {
       title: '年份',
       dataIndex: 'id',
-      render: (item: number) => {
-        return <div style={{ fontWeight: 'bold' }}>{item}</div>;
-      },
+      render: (item: string) => <strong>{item}</strong>,
     },
     {
       title: '普通交易次数',
@@ -83,31 +96,30 @@ export const CostList: React.FC<CostListProps> = (props: CostListProps) => {
     {
       title: '费用',
       dataIndex: 'fee',
-      render: (item: number) => {
-        return <div>{item?.toFixed(2)}</div>;
-      },
+      render: (item: number) => <div>{item?.toFixed(2)}</div>,
     },
   ];
 
-  const expandedRowRender = (record: CostListModel) => {
-    return (
-      <Table
-        style={{ marginTop: '10px', marginBottom: '10px' }}
-        columns={Column}
-        bordered
-        size="small"
-        tableLayout="fixed"
-        dataSource={record.subList}
-        pagination={false}
-        showHeader={false}
-      />
-    );
-  };
+  /**
+   * 展开行渲染函数（显示月份明细）
+   */
+  const expandedRowRender = (record: CostListModel) => (
+    <Table
+      style={{ margin: '10px 0' }}
+      columns={columns}
+      bordered
+      size="small"
+      tableLayout="fixed"
+      dataSource={record.subList}
+      pagination={false}
+      showHeader={false}
+    />
+  );
 
   return (
     <Table
       rowKey="id"
-      columns={Column}
+      columns={columns}
       dataSource={costList}
       bordered
       pagination={false}

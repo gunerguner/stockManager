@@ -1,19 +1,18 @@
 import { Table, Row, Col, Modal, Input, Form } from 'antd';
 import React from 'react';
-
 import type { ColumnsType } from 'antd/lib/table';
-import { updateOriginCash, updateIncomeCash } from '../../services/api';
-
-import { colorFromValue } from '../../utils';
+import { updateOriginCash, updateIncomeCash } from '@/services/api';
+import { colorFromValue } from '@/utils';
 
 export type OverallBoardProps = {
   data: API.Overall;
-  compeletion?: (type: string, success: boolean) => void;
+  completion?: (success: boolean) => void;
 };
 
-export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardProps) => {
+export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
   const [form] = Form.useForm();
-  const ColumnsOverAll: ColumnsType<API.Overall> = [
+
+  const columnsOverall: ColumnsType<API.Overall> = [
     {
       title: '当日盈亏',
       dataIndex: 'offsetToday',
@@ -55,7 +54,6 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
       title: '其它现金收入',
       dataIndex: 'incomeCash',
       render: (item: number) => {
-       
         return (
           <Row>
             <Col span={15}>
@@ -83,9 +81,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
                     ),
                     onOk: async () => {
                       const { incomeCash } = await form.validateFields();
-                      const respons = await updateIncomeCash(incomeCash);
-                      if (props.compeletion) {
-                        props.compeletion('updateIncomeCash', respons.status == 1);
+                      const response = await updateIncomeCash(incomeCash);
+                      if (props.completion) {
+                        props.completion(response.status === 1);
                       }
                     },
                   });
@@ -126,9 +124,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
                     ),
                     onOk: async () => {
                       const { cash } = await form.validateFields();
-                      const respons = await updateOriginCash(cash);
-                      if (props.compeletion) {
-                        props.compeletion('updateOriginCash', respons.status == 1);
+                      const response = await updateOriginCash(cash);
+                      if (props.completion) {
+                        props.completion(response.status === 1);
                       }
                     },
                   });
@@ -150,5 +148,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props: OverallBoardPro
     },
   ];
 
-  return <Table columns={ColumnsOverAll} dataSource={[props.data]} bordered pagination={false} />;
+  return (
+    <Table columns={columnsOverall} dataSource={[props.data]} bordered pagination={false} />
+  );
 };
