@@ -114,7 +114,7 @@
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `npm install` 前端部分的依赖。
 6.  在front目录，`npm run build` 生成目标文件。
-7.  在主目录下`python manage.py migrate` 生成数据库（或者直接copy数据库文件）。
+7.  在主目录下`python3 manage.py makemigrations`，`python3 manage.py migrate` 生成数据库（或者直接copy数据库文件）。
 8.  在主目录下`pytho3 manage.py createsuperuser`生成管理密码。
 9.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
 10.  在主目录下，`python manage.py runserver`。 
