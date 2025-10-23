@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, message } from 'antd';
-import ProForm, { ProFormText } from '@ant-design/pro-form';
-import { Link, history, useModel } from 'umi';
+import { ProForm, ProFormText } from '@ant-design/pro-components';
+import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';
 import { login } from '@/services/api';
@@ -20,8 +20,8 @@ const LoginMessage: React.FC<LoginMessageProps> = ({ content }) => (
 const goto = () => {
   if (!history) return;
   setTimeout(() => {
-    const { query } = history.location;
-    const { redirect } = query as { redirect: string };
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirect = urlParams.get('redirect');
     history.push(redirect || '/');
   }, 10);
 };
@@ -34,12 +34,12 @@ const Login: React.FC = () => {
   const fetchUserInfo = useCallback(async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
     if (userInfo) {
-      setInitialState({
-        ...initialState,
+      await setInitialState((s) => ({
+        ...s,
         currentUser: userInfo,
-      });
+      }));
     }
-  }, [initialState, setInitialState]);
+  }, [initialState?.fetchUserInfo, setInitialState]);
 
   const handleSubmit = useCallback(async (values: API.LoginParams) => {
     setSubmitting(true);

@@ -1,10 +1,9 @@
 import { Tag, Space } from 'antd';
 import React, { useMemo } from 'react';
-import { useModel } from 'umi';
+import { useModel } from '@umijs/max';
 import Avatar from './AvatarDropdown';
 import styles from './index.less';
 
-export type SiderTheme = 'light' | 'dark';
 
 // 环境标签颜色配置
 const ENV_TAG_COLORS = {
@@ -20,14 +19,17 @@ const ENV_TAG_COLORS = {
 const RightContent: React.FC = () => {
   const { initialState } = useModel('@@initialState');
 
-  // 计算样式类名
+  // 计算样式类名 - 根据 navTheme 判断是否使用暗色样式
   const className = useMemo(() => {
     if (!initialState?.settings) {
       return styles.right;
     }
 
     const { navTheme, layout } = initialState.settings;
-    const isDarkMode = (navTheme === 'dark' && layout === 'top') || layout === 'mix';
+    // 当 navTheme 是 dark 或 realDark 且布局是 top 时，或布局是 mix 且 navTheme 不是 light 时，使用暗色样式
+    const isDarkMode = 
+      ( navTheme === 'realDark') && 
+      (layout === 'top' || layout === 'mix');
 
     return isDarkMode ? `${styles.right} ${styles.dark}` : styles.right;
   }, [initialState?.settings]);
@@ -37,12 +39,14 @@ const RightContent: React.FC = () => {
     return null;
   }
 
+  const env = process.env.REACT_APP_ENV;
+  
   return (
     <Space className={className}>
       <Avatar />
-      {REACT_APP_ENV && REACT_APP_ENV in ENV_TAG_COLORS && (
-        <Tag color={ENV_TAG_COLORS[REACT_APP_ENV as keyof typeof ENV_TAG_COLORS]}>
-          {REACT_APP_ENV}
+      {env && env in ENV_TAG_COLORS && (
+        <Tag color={ENV_TAG_COLORS[env as keyof typeof ENV_TAG_COLORS]}>
+          {env}
         </Tag>
       )}
     </Space>

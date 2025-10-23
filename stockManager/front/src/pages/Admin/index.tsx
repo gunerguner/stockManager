@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Modal, Button, Row, Space } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import ProCard from '@ant-design/pro-card';
-import { history } from 'umi';
+import { ProCard } from '@ant-design/pro-components';
+import { history } from '@umijs/max';
 import { updateDividend } from '../../services/api';
 
 /**

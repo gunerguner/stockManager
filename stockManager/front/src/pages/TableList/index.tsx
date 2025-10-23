@@ -1,7 +1,7 @@
-import { Button, Row, Col, Checkbox, BackTop } from 'antd';
+import { Button, Row, Col, Checkbox, FloatButton } from 'antd';
 import React, { useState, useEffect, useCallback } from 'react';
-import ProCard from '@ant-design/pro-card';
-import { history, useModel } from 'umi';
+import { ProCard } from '@ant-design/pro-components';
+import { history, useModel } from '@umijs/max';
 import { ReloadOutlined } from '@ant-design/icons';
 import { getStockList } from '@/services/api';
 import { OverallBoard } from '@/components/Table/OverallBoard';
@@ -56,7 +56,7 @@ const TableList: React.FC = () => {
 
   return (
     <>
-      <BackTop />
+      <FloatButton.BackTop />
       <ProCard direction="column" ghost gutter={[0, 8]}>
         {/* 整体数据面板 */}
         <ProCard colSpan={24}>

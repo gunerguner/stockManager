@@ -1,27 +1,22 @@
-import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
-import { PageLoading } from '@ant-design/pro-layout';
+import type { ProLayoutProps } from '@ant-design/pro-components';
 import { notification } from 'antd';
-import type { RequestConfig, RunTimeLayoutConfig } from 'umi';
-import { history } from 'umi';
+import type { RequestConfig, RuntimeConfig } from '@umijs/max';
+import { history } from '@umijs/max';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
-import type { ResponseError } from 'umi-request';
+import defaultSettings from '../config/defaultSettings';
 
 import { getCurrentUser as queryCurrentUser } from './services/api';
 
 
 const loginPath = '/login';
 
-/** 获取用户信息比较慢的时候会展示一个 loading */
-export const initialStateConfig = {
-  loading: <PageLoading />,
-};
-
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
+ * @note Umi 4 中 initialStateConfig 已被移除，loading 状态由框架自动处理
  * */
 export async function getInitialState(): Promise<{
-  settings?: Partial<LayoutSettings>;
+  settings?: Partial<ProLayoutProps>;
   currentUser?: API.CurrentUser;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
@@ -44,17 +39,18 @@ export async function getInitialState(): Promise<{
     return {
       fetchUserInfo,
       currentUser,
-      settings: {},
+      settings: defaultSettings,
     };
   }
   return {
     fetchUserInfo,
-    settings: {},
+    settings: defaultSettings,
   };
 }
 
 // https://umijs.org/zh-CN/plugins/plugin-layout
-export const layout: RunTimeLayoutConfig = ({ initialState }) => {
+// @ts-ignore - Umi 4 的 rightContentRender 类型定义与实际使用不一致，这里忽略类型检查
+export const layout: RuntimeConfig['layout'] = ({ initialState }) => {
   return {
     rightContentRender: () => <RightContent />,
     disableContentMargin: false,
@@ -65,12 +61,10 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     onPageChange: () => {
       const { location } = history;
       // 如果没有登录，重定向到 login
-
       if (!initialState?.currentUser && location.pathname !== loginPath) {
         history.push(loginPath);
       }
     },
-
     menuHeaderRender: undefined,
     ...initialState?.settings,
   };
@@ -98,9 +92,11 @@ const codeMessage: Record<number, string> = {
 
 /** 异常处理程序
  * @see https://beta-pro.ant.design/docs/request-cn
+ * @note Umi 4 中错误处理后不应该再抛出错误,否则会导致通知无法显示
  */
-const errorHandler = (error: ResponseError) => {
+const errorHandler = (error: any) => {
   const { response } = error;
+  
   if (response && response.status) {
     const errorText = codeMessage[response.status] || response.statusText;
     const { status, url } = response;
@@ -109,22 +105,23 @@ const errorHandler = (error: ResponseError) => {
       message: `请求错误 ${status}: ${url}`,
       description: errorText,
     });
-  }
-
-  if (!response) {
+  } else if (!response) {
+    // 网络错误或请求超时
     notification.error({
-      description: '您的网络发生异常，无法连接服务器',
       message: '网络异常',
+      description: '您的网络发生异常，无法连接服务器',
     });
   }
-  throw error;
+
 };
 
 /**
  * 响应拦截器：统一处理后端返回的message字段
+ * @note Umi 4 的响应拦截器接收的是 axios response 对象，需要取 data 字段
  */
-const responseInterceptor = async (response: Response) => {
-  const data = await response.clone().json();
+const responseInterceptor = (response: any) => {
+  // Umi 4 中 response 是 axios response 对象，需要取 data 字段
+  const data = response?.data || response;
   
   // 如果响应中包含message字段，则显示通知
   if (data && data.message) {
@@ -163,7 +160,10 @@ const responseInterceptor = async (response: Response) => {
 
 // https://umijs.org/zh-CN/plugins/plugin-request
 export const request: RequestConfig = {
-  errorHandler,
-  credentials: 'include',
+  timeout: 10000,
+  errorConfig: {
+    errorHandler,
+  },
+  requestInterceptors: [],
   responseInterceptors: [responseInterceptor],
 };

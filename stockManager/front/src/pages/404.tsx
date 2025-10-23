@@ -9,7 +9,7 @@ const NoFoundPage: React.FC = () => {
   };
 
   const handleGoBack = (): void => {
-    history.goBack();
+    history.back();
   };
 
   return (

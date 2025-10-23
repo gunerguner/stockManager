@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from 'antd';
-import ProCard from '@ant-design/pro-card';
-import { useModel } from 'umi';
+import { ProCard } from '@ant-design/pro-components';
+import { useModel } from '@umijs/max';
 
 /**
  * 账户设置页面

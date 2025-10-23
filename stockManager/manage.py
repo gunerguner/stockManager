@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
 
 
 def main():
+    os.environ.setdefault('DJANGO_USE_WATCHMAN', 'false')
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stockManager.settings')
     try:
         from django.core.management import execute_from_command_line

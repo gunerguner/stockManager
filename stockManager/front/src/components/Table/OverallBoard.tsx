@@ -149,6 +149,12 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
   ];
 
   return (
-    <Table columns={columnsOverall} dataSource={[props.data]} bordered pagination={false} />
+    <Table 
+      columns={columnsOverall} 
+      dataSource={[props.data]} 
+      bordered 
+      pagination={false}
+      rowKey={() => 'overall'}
+    />
   );
 };

@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "strict": true,
+    "types": [],
     "paths": {
       "@/*": ["./src/*"],
       "@@/*": ["./src/.umi/*"]

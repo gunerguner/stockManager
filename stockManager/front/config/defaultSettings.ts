@@ -1,13 +1,15 @@
-import { Settings as LayoutSettings } from '@ant-design/pro-layout';
 
-const Settings: LayoutSettings & {
+import type { ProLayoutProps } from '@ant-design/pro-components';
+
+const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
+  colorPrimary?: string;
 } = {
-  navTheme: 'dark',
+  navTheme: 'light',
   // 拂晓蓝
-  primaryColor: '#1890ff',
-  layout: 'mix',
+  colorPrimary: '#1890ff',
+  layout: 'top',
   contentWidth: 'Fluid',
   fixedHeader: false,
   fixSiderbar: true,

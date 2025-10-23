@@ -1,10 +1,9 @@
 // @ts-ignore
 /* eslint-disable */
-import { request } from 'umi';
-import type { RequestOptionsInit } from 'umi-request';
+import { request } from '@umijs/max';
+import type { RequestOptions } from '@umijs/max';
 
-// API基础地址配置
-const API_BASE_URL = REACT_APP_ENV ? 'http://127.0.0.1:8000' : '';
+const API_BASE_URL = '';
 
 // 通用JSON请求头
 const JSON_HEADERS = {
@@ -14,7 +13,7 @@ const JSON_HEADERS = {
 /**
  * 统一的GET请求封装
  */
-const getRequest = <T>(endpoint: string, options?: RequestOptionsInit) => {
+const getRequest = <T>(endpoint: string, options?: RequestOptions) => {
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'GET',
     ...options,
@@ -24,7 +23,7 @@ const getRequest = <T>(endpoint: string, options?: RequestOptionsInit) => {
 /**
  * 统一的POST请求封装
  */
-const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, options?: RequestOptionsInit) => {
+const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, options?: RequestOptions) => {
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: JSON_HEADERS,
@@ -34,37 +33,37 @@ const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, option
 };
 
 /** 获取当前用户信息 GET /api/currentUser */
-export async function getCurrentUser(options?: RequestOptionsInit) {
+export async function getCurrentUser(options?: RequestOptions) {
   return getRequest<API.UserResult>('/api/currentUser', options);
 }
 
 /** 用户登录 POST /api/login */
-export async function login(params: API.LoginParams, options?: RequestOptionsInit) {
+export async function login(params: API.LoginParams, options?: RequestOptions) {
   return postRequest<API.LoginResult>('/api/login', params, options);
 }
 
 /** 用户登出 POST /api/logout */
-export async function logout(options?: RequestOptionsInit) {
+export async function logout(options?: RequestOptions) {
   return postRequest<Record<string, unknown>>('/api/logout', undefined, options);
 }
 
 /** 获取股票数据 GET /api/ */
-export async function getStockList(options?: RequestOptionsInit) {
+export async function getStockList(options?: RequestOptions) {
   return getRequest<API.StockResult>('/api/', options);
 }
 
 /** 更新原始资金 POST /api/updateOriginCash */
-export async function updateOriginCash(cash: number, options?: RequestOptionsInit) {
+export async function updateOriginCash(cash: number, options?: RequestOptions) {
   return postRequest<API.BaseResult>('/api/updateOriginCash', { cash }, options);
 }
 
 /** 更新收益资金 POST /api/updateIncomeCash */
-export async function updateIncomeCash(incomeCash: number, options?: RequestOptionsInit) {
+export async function updateIncomeCash(incomeCash: number, options?: RequestOptions) {
   return postRequest<API.BaseResult>('/api/updateIncomeCash', { incomeCash }, options);
 }
 
 /** 更新分红 POST /api/divident */
-export async function updateDividend(options?: RequestOptionsInit) {
+export async function updateDividend(options?: RequestOptions) {
   return postRequest<API.DividentResult>('/api/divident', undefined, options);
 }
 

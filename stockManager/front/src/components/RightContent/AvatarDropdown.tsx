@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { Avatar, Spin, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { history, useModel } from 'umi';
+import { history, useModel } from '@umijs/max';
 import { stringify } from 'querystring';
 import styles from './index.less';
 import { logout } from '@/services/api';
@@ -27,8 +27,10 @@ const AvatarDropdown: React.FC = () => {
         setInitialState((state) => ({ ...state, currentUser: undefined }));
       }
 
-      const { query = {}, pathname } = history.location;
-      const { redirect } = query;
+      const { pathname } = history.location;
+      // 从 URL search 参数中获取 redirect
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect');
       
       // 如果不在登录页且没有重定向参数，则重定向到登录页
       if (window.location.pathname !== '/login' && !redirect) {
