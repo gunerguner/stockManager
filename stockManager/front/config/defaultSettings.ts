@@ -16,7 +16,7 @@ const Settings: ProLayoutProps & {
   colorWeak: false,
   title: 'Stock Manager',
   pwa: false,
-  logo: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png',
+  logo: 'https://s21.ax1x.com/2025/10/24/pVXld8U.png',
   iconfontUrl: '',
 };
 

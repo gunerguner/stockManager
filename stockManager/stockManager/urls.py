@@ -16,12 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.urls import include, re_path, path
-from django.contrib.staticfiles.views import serve
 
 urlpatterns = [
     re_path(r'^api/', include('backend.urls')),
     path('sys/admin', admin.site.urls),
-    path('favicon.ico', serve, {'path': 'static/favicon.ico'}),    
+    # favicon.ico 由 Django 静态文件系统自动处理（/static/favicon.ico）
     re_path(r'^', TemplateView.as_view(template_name="index.html")),
     re_path(r'^user/', TemplateView.as_view(template_name="index.html")),
    

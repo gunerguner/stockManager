@@ -26,16 +26,12 @@
   "include": [
     "mock/**/*",
     "src/**/*",
-    "tests/**/*",
-    "test/**/*",
-    "__test__/**/*",
     "typings/**/*",
     "config/**/*",
     ".eslintrc.js",
     ".stylelintrc.js",
     ".prettierrc.js",
-    "jest.config.js",
     "mock/*"
   ],
-  "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack", "jest"]
+  "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack"]
 }

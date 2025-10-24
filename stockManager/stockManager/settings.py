@@ -170,8 +170,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-# 使用 Path 替代 os.path.join 
-# STATIC_ROOT = BASE_DIR / "front" / "dist"
+
+# 使用 Path 替代 os.path.join
+# 生产环境：收集所有静态文件到这个目录
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# 开发环境：额外的静态文件目录
 STATICFILES_DIRS = [
     BASE_DIR / "front" / "dist",
 ]

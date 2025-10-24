@@ -95,7 +95,7 @@ export default defineConfig({
   
   /**
    * @name favicon 路径
-   * @description 网站 favicon
+   * @description 网站 favicon，使用 /static/ 路径与 publicPath 保持一致
    */
-  favicons: ['/favicon.ico'],
+  favicons: ['/static/favicon.ico'],
 });
