@@ -15,10 +15,14 @@ import os
 import time
 from pathlib import Path
 
+from . import __version__
+
 # 使用 Path 替代 os.path（Django 3.1+ 推荐）
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 CURRENT_DIR = Path(__file__).resolve().parent
+
+VERSION = __version__
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/

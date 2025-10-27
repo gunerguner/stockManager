@@ -8,6 +8,16 @@ import defaultSettings from '../config/defaultSettings';
 
 import { getCurrentUser as queryCurrentUser } from './services/api';
 
+// AI修改: 添加版本号导入和打印功能
+// 从 package.json 导入版本号
+// @ts-ignore - package.json 不需要类型定义
+import { version } from '../package.json';
+
+// 在应用启动时打印版本号
+console.log(
+  `%c Stock Manager v${version} `,
+  'background: #1890ff; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;'
+);
 
 const loginPath = '/login';
 

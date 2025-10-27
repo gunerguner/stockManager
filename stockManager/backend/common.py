@@ -153,4 +153,3 @@ def log_view_access(view_func):
             raise
             
     return wrapper
-
