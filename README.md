@@ -1,10 +1,16 @@
 炒股多年，一直苦于没有一个特别让我满意的股票交易记录软件，于是花了点时间写了一个类似的工具，同时也学习了一些相关的知识。
 
 
+效果如下：
 
-效果如下 （并非真实数据）：
+#### 持仓盈亏
+![image.png](https://s21.ax1x.com/2025/10/27/pVxFACd.png)
 
-![image.png](https://ftp.bmp.ovh/imgs/2021/04/01d5e29392695622.jpg)
+#### 数据分析
+![image.png](https://s21.ax1x.com/2025/10/27/pVxFF4H.png)
+
+#### 除权更新
+![image.png](https://s21.ax1x.com/2025/10/27/pVxFiUe.png)
 
 
 
