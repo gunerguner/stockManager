@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, message } from 'antd';
-import { ProForm, ProFormText } from '@ant-design/pro-components';
+import ProForm, { ProFormText } from '@ant-design/pro-form';
 import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';

@@ -1,4 +1,4 @@
-import type { ProLayoutProps } from '@ant-design/pro-components';
+import type { ProLayoutProps } from '@ant-design/pro-layout';
 import { notification } from 'antd';
 import type { RequestConfig, RuntimeConfig } from '@umijs/max';
 import { history } from '@umijs/max';

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Tabs, Statistic, Row, Col } from 'antd';
-import { ProCard } from '@ant-design/pro-components';
+import ProCard from '@ant-design/pro-card';
 import { useModel } from '@umijs/max';
 
 import { AnalysisList } from '../../components/Table/AnalysisList';

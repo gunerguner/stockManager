@@ -1,6 +1,6 @@
 import { Button, Row, Col, Checkbox, FloatButton } from 'antd';
 import React, { useState, useEffect, useCallback } from 'react';
-import { ProCard } from '@ant-design/pro-components';
+import ProCard from '@ant-design/pro-card';
 import { history, useModel } from '@umijs/max';
 import { ReloadOutlined } from '@ant-design/icons';
 import { getStockList } from '@/services/api';
