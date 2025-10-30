@@ -52,14 +52,12 @@
     "antd": "^5.21.6",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.13",
-    "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5"
   },
   "devDependencies": {
     "@ant-design/pro-cli": "^2.1.0",
-    "@types/lodash": "^4.17.13",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/react-helmet": "^6.1.11",
