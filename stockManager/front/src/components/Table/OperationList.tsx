@@ -1,5 +1,5 @@
 import { Table, Tooltip } from 'antd';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { colorFromValue } from '@/utils';
 
@@ -10,15 +10,40 @@ export type OperationListProps = {
 };
 
 export const OperationList: React.FC<OperationListProps> = (props) => {
+  // 维护展开行的状态
+  const [expandedRowKeys, setExpandedRowKeys] = useState<readonly React.Key[]>([]);
+
+  /**
+   * 判断某行是否应该被隐藏
+   */
+  const shouldHideRow = (record: API.Stock): boolean => {
+    const shouldHideZeroValue = record.totalValue < 0.1 && !props.showAll;
+    const shouldHideConvertible = record.stockType === 'CONV' && !props.showConv;
+    return shouldHideZeroValue || shouldHideConvertible;
+  };
+
   /**
    * 根据筛选条件决定行是否隐藏
    */
   const rowClassName = (record: API.Stock): string => {
-    const shouldHideZeroValue = record.totalValue < 0.1 && !props.showAll;
-    const shouldHideConvertible = record.stockType === 'CONV' && !props.showConv;
-    
-    return shouldHideZeroValue || shouldHideConvertible ? 'hide' : '';
+    return shouldHideRow(record) ? 'hide' : '';
   };
+
+  /**
+   * 当筛选条件变化时,折叠需要隐藏的行
+   */
+  useEffect(() => {
+    if (expandedRowKeys.length === 0) return;
+
+    const newExpandedKeys = expandedRowKeys.filter((key) => {
+      const stock = props.data.stocks?.find((item) => item.code === key);
+      return stock ? !shouldHideRow(stock) : false;
+    });
+
+    if (newExpandedKeys.length !== expandedRowKeys.length) {
+      setExpandedRowKeys(newExpandedKeys);
+    }
+  }, [props.showAll, props.showConv, props.data.stocks, expandedRowKeys]);
 
   /**
    * 操作类型映射
@@ -170,7 +195,11 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
       bordered
       pagination={false}
       rowClassName={rowClassName}
-      expandable={{ expandedRowRender }}
+      expandable={{
+        expandedRowRender,
+        expandedRowKeys,
+        onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
+      }}
     />
   );
 };
