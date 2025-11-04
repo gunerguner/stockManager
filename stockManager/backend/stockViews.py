@@ -3,7 +3,6 @@
 处理股票相关的 API 请求
 """
 import json
-from django.views.decorators.csrf import csrf_exempt
 from .models import Info
 from .integrate import Integrate
 # 导入公共组件
@@ -35,7 +34,6 @@ def show_stocks(request):
         return json_response(status=STATUS_ERROR, message="获取股票数据失败")
 
 
-@csrf_exempt
 @require_authentication
 @require_methods(['POST'])
 def update_origin_cash(request):
@@ -61,7 +59,6 @@ def update_origin_cash(request):
         return json_response(status=STATUS_ERROR, message="更新本金失败")
 
 
-@csrf_exempt
 @require_authentication
 @require_methods(['POST'])
 def update_income_cash(request):
@@ -87,7 +84,6 @@ def update_income_cash(request):
         return json_response(status=STATUS_ERROR, message="更新收益现金失败")
 
 
-@csrf_exempt
 @require_authentication
 @require_methods(['POST'])
 def refresh_divident(request):

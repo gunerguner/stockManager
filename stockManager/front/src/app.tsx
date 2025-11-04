@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import defaultSettings from '../config/defaultSettings';
 
 import { getCurrentUser as queryCurrentUser } from './services/api';
+import { getCsrfToken } from '@/utils/csrf';
 
 // AI修改: 添加版本号导入和打印功能
 // 从 package.json 导入版本号
@@ -126,6 +127,36 @@ const errorHandler = (error: any) => {
 };
 
 /**
+ * 请求拦截器：自动添加 CSRF Token 到请求头
+ * 对于非 GET 请求，自动从 Cookie 中读取 CSRF token 并添加到请求头
+ */
+const requestInterceptor = (url: string, options: any) => {
+  const method = options.method?.toUpperCase() || 'GET';
+  
+  // GET、HEAD、OPTIONS 请求不需要 CSRF token
+  if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    return { url, options };
+  }
+  
+  // 获取 CSRF token
+  const csrfToken = getCsrfToken();
+  
+  if (csrfToken) {
+    const headers = options.headers || {};
+    headers['X-CSRFToken'] = csrfToken;
+    return {
+      url,
+      options: {
+        ...options,
+        headers,
+      },
+    };
+  }
+  
+  return { url, options };
+};
+
+/**
  * 响应拦截器：统一处理后端返回的message字段
  * @note Umi 4 的响应拦截器接收的是 axios response 对象，需要取 data 字段
  */
@@ -174,6 +205,6 @@ export const request: RequestConfig = {
   errorConfig: {
     errorHandler,
   },
-  requestInterceptors: [],
+  requestInterceptors: [requestInterceptor],
   responseInterceptors: [responseInterceptor],
 };

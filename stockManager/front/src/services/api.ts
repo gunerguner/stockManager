@@ -16,6 +16,7 @@ const JSON_HEADERS = {
 const getRequest = <T>(endpoint: string, options?: RequestOptions) => {
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'GET',
+    credentials: 'include', // 确保发送 Cookie（包括 CSRF token）
     ...options,
   });
 };
@@ -27,6 +28,7 @@ const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, option
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: JSON_HEADERS,
+    credentials: 'include', // 确保发送 Cookie（包括 CSRF token）
     data,
     ...options,
   });

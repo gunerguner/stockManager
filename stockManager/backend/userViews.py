@@ -1,4 +1,4 @@
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.contrib import auth
 
 import json
@@ -16,6 +16,7 @@ from .common import (
 
 
 @csrf_exempt
+@ensure_csrf_cookie
 @require_methods(['POST'])
 def login(request):
     """用户登录接口"""
@@ -51,7 +52,6 @@ def login(request):
         logger.error(f"登录过程发生异常: {str(e)}")
         return json_response(status=STATUS_ERROR, message="登录失败，请稍后重试")
 
-@csrf_exempt
 @require_authentication
 def logout(request):
     """用户登出接口"""
@@ -66,6 +66,7 @@ def logout(request):
 
 
 
+@ensure_csrf_cookie
 @require_authentication
 def currentUser(request):
     """获取当前登录用户信息"""
