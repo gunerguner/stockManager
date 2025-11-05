@@ -9,6 +9,7 @@ import baostock as bs
 
 from .common import logger
 from .models import Operation, Info, StockMeta
+from .utils import _safe_float
 
 # 常量定义
 OPERATION_TYPE_BUY = "BUY"
@@ -178,9 +179,9 @@ class Caculator(object):
                         
                         # 解析分红数据
                         dividend_date = data[6]
-                        cash = self.__safe_float(data[9])
-                        reserve = self.__safe_float(data[11])
-                        stock = self.__safe_float(data[13])
+                        cash = _safe_float(data[9])
+                        reserve = _safe_float(data[11])
+                        stock = _safe_float(data[13])
          
                         # 如果该日期不在已有列表中,也不在前后指定天数范围内,且不晚于今天,则创建
                         if not self.__is_date_near_existing(dividend_date, date_set, today):
@@ -208,13 +209,6 @@ class Caculator(object):
         except Exception as e:
             logger.error(f"生成股票 {code} 分红信息失败: {e}")
             return ""
-    
-    def __safe_float(self, value: str, default: float = 0.0) -> float:
-        """安全地将字符串转换为浮点数"""
-        try:
-            return float(value) if value else default
-        except (ValueError, TypeError):
-            return default
     
     def __update_dividend_holdings(self, code: str) -> int:
         """更新分红记录的持仓数量并删除无效记录"""
@@ -309,8 +303,6 @@ class Caculator(object):
         to_return["operationList"] = self.__caculate_single_operation_list(
             single_operation_list
         )
-
-       
 
         total_offset_today = 0
         if to_return["totalValueYesterday"] < 0.1:

@@ -1,9 +1,8 @@
 import { Button, Row, Col, Checkbox, FloatButton } from 'antd';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import ProCard from '@ant-design/pro-card';
-import { history, useModel } from '@umijs/max';
+import { useModel } from '@umijs/max';
 import { ReloadOutlined } from '@ant-design/icons';
-import { getStockList } from '@/services/api';
 import { OverallBoard } from '@/components/Table/OverallBoard';
 import { OperationList } from '@/components/Table/OperationList';
 import './index.less';
@@ -12,24 +11,9 @@ const TableList: React.FC = () => {
   // 筛选条件状态
   const [showAll, setShowAll] = useState<boolean>(false);
   const [showConv, setShowConv] = useState<boolean>(true);
-  const { stock, setStockData } = useModel('stocks');
-
-  /**
-   * 获取股票列表数据
-   */
-  const fetchData = useCallback(async (): Promise<void> => {
-    const response = await getStockList();
-
-    if (response.status === 1 && response.data) {
-      setStockData(response.data);
-    } else if (response.status === 302) {
-      history.push('/login');
-    }
-  }, [setStockData]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  
+  // 使用 model 统一管理的数据和方法
+  const { stock, fetchStockData } = useModel('stocks');
 
   /**
    * 整体数据修改完成回调
@@ -38,12 +22,11 @@ const TableList: React.FC = () => {
   const handleOverallModifyCompletion = useCallback(
     (success: boolean): void => {
       if (success) {
-        fetchData();
-      } else {
-        history.push('/login');
+        fetchStockData();
       }
+      // 失败情况在 fetchStockData 中已处理（跳转登录）
     },
-    [fetchData],
+    [fetchStockData],
   );
 
   const handleShowAllChange = (checked: boolean): void => {
@@ -67,7 +50,7 @@ const TableList: React.FC = () => {
         <ProCard colSpan={24}>
           <Row align="middle" gutter={[16, 16]}>
             <Col xs={24} sm={4} md={2}>
-              <Button onClick={fetchData} icon={<ReloadOutlined />} block>
+              <Button onClick={fetchStockData} icon={<ReloadOutlined />} block>
                 刷新
               </Button>
             </Col>
