@@ -1,7 +1,8 @@
+import React, { useEffect } from 'react';
 import type { ProLayoutProps } from '@ant-design/pro-layout';
-import { notification } from 'antd';
+import { notification, ConfigProvider, theme, App } from 'antd';
 import type { RequestConfig, RuntimeConfig } from '@umijs/max';
-import { history } from '@umijs/max';
+import { history, useModel } from '@umijs/max';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
 import defaultSettings from '../config/defaultSettings';
@@ -59,10 +60,27 @@ export async function getInitialState(): Promise<{
   };
 }
 
+/**
+ * 动态 Logo 组件
+ * 根据主题自动切换 logo
+ */
+const DynamicLogo: React.FC = () => {
+  const { actualTheme } = useModel('theme');
+  const { initialState } = useModel('@@initialState');
+  const settings = initialState?.settings as typeof defaultSettings;
+
+  const logoUrl = actualTheme === 'dark' 
+    ? (settings?.logoDark || settings?.logo)
+    : (settings?.logoLight || settings?.logo);
+
+  return <img src={logoUrl} alt="logo" style={{ height: '32px' }} />;
+};
+
 // https://umijs.org/zh-CN/plugins/plugin-layout
 // @ts-ignore - Umi 4 的 rightContentRender 类型定义与实际使用不一致，这里忽略类型检查
 export const layout: RuntimeConfig['layout'] = ({ initialState }) => {
   return {
+    ...initialState?.settings,
     rightContentRender: () => <RightContent />,
     disableContentMargin: false,
     waterMarkProps: {
@@ -77,7 +95,8 @@ export const layout: RuntimeConfig['layout'] = ({ initialState }) => {
       }
     },
     menuHeaderRender: undefined,
-    ...initialState?.settings,
+    // 使用自定义 logo 渲染（放在最后，覆盖 settings 中的 logo）
+    logo: <DynamicLogo />,
   };
 };
 
@@ -208,3 +227,41 @@ export const request: RequestConfig = {
   requestInterceptors: [requestInterceptor],
   responseInterceptors: [responseInterceptor],
 };
+
+/**
+ * innerProvider 配置
+ * 在 Umi Model Provider 之后注入主题配置
+ * 这样可以在组件中使用 useModel
+ */
+export function innerProvider(container: React.ReactNode) {
+  return <ThemeConfigProvider>{container}</ThemeConfigProvider>;
+}
+
+/**
+ * 主题配置提供者组件
+ * 使用 Ant Design 的 ConfigProvider 实现主题切换
+ * 支持所有组件（包括 Modal.confirm 等静态方法）
+ */
+function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
+  const { actualTheme } = useModel('theme');
+
+  // 动态更新 document 的 data-theme 属性，用于自定义样式
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', actualTheme);
+  }, [actualTheme]);
+
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: actualTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#1890ff',
+        },
+      }}
+    >
+      <App>
+        {children}
+      </App>
+    </ConfigProvider>
+  );
+}

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Modal, Button, Row, Space } from 'antd';
+import { Button, Row, Space, App } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import ProCard from '@ant-design/pro-card';
 import { history } from '@umijs/max';
@@ -11,12 +11,13 @@ import { updateDividend } from '../../services/api';
  */
 const Admin: React.FC = () => {
   const [dividendLoading, setDividendLoading] = useState(false);
+  const { modal } = App.useApp();
 
   /**
    * 处理更新除权信息
    */
   const handleDividendUpdate = useCallback(() => {
-    Modal.confirm({
+    modal.confirm({
       title: '确定更新除权信息？',
       icon: <ExclamationCircleOutlined />,
       async onOk() {
@@ -28,7 +29,7 @@ const Admin: React.FC = () => {
             const hasUpdates = response.data.length > 0;
             const modalTitle = hasUpdates ? '有更新股票' : '无更新股票';
 
-            Modal.info({
+            modal.info({
               title: modalTitle,
               content: (
                 <>
@@ -43,7 +44,7 @@ const Admin: React.FC = () => {
           }
         } catch (error) {
           console.error('更新除权信息失败:', error);
-          Modal.error({
+          modal.error({
             title: '操作失败',
             content: '更新除权信息失败，请稍后重试',
           });
@@ -52,7 +53,7 @@ const Admin: React.FC = () => {
         }
       },
     });
-  }, []);
+  }, [modal]);
 
   /**
    * 打开后台管理页面

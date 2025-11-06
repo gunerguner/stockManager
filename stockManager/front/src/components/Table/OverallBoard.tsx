@@ -1,4 +1,4 @@
-import { Table, Row, Col, Modal, Input, Form } from 'antd';
+import { Table, Row, Col, Input, Form, App } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { updateOriginCash, updateIncomeCash } from '@/services/api';
@@ -11,6 +11,7 @@ export type OverallBoardProps = {
 
 export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
   const [form] = Form.useForm();
+  const { modal } = App.useApp();
 
   const columnsOverall: ColumnsType<API.Overall> = [
     {
@@ -62,7 +63,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
             <Col>
               <a
                 onClick={() => {
-                  Modal.confirm({
+                  modal.confirm({
                     title: '编辑现金收入',
                     content: (
                       <Form
@@ -108,7 +109,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
             <Col>
               <a
                 onClick={() => {
-                  Modal.confirm({
+                  modal.confirm({
                     title: '编辑本金',
                     content: (
                       <Form
