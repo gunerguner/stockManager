@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { BulbOutlined, BulbFilled, DesktopOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonFilled, SyncOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import type { ThemeMode } from '@/models/theme';
 import styles from './index.less';
@@ -11,7 +11,7 @@ import styles from './index.less';
  * 显示在页面右上角，提供白天模式、暗夜模式、跟随系统三个选项
  */
 const ThemeSwitch: React.FC = () => {
-  const { themeMode, actualTheme, setThemeMode } = useModel('theme');
+  const { themeMode, setThemeMode } = useModel('theme');
 
   /**
    * 下拉菜单项配置
@@ -21,17 +21,17 @@ const ThemeSwitch: React.FC = () => {
       {
         key: 'light',
         label: '白天模式',
-        icon: <BulbOutlined />,
+        icon: <SunOutlined />,
       },
       {
         key: 'dark',
         label: '暗夜模式',
-        icon: <BulbFilled />,
+        icon: <MoonFilled />,
       },
       {
         key: 'auto',
         label: '跟随系统',
-        icon: <DesktopOutlined />,
+        icon: <SyncOutlined />,
       },
     ],
     [],
@@ -45,9 +45,23 @@ const ThemeSwitch: React.FC = () => {
   };
 
   /**
-   * 根据当前主题选择图标
+   * 根据当前选中的模式显示对应图标
+   * light -> 太阳图标
+   * dark -> 月亮图标
+   * auto -> 同步图标
    */
-  const ThemeIcon = actualTheme === 'dark' ? BulbFilled : BulbOutlined;
+  const getCurrentIcon = () => {
+    switch (themeMode) {
+      case 'light':
+        return <SunOutlined />;
+      case 'dark':
+        return <MoonFilled />;
+      case 'auto':
+        return <SyncOutlined />;
+      default:
+        return <SunOutlined />;
+    }
+  };
 
   return (
     <Dropdown
@@ -60,7 +74,7 @@ const ThemeSwitch: React.FC = () => {
       arrow
     >
       <span className={`${styles.action} ${styles.account}`} title="切换主题">
-        <ThemeIcon />
+        {getCurrentIcon()}
       </span>
     </Dropdown>
   );
