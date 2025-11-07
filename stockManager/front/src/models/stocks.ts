@@ -1,6 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { getStockList } from '@/services/api';
 import { history } from '@umijs/max';
+
+const loginPath = '/login';
 
 export default () => {
   const [stock, setStock] = useState({} as API.StockData);
@@ -18,7 +20,7 @@ export default () => {
         setInitialized(true);
         return true;
       } else if (response.status === 302) {
-        history.push('/login');
+        history.push(loginPath);
         return false;
       }
       return false;
@@ -35,16 +37,6 @@ export default () => {
     setStock(stockData);
     setInitialized(true);
   }, []);
-
-  /**
-   * 初始化时自动加载数据
-   */
-  useEffect(() => {
-    // 只在首次加载且未初始化时自动获取数据
-    if (!initialized) {
-      fetchStockData();
-    }
-  }, [initialized, fetchStockData]);
 
   return { 
     stock, 

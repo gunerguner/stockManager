@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Tabs, Statistic, Row, Col } from 'antd';
 import ProCard from '@ant-design/pro-card';
-import { useModel } from '@umijs/max';
+import { useStocks } from '@/hooks/useStocks';
 
 import { AnalysisList } from '../../components/Table/AnalysisList';
 import { CostList } from '../../components/Table/CostList';
@@ -9,7 +9,8 @@ import styles from './index.less';
 
 
 const DataPage: React.FC = () => {
-  const { stock } = useModel('stocks');
+  // 使用自定义 Hook 自动加载股票数据
+  const { stock } = useStocks();
 
   // 格式化总费用，避免运行时错误
   const formattedTotalCost = useMemo(() => {

@@ -1,10 +1,10 @@
 import { Button, Row, Col, Checkbox, FloatButton } from 'antd';
 import React, { useState, useCallback } from 'react';
 import ProCard from '@ant-design/pro-card';
-import { useModel } from '@umijs/max';
 import { ReloadOutlined } from '@ant-design/icons';
 import { OverallBoard } from '@/components/Table/OverallBoard';
 import { OperationList } from '@/components/Table/OperationList';
+import { useStocks } from '@/hooks/useStocks';
 import './index.less';
 
 const TableList: React.FC = () => {
@@ -12,8 +12,8 @@ const TableList: React.FC = () => {
   const [showAll, setShowAll] = useState<boolean>(false);
   const [showConv, setShowConv] = useState<boolean>(true);
   
-  // 使用 model 统一管理的数据和方法
-  const { stock, fetchStockData } = useModel('stocks');
+  // 使用自定义 Hook 自动加载股票数据
+  const { stock, fetchStockData } = useStocks();
 
   /**
    * 整体数据修改完成回调
