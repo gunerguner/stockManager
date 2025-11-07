@@ -185,7 +185,13 @@ STATICFILES_DIRS = [
 ]
 
 # 使用 Path 替代 os.path.join 
-BASE_LOG_DIR = CURRENT_DIR / "log"
+# 生产环境：使用 /var/log/stockmanager/django/
+# 开发环境：使用项目目录下的 log（如果目录不存在会自动创建）
+if os.path.exists('/var/log/stockmanager/django'):
+    BASE_LOG_DIR = Path('/var/log/stockmanager/django')
+else:
+    BASE_LOG_DIR = CURRENT_DIR / "log"
+
 if not BASE_LOG_DIR.exists():
     BASE_LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOGGING = {
