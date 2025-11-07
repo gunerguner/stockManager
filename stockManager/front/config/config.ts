@@ -6,7 +6,7 @@ import defaultSettings from './defaultSettings';
 import proxy from './proxy';
 import routes from './routes';
 
-const { REACT_APP_ENV, ANALYZE } = process.env;
+const { UMI_ENV, ANALYZE } = process.env;
 const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
@@ -73,7 +73,7 @@ export default defineConfig({
   /**
    * @name 代理配置
    */
-  proxy: proxy[REACT_APP_ENV as keyof typeof proxy || 'dev'],
+  proxy: proxy[UMI_ENV as keyof typeof proxy || 'dev'],
   
   /**
    * @name Fast Refresh 热更新

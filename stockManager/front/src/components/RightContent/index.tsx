@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import Avatar from './AvatarDropdown';
 import ThemeSwitch from './ThemeSwitch';
+import { getEnv } from '@/utils/env';
 import styles from './index.less';
 
 
@@ -40,7 +41,8 @@ const RightContent: React.FC = () => {
     return null;
   }
 
-  const env = process.env.REACT_APP_ENV;
+  // 获取环境变量（构建时确定，无需 useMemo）
+  const env = getEnv();
   
   return (
     <Space className={className} size={0} align="center">
