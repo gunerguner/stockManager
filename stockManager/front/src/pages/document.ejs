@@ -1,33 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="keywords"
-      content="antd,umi,umijs,ant design,stock,股票,溯宁"
-    />
-    <meta
-      name="description"
-      content="
-    An open source stock manager."
-    />
-    <meta
-      name="description"
-      content="
-      开源的股票管理工具。"
-    />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-    />
-    <title>StockManager</title>
-    <link rel="icon" href="<%= context.config.publicPath +'favicon.ico'%>" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    
+    <!-- SEO 优化 -->
+    <meta name="keywords" content="股票管理,股票系统,股票分析,stock manager,antd,umi,umijs,ant design" />
+    <meta name="description" content="开源的股票管理系统，提供股票交易记录、收益分析、持仓管理等功能" />
+    <meta name="author" content="Stock Manager" />
+    
+    <!-- 安全相关 -->
+    <!-- 注意：CSP 策略需要根据实际需求调整，当前注释掉以避免影响开发环境 -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;" /> -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- 性能优化 -->
+    <link rel="preconnect" href="https://gw.alipayobjects.com" crossorigin />
+    <link rel="dns-prefetch" href="https://gw.alipayobjects.com" />
+    
+    <title>Stock Manager - 股票管理系统</title>
+    <link rel="icon" href="<%= context.config.publicPath %>favicon.ico" type="image/x-icon" />
   </head>
   <body>
-    <noscript>Out-of-the-box mid-stage front/design solution!</noscript>
+    <noscript>
+      <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>需要启用 JavaScript</h1>
+        <p>Stock Manager 需要 JavaScript 才能正常运行，请在浏览器设置中启用 JavaScript。</p>
+      </div>
+    </noscript>
     <div id="root">
       <style>
+        /* 基础样式 */
         html,
         body,
         #root {
@@ -35,129 +39,105 @@
           margin: 0;
           padding: 0;
         }
+
+        /* 加载页面背景 */
         #root {
-          background-image: url('<%= context.config.publicPath +"home_bg.png"%>');
+          background-image: url('<%= context.config.publicPath %>home_bg.png');
           background-repeat: no-repeat;
-          background-size: 100% auto;
+          background-size: cover;
+          background-position: center;
         }
-        .page-loading-warp {
+
+        /* 加载容器 */
+        .page-loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          min-height: 420px;
+        }
+
+        /* Logo 样式 */
+        .page-loading-logo {
+          width: 256px;
+          height: auto;
+          margin-bottom: 32px;
+        }
+
+        /* 加载动画容器 */
+        .page-loading-spinner {
+          padding: 48px 0;
+        }
+
+        /* 品牌信息 */
+        .page-loading-brand {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 98px;
-        }
-        .ant-spin {
-          position: absolute;
-          display: none;
-          -webkit-box-sizing: border-box;
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
+          margin-top: 24px;
+          font-size: 16px;
           color: rgba(0, 0, 0, 0.65);
-          color: #1890ff;
-          font-size: 14px;
-          font-variant: tabular-nums;
-          line-height: 1.5;
-          text-align: center;
-          list-style: none;
-          opacity: 0;
-          -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-          transition: -webkit-transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-          transition: transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-          transition: transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86),
-            -webkit-transform 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86);
-          -webkit-font-feature-settings: 'tnum';
-          font-feature-settings: 'tnum';
         }
 
-        .ant-spin-spinning {
-          position: static;
+        .page-loading-brand-icon {
+          width: 32px;
+          height: 32px;
+          margin-right: 8px;
+        }
+
+        /* 简化版加载动画（antd 加载后会被替换） */
+        .page-loading-spinner .ant-spin {
           display: inline-block;
-          opacity: 1;
         }
 
-        .ant-spin-dot {
+        .page-loading-spinner .ant-spin-dot {
           position: relative;
           display: inline-block;
-          width: 20px;
-          height: 20px;
-          font-size: 20px;
-        }
-
-        .ant-spin-dot-item {
-          position: absolute;
-          display: block;
-          width: 9px;
-          height: 9px;
-          background-color: #1890ff;
-          border-radius: 100%;
-          -webkit-transform: scale(0.75);
-          -ms-transform: scale(0.75);
-          transform: scale(0.75);
-          -webkit-transform-origin: 50% 50%;
-          -ms-transform-origin: 50% 50%;
-          transform-origin: 50% 50%;
-          opacity: 0.3;
-          -webkit-animation: antspinmove 1s infinite linear alternate;
-          animation: antSpinMove 1s infinite linear alternate;
-        }
-
-        .ant-spin-dot-item:nth-child(1) {
-          top: 0;
-          left: 0;
-        }
-
-        .ant-spin-dot-item:nth-child(2) {
-          top: 0;
-          right: 0;
-          -webkit-animation-delay: 0.4s;
-          animation-delay: 0.4s;
-        }
-
-        .ant-spin-dot-item:nth-child(3) {
-          right: 0;
-          bottom: 0;
-          -webkit-animation-delay: 0.8s;
-          animation-delay: 0.8s;
-        }
-
-        .ant-spin-dot-item:nth-child(4) {
-          bottom: 0;
-          left: 0;
-          -webkit-animation-delay: 1.2s;
-          animation-delay: 1.2s;
-        }
-
-        .ant-spin-dot-spin {
-          -webkit-transform: rotate(45deg);
-          -ms-transform: rotate(45deg);
-          transform: rotate(45deg);
-          -webkit-animation: antrotate 1.2s infinite linear;
-          animation: antRotate 1.2s infinite linear;
-        }
-
-        .ant-spin-lg .ant-spin-dot {
           width: 32px;
           height: 32px;
           font-size: 32px;
         }
 
-        .ant-spin-lg .ant-spin-dot i {
+        .page-loading-spinner .ant-spin-dot-item {
+          position: absolute;
+          display: block;
           width: 14px;
           height: 14px;
+          background-color: #1890ff;
+          border-radius: 50%;
+          transform: scale(0.75);
+          transform-origin: 50% 50%;
+          opacity: 0.3;
+          animation: antSpinMove 1s infinite linear alternate;
         }
 
-        @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
-          .ant-spin-blur {
-            background: #fff;
-            opacity: 0.5;
-          }
+        .page-loading-spinner .ant-spin-dot-item:nth-child(1) {
+          top: 0;
+          left: 0;
         }
 
-        @-webkit-keyframes antSpinMove {
-          to {
-            opacity: 1;
-          }
+        .page-loading-spinner .ant-spin-dot-item:nth-child(2) {
+          top: 0;
+          right: 0;
+          animation-delay: 0.4s;
+        }
+
+        .page-loading-spinner .ant-spin-dot-item:nth-child(3) {
+          right: 0;
+          bottom: 0;
+          animation-delay: 0.8s;
+        }
+
+        .page-loading-spinner .ant-spin-dot-item:nth-child(4) {
+          bottom: 0;
+          left: 0;
+          animation-delay: 1.2s;
+        }
+
+        .page-loading-spinner .ant-spin-dot-spin {
+          transform: rotate(45deg);
+          animation: antRotate 1.2s infinite linear;
         }
 
         @keyframes antSpinMove {
@@ -166,46 +146,37 @@
           }
         }
 
-        @-webkit-keyframes antRotate {
-          to {
-            -webkit-transform: rotate(405deg);
-            transform: rotate(405deg);
-          }
-        }
-
         @keyframes antRotate {
           to {
-            -webkit-transform: rotate(405deg);
             transform: rotate(405deg);
           }
         }
       </style>
-      <div
-        style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          min-height: 420px;
-        "
-      >
-        <img src="<%= context.config.publicPath +'pro_icon.svg'%>" alt="logo" width="256" />
-        <div class="page-loading-warp">
+      <div class="page-loading-container">
+        <img 
+          src="<%= context.config.publicPath %>pro_icon.svg" 
+          alt="Stock Manager Logo" 
+          class="page-loading-logo"
+          loading="eager"
+        />
+        <div class="page-loading-spinner">
           <div class="ant-spin ant-spin-lg ant-spin-spinning">
-            <span class="ant-spin-dot ant-spin-dot-spin"
-              ><i class="ant-spin-dot-item"></i><i class="ant-spin-dot-item"></i
-              ><i class="ant-spin-dot-item"></i><i class="ant-spin-dot-item"></i
-            ></span>
+            <span class="ant-spin-dot ant-spin-dot-spin">
+              <i class="ant-spin-dot-item"></i>
+              <i class="ant-spin-dot-item"></i>
+              <i class="ant-spin-dot-item"></i>
+              <i class="ant-spin-dot-item"></i>
+            </span>
           </div>
         </div>
-        <div style="display: flex; align-items: center; justify-content: center">
+        <div class="page-loading-brand">
           <img
             src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
-            width="32"
-            style="margin-right: 8px"
+            alt="Ant Design"
+            class="page-loading-brand-icon"
+            loading="lazy"
           />
-          Stock Manager
+          <span>Stock Manager</span>
         </div>
       </div>
     </div>
