@@ -33,7 +33,9 @@ class Caculator(object):
         """
         self.operation_list = operation_list
         self.realtime_list = realtime_list
+        # 优化：将 StockMeta 转换为字典，提升查找效率 O(1) vs O(n)
         self.stockMeta = StockMeta.objects.all()
+        self.stockMeta_dict = {meta.code: meta for meta in self.stockMeta}
     
     @property
     def _today(self) -> datetime.date:
@@ -243,11 +245,11 @@ class Caculator(object):
             return ""
         to_return = {}
 
-        # 带上股票的标签
-        stockType = list(filter(lambda x: x.code == key, self.stockMeta))
-        if len(stockType) > 0:
-            to_return["stockType"] = stockType[0].stockType
-            to_return["isNew"] = stockType[0].isNew
+        # 带上股票的标签（优化：使用字典查找，O(1) 复杂度）
+        stock_meta = self.stockMeta_dict.get(key)
+        if stock_meta:
+            to_return["stockType"] = stock_meta.stockType
+            to_return["isNew"] = stock_meta.isNew
 
         single_operation_list = self.operation_list[key]
         single_real_time = self.realtime_list[key]
@@ -262,20 +264,24 @@ class Caculator(object):
             to_return["offsetToday"] = single_real_time[2]  # 今日股价涨跌
             to_return["offsetTodayRatio"] = single_real_time[3]  # 今日涨跌率
 
-        current_hold_count = self.__caculate_single_holdCount(single_operation_list)
+        # 优化：一次遍历计算所有指标
+        metrics = self.__caculate_single_metrics_optimized(single_operation_list)
+        
+        current_hold_count = metrics['current_hold_count']
+        yesterday_hold_count = metrics['yesterday_hold_count']
+        current_hold_cost = metrics['current_hold_cost']
+        current_overall = metrics['current_overall']
+        today_input = metrics['today_input']
+        total_fee = metrics['total_fee']
+        
         to_return["holdCount"] = current_hold_count  # 持股数
-        current_hold_cost = self.__caculate_single_hold_cost(single_operation_list)
         to_return["holdCost"] = current_hold_cost  # 持仓成本
-        current_overall = self.__caculate_single_overall(single_operation_list)
         to_return["overallCost"] = (
-            current_overall / current_hold_count if current_hold_cost > 0 else 0
+            current_overall / current_hold_count if current_hold_count > 0 else 0
         )  # 摊薄成本
         to_return["totalValue"] = (
             float(single_real_time[1]) * current_hold_count
         )  # 今日市值
-        yesterday_hold_count = self.__caculate_single_holdCount(
-            single_operation_list, 1
-        )
         to_return["totalValueYesterday"] = (
             float(single_real_time[4]) * yesterday_hold_count
         )  # 昨日市值,不显示
@@ -297,8 +303,7 @@ class Caculator(object):
             float(single_real_time[1]) * current_hold_count - current_overall
         )  # 累计盈亏额
 
-        to_return["totalCost"] = self.__caculate_single_fee(single_operation_list)
-        # 所有费用
+        to_return["totalCost"] = total_fee  # 所有费用
 
         to_return["operationList"] = self.__caculate_single_operation_list(
             single_operation_list
@@ -311,12 +316,115 @@ class Caculator(object):
             total_offset_today = (
                 float(single_real_time[1]) * current_hold_count
                 - float(single_real_time[4]) * yesterday_hold_count
-                - self.__caculate_single_today_input(single_operation_list)
+                - today_input
             )
 
         to_return["totalOffsetToday"] = total_offset_today  # 今日盈亏,不显示
 
         return to_return
+
+    def __caculate_single_metrics_optimized(self, single_operation_list: List) -> Dict:
+        """
+        优化：一次遍历计算所有指标
+        合并了原来的多个方法：
+        - __caculate_single_holdCount (今天和昨天)
+        - __caculate_single_hold_cost
+        - __caculate_single_overall
+        - __caculate_single_today_input
+        - __caculate_single_fee
+        
+        Args:
+            single_operation_list: 操作记录列表
+            
+        Returns:
+            Dict: 包含所有计算指标的字典
+        """
+        # 获取今天的日期（只调用一次）
+        today = self._today
+        
+        # 初始化所有累计变量
+        current_hold = 0.0  # 当前持股数
+        yesterday_hold = 0.0  # 昨日持股数
+        
+        # 持仓成本相关
+        hold_total_pay = 0.0  # 持仓总支付（用于计算持仓成本）
+        hold_total_count = 0.0  # 持仓总数量
+        
+        # 摊薄成本相关
+        overall_sum = 0.0  # 摊薄成本总和
+        
+        # 其他指标
+        today_input = 0.0  # 今日净投入
+        total_fee = 0.0  # 总手续费
+        
+        for operation in single_operation_list:
+            op_type = operation.operationType
+            
+            # 累计手续费
+            total_fee += operation.fee
+            
+            # 判断是否是今天的操作
+            is_today = operation.date == today
+            
+            if op_type == OPERATION_TYPE_BUY:
+                # 买入操作
+                current_hold += operation.count
+                
+                # 持仓成本计算
+                hold_total_pay += operation.count * operation.price + operation.fee
+                hold_total_count += operation.count
+                
+                # 摊薄成本计算
+                overall_sum += operation.count * operation.price + operation.fee
+                
+                # 今日投入计算
+                if is_today:
+                    today_input += operation.count * operation.price + operation.fee
+                    
+            elif op_type == OPERATION_TYPE_SELL:
+                # 卖出操作
+                current_hold -= operation.count
+                
+                # 摊薄成本计算
+                overall_sum -= operation.count * operation.price - operation.fee
+                
+                # 今日投入计算（卖出是负投入）
+                if is_today:
+                    today_input -= operation.count * operation.price + operation.fee
+                
+                # 如果清仓了，重置持仓成本相关变量
+                if current_hold == 0:
+                    hold_total_pay = 0.0
+                    hold_total_count = 0.0
+                    
+            elif op_type == OPERATION_TYPE_DIVIDEND:
+                # 分红操作
+                dividend_multiplier = operation.reserve + operation.stock
+                
+                # 持仓成本计算
+                hold_total_count += hold_total_count * dividend_multiplier
+                
+                # 摊薄成本计算
+                overall_sum -= current_hold * operation.cash
+                
+                # 更新持股数（送股和转增）
+                current_hold += current_hold * dividend_multiplier
+            
+            # 计算昨日持股数（在处理完当前操作后）
+            if not is_today:
+                yesterday_hold = current_hold
+        
+        # 计算持仓成本
+        current_hold_cost = hold_total_pay / hold_total_count if hold_total_count > 0 else 0.0
+        
+        return {
+            'current_hold_count': current_hold,
+            'yesterday_hold_count': yesterday_hold,
+            'current_hold_cost': current_hold_cost,
+            'current_overall': overall_sum,
+            'today_input': today_input,
+            'total_fee': total_fee,
+        }
 
     def __caculate_single_operation_list(self, single_operation_list):
         """将操作列表转换为字典列表并反转顺序"""
@@ -354,100 +462,6 @@ class Caculator(object):
 
         return current_hold
 
-    def __caculate_single_hold_cost(self, single_operation_list):
-        # 某个股票的持仓成本
-        total_pay = 0
-        current_hold = 0
-        total_count = 0
-        
-        for single_operation in single_operation_list:
-            if single_operation.operationType == OPERATION_TYPE_BUY:
-                current_hold += single_operation.count
-                total_pay += (
-                    single_operation.count * single_operation.price
-                    + single_operation.fee
-                )
-                total_count += single_operation.count
-            elif single_operation.operationType == OPERATION_TYPE_SELL:
-                current_hold -= single_operation.count
-            elif single_operation.operationType == OPERATION_TYPE_DIVIDEND:
-                
-                total_count += total_count * (
-                    single_operation.reserve + single_operation.stock
-                )
-                current_hold += current_hold * (
-                    single_operation.reserve + single_operation.stock
-                )
-
-            if current_hold == 0:
-                # 这里有个大坑,如果清仓了就不算,重头算起
-                total_pay = 0
-                total_count = 0
-
-        return total_pay / total_count if total_count > 0 else 0
-
-    def __caculate_single_overall(self, single_operation_list):
-        # 某个股票的摊薄成本
-        current_hold = 0
-        current_sum = 0
-        
-        for single_operation in single_operation_list:
-            if single_operation.operationType == OPERATION_TYPE_BUY:
-                current_hold += single_operation.count
-                current_sum += (
-                    single_operation.count * single_operation.price
-                    + single_operation.fee
-                )
-            elif single_operation.operationType == OPERATION_TYPE_SELL:
-                current_hold -= single_operation.count
-                current_sum -= (
-                    single_operation.count * single_operation.price
-                    - single_operation.fee
-                )
-            elif single_operation.operationType == OPERATION_TYPE_DIVIDEND:
-                
-                current_sum -= current_hold * single_operation.cash
-                current_hold += current_hold * (
-                    single_operation.reserve + single_operation.stock
-                )
-
-        return current_sum
-
-    def __caculate_single_today_input(self, single_operation_list: List) -> float:
-        """
-        计算某个股票今天的净投入
-        
-        Args:
-            single_operation_list: 操作记录列表
-            
-        Returns:
-            float: 今日净投入金额
-        """
-        today_operation = 0
-        # 在方法开始时获取today并赋值给局部变量
-        today = self._today
-        
-        for single_operation in single_operation_list:
-            # 只计算今天的操作
-            if single_operation.date != today:
-                continue
-            
-            if single_operation.operationType == OPERATION_TYPE_BUY:
-                today_operation += (
-                    single_operation.count * single_operation.price
-                    + single_operation.fee
-                )
-            elif single_operation.operationType == OPERATION_TYPE_SELL:
-                today_operation -= (
-                    single_operation.count * single_operation.price
-                    + single_operation.fee
-                )
-
-        return today_operation
-
-    def __caculate_single_fee(self, single_target_list):
-        """计算总手续费"""
-        return sum(op.fee for op in single_target_list)
 
     def __caculate_overall_target(self, single_target_list: List[Dict]) -> Dict:
         """

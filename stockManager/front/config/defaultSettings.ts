@@ -23,7 +23,7 @@ const Settings: ProLayoutProps & {
   // 浅色主题 logo
   logoLight: 'https://s21.ax1x.com/2025/10/24/pVXld8U.png',
   // 暗色主题 logo（你需要替换成实际的暗色 logo 地址）
-  logoDark: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png', // TODO: 替换成暗色 logo
+  logoDark: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png', 
   iconfontUrl: '',
 };
 
