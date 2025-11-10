@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import Avatar from './AvatarDropdown';
 import ThemeSwitch from './ThemeSwitch';
-import { getEnv } from '@/utils/env';
+import { getEnv } from '@/utils';
 import styles from './index.less';
 
 

@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import defaultSettings from '../config/defaultSettings';
 
 import { getCurrentUser as queryCurrentUser } from './services/api';
-import { getCsrfToken } from '@/utils/csrf';
+import { getCsrfToken } from '@/utils';
 
 // AI修改: 添加版本号导入和打印功能
 // 从 package.json 导入版本号
