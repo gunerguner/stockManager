@@ -1,5 +1,9 @@
+/**
+ * 全局样式文件
+ * 定义应用级别的基础样式
+ */
 
-@screen-xs: 480px;
+// ==================== 基础布局样式 ====================
 
 html,
 body,
@@ -7,20 +11,11 @@ body,
   height: 100%;
 }
 
-.colorWeak {
-  filter: invert(80%);
-}
-
 .ant-layout {
   min-height: 100vh;
 }
-.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
-  left: unset;
-}
 
-canvas {
-  display: block;
-}
+// ==================== 字体渲染优化 ====================
 
 body {
   text-rendering: optimizeLegibility;
@@ -28,20 +23,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+// ==================== 列表样式重置 ====================
+
 ul,
 ol {
   list-style: none;
 }
 
+// ==================== 响应式表格样式 ====================
+
+@screen-xs: 480px;
+
 @media (max-width: @screen-xs) {
   .ant-table {
     width: 100%;
     overflow-x: auto;
+    
     &-thead > tr,
     &-tbody > tr {
       > th,
       > td {
         white-space: pre;
+        
         > span {
           display: block;
         }

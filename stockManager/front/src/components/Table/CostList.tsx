@@ -1,6 +1,7 @@
 import { Table } from 'antd';
 import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import './index.less';
 
 interface CostListModel {
   id: string;
@@ -105,7 +106,7 @@ export const CostList: React.FC<CostListProps> = (props) => {
    */
   const expandedRowRender = (record: CostListModel) => (
     <Table
-      style={{ margin: '10px 0' }}
+      className="expanded-row-table"
       columns={columns}
       bordered
       size="small"

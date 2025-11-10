@@ -3,6 +3,7 @@ import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { updateOriginCash, updateIncomeCash } from '@/services/api';
 import { colorFromValue } from '@/utils';
+import './index.less';
 
 export type OverallBoardProps = {
   data: API.Overall;
@@ -19,7 +20,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
       dataIndex: 'offsetToday',
       render: (item: number) => {
         return (
-          <div style={{ color: colorFromValue(item), fontWeight: 'bold' }}>{item?.toFixed(2)}</div>
+          <div className="bold-text" style={{ color: colorFromValue(item) }}>
+            {item?.toFixed(2)}
+          </div>
         );
       },
     },
@@ -67,7 +70,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
                     title: '编辑现金收入',
                     content: (
                       <Form
-                        style={{ marginTop: '30px' }}
+                        className="form-container"
                         form={form}
                         layout="vertical"
                         name="incomeCash"
@@ -113,7 +116,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
                     title: '编辑本金',
                     content: (
                       <Form
-                        style={{ marginTop: '30px' }}
+                        className="form-container"
                         form={form}
                         layout="vertical"
                         name="originCash"
@@ -144,7 +147,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
       title: '总资产',
       dataIndex: 'totalAsset',
       render: (item: number) => {
-        return <div style={{ fontWeight: 'bold' }}>{item?.toFixed(2)}</div>;
+        return <div className="bold-text">{item?.toFixed(2)}</div>;
       },
     },
   ];

@@ -2,6 +2,7 @@ import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { colorFromValue } from '@/utils';
+import './index.less';
 
 export type OperationListProps = {
   data: API.StockData;
@@ -96,7 +97,7 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
    */
   const expandedRowRender = (record: API.Stock) => (
     <Table
-      style={{ margin: '10px 0' }}
+      className="expanded-row-table"
       columns={columnsOperation}
       size="small"
       bordered
@@ -113,15 +114,19 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
     {
       title: '名称',
       dataIndex: 'name',
+      width: 120,
+      fixed: 'left',
       render: (_: string, record: API.Stock) => (
-        <a
-          target="_blank"
-          href={`https://xueqiu.com/S/${record.code}`}
-          style={{ textDecoration: 'none', fontWeight: 'bold', fontSize: '13px' }}
-          rel="noreferrer"
-        >
-          {`${record.name} (${record.code})`}
-        </a>
+        <Tooltip title={record.code}>
+          <a
+            className="stock-name-link"
+            target="_blank"
+            href={`https://xueqiu.com/S/${record.code}`}
+            rel="noreferrer"
+          >
+            {record.name}
+          </a>
+        </Tooltip>
       ),
     },
     {
