@@ -33,9 +33,7 @@ class Caculator(object):
         """
         self.operation_list = operation_list
         self.realtime_list = realtime_list
-        # 优化：将 StockMeta 转换为字典，提升查找效率 O(1) vs O(n)
-        self.stockMeta = StockMeta.objects.all()
-        self.stockMeta_dict = {meta.code: meta for meta in self.stockMeta}
+        self.stockMeta_dict = {meta.code: meta for meta in StockMeta.objects.all()}
     
     @property
     def _today(self) -> datetime.date:
@@ -273,6 +271,7 @@ class Caculator(object):
         current_overall = metrics['current_overall']
         today_input = metrics['today_input']
         total_fee = metrics['total_fee']
+        holding_duration = metrics['holding_duration']
         
         to_return["holdCount"] = current_hold_count  # 持股数
         to_return["holdCost"] = current_hold_cost  # 持仓成本
@@ -305,10 +304,6 @@ class Caculator(object):
 
         to_return["totalCost"] = total_fee  # 所有费用
 
-        to_return["operationList"] = self.__caculate_single_operation_list(
-            single_operation_list
-        )
-
         total_offset_today = 0
         if to_return["totalValueYesterday"] < 0.1:
             total_offset_today = current_offset  # 今天新买的,今日盈亏等于浮动盈亏
@@ -320,6 +315,13 @@ class Caculator(object):
             )
 
         to_return["totalOffsetToday"] = total_offset_today  # 今日盈亏,不显示
+        
+        # 持股时长（已在 metrics 中计算）
+        to_return["holdingDuration"] = holding_duration
+
+        to_return["operationList"] = self.__caculate_single_operation_list(
+            single_operation_list
+        )
 
         return to_return
 
@@ -332,6 +334,7 @@ class Caculator(object):
         - __caculate_single_overall
         - __caculate_single_today_input
         - __caculate_single_fee
+        - __caculate_holding_duration (持股时长)
         
         Args:
             single_operation_list: 操作记录列表
@@ -357,6 +360,10 @@ class Caculator(object):
         today_input = 0.0  # 今日净投入
         total_fee = 0.0  # 总手续费
         
+        # 持股时长相关
+        holding_start_date = None  # 当前持仓周期的开始日期
+        total_holding_days = 0  # 累计持股天数
+        
         for operation in single_operation_list:
             op_type = operation.operationType
             
@@ -368,6 +375,7 @@ class Caculator(object):
             
             if op_type == OPERATION_TYPE_BUY:
                 # 买入操作
+                previous_hold = current_hold
                 current_hold += operation.count
                 
                 # 持仓成本计算
@@ -380,9 +388,14 @@ class Caculator(object):
                 # 今日投入计算
                 if is_today:
                     today_input += operation.count * operation.price + operation.fee
+                
+                # 持股时长计算：如果之前没有持仓，现在买入后持股数 >= 1，记录开始日期
+                if previous_hold < 1 and current_hold >= 1:
+                    holding_start_date = operation.date
                     
             elif op_type == OPERATION_TYPE_SELL:
                 # 卖出操作
+                previous_hold = current_hold
                 current_hold -= operation.count
                 
                 # 摊薄成本计算
@@ -391,6 +404,13 @@ class Caculator(object):
                 # 今日投入计算（卖出是负投入）
                 if is_today:
                     today_input -= operation.count * operation.price + operation.fee
+                
+                # 持股时长计算：如果卖出后持股数 < 1，结算这一轮的持股时长
+                if previous_hold >= 1 and current_hold < 1:
+                    if holding_start_date:
+                        duration = (operation.date - holding_start_date).days
+                        total_holding_days += duration
+                        holding_start_date = None
                 
                 # 如果清仓了，重置持仓成本相关变量
                 if current_hold == 0:
@@ -414,6 +434,11 @@ class Caculator(object):
             if not is_today:
                 yesterday_hold = current_hold
         
+        # 如果当前仍在持有（持股数 >= 1），计算到今天的时长
+        if current_hold >= 1 and holding_start_date:
+            duration = (today - holding_start_date).days
+            total_holding_days += duration
+        
         # 计算持仓成本
         current_hold_cost = hold_total_pay / hold_total_count if hold_total_count > 0 else 0.0
         
@@ -424,6 +449,7 @@ class Caculator(object):
             'current_overall': overall_sum,
             'today_input': today_input,
             'total_fee': total_fee,
+            'holding_duration': total_holding_days,
         }
 
     def __caculate_single_operation_list(self, single_operation_list):

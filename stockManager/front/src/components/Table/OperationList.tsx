@@ -159,6 +159,11 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
     {
       title: '持仓',
       dataIndex: 'holdCount',
+      render: (_: number, record: API.Stock) => (
+        <Tooltip title={`持股 ${record.holdingDuration} 天`}>
+          <div>{record.holdCount}</div>
+        </Tooltip>
+      ),
     },
     {
       title: '摊薄成本/持仓成本',

@@ -70,6 +70,7 @@ declare namespace API {
     totalOffsetToday: number;
     isNew: boolean;
     stockType: string;
+    holdingDuration: number;
   };
 
   type Operation = {
