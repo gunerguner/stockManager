@@ -31,7 +31,7 @@ VERSION = __version__
 SECRET_KEY = '=2tfcp7f#j^+(!5m(ennkrmntjb5p9oq3!6g7uu3dpe%_frs_n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS =  ['*']
 
@@ -64,49 +64,58 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # 必须在 CommonMiddleware 之前
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
-# 修复 django-cors-headers 已弃用的配置项 
+# ==================== CORS 跨域配置 ====================
+# 使用 django-cors-headers 处理跨域请求
+
+# 允许跨域请求携带凭证（Cookie、Session、CSRF Token）
 CORS_ALLOW_CREDENTIALS = True
-# CORS_ORIGIN_ALLOW_ALL 已弃用，改用 CORS_ALLOW_ALL_ORIGINS
-CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ORIGIN_WHITELIST 已弃用，改用 CORS_ALLOWED_ORIGINS
+
+# 开发环境：允许所有域名（方便调试）
+# 生产环境：应该注释掉这一行，只使用 CORS_ALLOWED_ORIGINS
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # 只在 DEBUG=True 时允许所有域名
+
+# 允许的域名白名单（生产环境使用）
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8001",
     "http://localhost:8000",
     "http://localhost:8001",
+    # 生产环境添加你的域名：
+    # "https://yourdomain.com",
+    # "https://www.yourdomain.com",
 ]
-CORS_ALLOW_METHODS = (
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-    'VIEW',
-)
 
-CORS_ALLOW_HEADERS = (
-    'XMLHttpRequest',
-    'X_FILENAME',
+# 允许的 HTTP 方法
+CORS_ALLOW_METHODS = [
+    'DELETE',   # 删除操作
+    'GET',      # 查询操作
+    'OPTIONS',  # 预检请求（必需）
+    'PATCH',    # 部分更新
+    'POST',     # 创建操作
+    'PUT',      # 完整更新
+]
+
+# 允许的请求头
+CORS_ALLOW_HEADERS = [
+    'accept',
     'accept-encoding',
-    'authorization',
-    'content-type',
+    'authorization',      # 认证信息
+    'content-type',       # 内容类型（必需）
     'dnt',
     'origin',
     'user-agent',
-    'x-csrftoken',
+    'x-csrftoken',        # CSRF Token（必需）
     'x-requested-with',
-    'Pragma',
-)
+]
 
 ROOT_URLCONF = 'stockManager.urls'
 
