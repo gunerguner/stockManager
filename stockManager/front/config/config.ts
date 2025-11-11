@@ -82,10 +82,11 @@ export default defineConfig({
   
   /**
    * @name 启用 MFSU 加速构建
-   * @description 开启后可以显著提升构建速度和优化包大小
+   * @description 使用 esbuild 模式可以进一步提升构建速度
    */
   mfsu: {
     strategy: 'normal',
+    esbuild: true,
   },
   
   /**
@@ -112,6 +113,14 @@ export default defineConfig({
       },
     }),
   }),
+  
+  /**
+   * @name 别名配置
+   * @description 为 Node.js 内置模块提供浏览器 polyfill
+   */
+  alias: {
+    querystring: require.resolve('querystring-es3'),
+  },
   
   /**
    * @name Webpack 配置优化
