@@ -25,7 +25,7 @@ def show_stocks(request):
     try:
         logger.info(f"show_stocks - 用户: {request.user.username}, IP: {get_client_ip(request)}")
         
-        stock_caculator = Integrate.caculator(request.user, True)
+        stock_caculator = Integrate.caculator(request.user)
         merged_data = stock_caculator.caculate_target()
         
         return json_response(status=STATUS_SUCCESS, data=merged_data)
@@ -101,7 +101,7 @@ def refresh_divident(request):
     try:
         logger.info(f"refresh_divident - 用户: {request.user.username}, IP: {get_client_ip(request)}")
         
-        stock_caculator = Integrate.caculator(request.user, False)
+        stock_caculator = Integrate.caculator(request.user)
         codes = stock_caculator.generate_dividend()
         
         return json_response(status=STATUS_SUCCESS, data=codes, message="刷新除权除息信息成功")

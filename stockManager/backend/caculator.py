@@ -10,7 +10,7 @@ import baostock as bs
 from .common import logger
 from .models import Operation
 from .stockMeta import StockMeta
-from .utils import _safe_float
+from .utils import _safe_float, query_realtime_price
 from django.contrib.auth.models import User
 
 # 常量定义
@@ -23,19 +23,17 @@ DIVIDEND_DATE_CHECK_RANGE = 5  # 分红日期检查范围（前后天数）
 class Caculator(object):
     """股票计算器类，用于计算股票相关指标"""
     
-    def __init__(self, operation_list: Dict, realtime_list: Dict, user: User, origin_cash: float = 0.0, income_cash: float = 0.0):
+    def __init__(self, operation_list: Dict, user: User, origin_cash: float = 0.0, income_cash: float = 0.0):
         """
         初始化计算器
         
         Args:
             operation_list: 交易操作列表字典
-            realtime_list: 实时价格字典
             user: 用户对象
             origin_cash: 本金
             income_cash: 收益现金
         """
         self.operation_list = operation_list
-        self.realtime_list = realtime_list
         self.user = user
         self.origin_cash = origin_cash
         self.income_cash = income_cash
@@ -53,9 +51,14 @@ class Caculator(object):
         to_return = {}
         stock_list = []
 
+        # 动态获取所有股票的实时价格（一次性获取，提升性能）
+        code_list = list(self.operation_list.keys())
+        realtime_price_list = query_realtime_price(code_list)
+
         # 个股指标
         for key in self.operation_list.keys():
-            single_target = self.__caculate_single_target(key)
+            single_real_time = realtime_price_list.get(key)
+            single_target = self.__caculate_single_target(key, single_real_time)
             stock_list.append(single_target)
 
         to_return["stocks"] = stock_list
@@ -66,15 +69,14 @@ class Caculator(object):
         return to_return
 
     def generate_dividend(self):
-
         hold_stocks = self.all_stocks(True)
 
         to_return = []
         bs.login()
         for single_code in hold_stocks:
-            name = self.__generate_dividend_single(single_code)
-            if len(name) > 0:
-                to_return.append(name)
+            code = self.__generate_dividend_single(single_code)
+            if code:
+                to_return.append(code)
 
         bs.logout()
 
@@ -144,7 +146,7 @@ class Caculator(object):
             code: 股票代码
             
         Returns:
-            str: 如果有更新返回股票名称，否则返回空字符串
+            str: 如果有更新返回股票代码，否则返回空字符串
         """
         if code is None:
             return ""
@@ -154,8 +156,6 @@ class Caculator(object):
             today = self._today
             update_count = 0
             single_operation_list = self.operation_list[code]
-            single_real_time = self.realtime_list[code]
-            name = single_real_time[0]
 
             # 获取已存在的分红操作记录
             exist_dv_operations = [
@@ -210,7 +210,7 @@ class Caculator(object):
             # 更新分红记录的持仓数量
             update_count -= self.__update_dividend_holdings(code)
 
-            return name if update_count > 0 else ""
+            return code if update_count > 0 else ""
             
         except Exception as e:
             logger.error(f"生成股票 {code} 分红信息失败: {e}")
@@ -244,7 +244,17 @@ class Caculator(object):
 
 
     # 计算个股指标
-    def __caculate_single_target(self, key):
+    def __caculate_single_target(self, key, single_real_time: Optional[List]):
+        """
+        计算单个股票的指标
+        
+        Args:
+            key: 股票代码
+            single_real_time: 实时价格数据 [名称, 现价, 涨跌额, 涨跌幅, 昨收]
+            
+        Returns:
+            Dict: 个股指标字典
+        """
         if key is None:
             return ""
         to_return = {}
@@ -256,7 +266,10 @@ class Caculator(object):
             to_return["isNew"] = stock_meta.isNew
 
         single_operation_list = self.operation_list[key]
-        single_real_time = self.realtime_list[key]
+        if not single_real_time:
+            logger.warning(f"无法获取股票 {key} 的实时价格")
+            # 使用默认值
+            single_real_time = ["未知", "0", 0, "0%", "0"]
 
         to_return["code"] = key
         to_return["name"] = single_real_time[0]  # 名称
