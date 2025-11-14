@@ -8,32 +8,37 @@ from typing import Dict, List, Optional
 import baostock as bs
 
 from .common import logger
-from .models import Operation, Info, StockMeta
+from .models import Operation
+from .stockMeta import StockMeta
 from .utils import _safe_float
+from django.contrib.auth.models import User
 
 # 常量定义
 OPERATION_TYPE_BUY = "BUY"
 OPERATION_TYPE_SELL = "SELL"
 OPERATION_TYPE_DIVIDEND = "DV"
-INFO_KEY_ORIGIN_CASH = "originCash"
-INFO_KEY_INCOME_CASH = "incomeCash"
 DIVIDEND_DATE_CHECK_RANGE = 5  # 分红日期检查范围（前后天数）
 
 
 class Caculator(object):
     """股票计算器类，用于计算股票相关指标"""
     
-    def __init__(self, operation_list: Dict, realtime_list: Dict):
+    def __init__(self, operation_list: Dict, realtime_list: Dict, user: User, origin_cash: float = 0.0, income_cash: float = 0.0):
         """
         初始化计算器
         
         Args:
             operation_list: 交易操作列表字典
             realtime_list: 实时价格字典
+            user: 用户对象
+            origin_cash: 本金
+            income_cash: 收益现金
         """
         self.operation_list = operation_list
         self.realtime_list = realtime_list
-        self.stockMeta_dict = {meta.code: meta for meta in StockMeta.objects.all()}
+        self.user = user
+        self.origin_cash = origin_cash
+        self.income_cash = income_cash
     
     @property
     def _today(self) -> datetime.date:
@@ -186,6 +191,7 @@ class Caculator(object):
                         # 如果该日期不在已有列表中,也不在前后指定天数范围内,且不晚于今天,则创建
                         if not self.__is_date_near_existing(dividend_date, date_set, today):
                             Operation.objects.create(
+                                user=self.user,
                                 date=dividend_date,
                                 code=code,
                                 operationType=OPERATION_TYPE_DIVIDEND,
@@ -212,7 +218,7 @@ class Caculator(object):
     
     def __update_dividend_holdings(self, code: str) -> int:
         """更新分红记录的持仓数量并删除无效记录"""
-        operations = Operation.objects.filter(code=code).order_by("date")
+        operations = Operation.objects.filter(user=self.user, code=code).order_by("date")
         current_hold = 0
         deleted_count = 0
         
@@ -244,7 +250,7 @@ class Caculator(object):
         to_return = {}
 
         # 带上股票的标签（优化：使用字典查找，O(1) 复杂度）
-        stock_meta = self.stockMeta_dict.get(key)
+        stock_meta = StockMeta().get_dict().get(key)
         if stock_meta:
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew
@@ -501,12 +507,9 @@ class Caculator(object):
         """
         to_return = {}
 
-        # 获取基础数据
-        origin_cash_set = Info.objects.filter(key=INFO_KEY_ORIGIN_CASH).first()
-        income_cash_set = Info.objects.filter(key=INFO_KEY_INCOME_CASH).first()
-        
-        origin_cash = float(origin_cash_set.value) if origin_cash_set else 0.0
-        income_cash = float(income_cash_set.value) if income_cash_set else 0.0
+        # 使用传入的资金数据（已在 Integrate 中获取）
+        origin_cash = self.origin_cash
+        income_cash = self.income_cash
 
         # 使用 sum() 简化累加
         current_offset = sum(target["offsetCurrent"] for target in single_target_list)

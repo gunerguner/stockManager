@@ -38,10 +38,20 @@ export default () => {
     setInitialized(true);
   }, []);
 
+  /**
+   * 重置股票数据状态
+   * 用于用户登出或重新登录时清空数据
+   */
+  const resetStockData = useCallback(() => {
+    setStock({} as API.StockData);
+    setInitialized(false);
+  }, []);
+
   return { 
     stock, 
     initialized,
     setStockData,
     fetchStockData,
+    resetStockData,
   };
 };

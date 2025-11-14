@@ -176,43 +176,22 @@ const requestInterceptor = (url: string, options: any) => {
 };
 
 /**
- * 响应拦截器：统一处理后端返回的message字段
+ * 响应拦截器：只拦截错误，显示错误通知
  * @note Umi 4 的响应拦截器接收的是 axios response 对象，需要取 data 字段
  */
 const responseInterceptor = (response: any) => {
   // Umi 4 中 response 是 axios response 对象，需要取 data 字段
   const data = response?.data || response;
   
-  // 如果响应中包含message字段，则显示通知
-  if (data && data.message) {
-    const { status, message } = data;
+  // 只处理错误情况（status === 0）
+  if (data && data.message && data.status === 0) {
+    const { message } = data;
     
-    // 根据status字段判断通知类型
-    if (status === 1) {
-      // 成功消息
-      notification.success({
-        message: '操作成功',
-        description: message,
-      });
-    } else if (status === 0) {
-      // 失败消息
-      notification.error({
-        message: '操作失败',
-        description: message,
-      });
-    } else if (status === 302) {
-      // 未登录等其他状态，使用info类型
-      notification.info({
-        message: '提示',
-        description: message,
-      });
-    } else {
-      // 其他状态默认使用info
-      notification.info({
-        message: '提示',
-        description: message,
-      });
-    }
+    // 显示错误通知
+    notification.error({
+      message: '操作失败',
+      description: message,
+    });
   }
   
   return response;

@@ -13,6 +13,7 @@ import { logout } from '@/services/api';
  */
 const AvatarDropdown: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
+  const { resetStockData } = useModel('stocks');
 
   /**
    * 处理用户登出
@@ -22,27 +23,29 @@ const AvatarDropdown: React.FC = () => {
     try {
       await logout();
       
-      // 清除用户状态
+      // 先清除用户状态
       if (setInitialState) {
         setInitialState((state) => ({ ...state, currentUser: undefined }));
       }
 
-      const { pathname } = history.location;
-      // 从 URL search 参数中获取 redirect
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirect = urlParams.get('redirect');
-      
-      // 如果不在登录页且没有重定向参数，则重定向到登录页
-      if (window.location.pathname !== '/login' && !redirect) {
+      // 重置股票数据状态，清空缓存数据
+      resetStockData();
+
+      // 等待状态更新传播完成后再跳转
+      // 使用 setTimeout 确保 React 状态更新已完成
+      setTimeout(() => {
+        const { pathname } = history.location;
+        
+        // 重定向到登录页
         history.replace({
           pathname: '/login',
           search: stringify({ redirect: pathname }),
         });
-      }
+      }, 50);
     } catch (error) {
       console.error('登出失败:', error);
     }
-  }, [setInitialState]);
+  }, [setInitialState, resetStockData]);
 
   /**
    * 导航到账户设置页

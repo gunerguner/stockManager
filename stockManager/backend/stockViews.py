@@ -20,12 +20,12 @@ from .common import (
 def show_stocks(request):
     """
     获取股票数据接口
-    返回所有股票的计算数据
+    返回当前用户的所有股票的计算数据
     """
     try:
         logger.info(f"show_stocks - 用户: {request.user.username}, IP: {get_client_ip(request)}")
         
-        stock_caculator = Integrate.caculator(request.user.username, True)
+        stock_caculator = Integrate.caculator(request.user, True)
         merged_data = stock_caculator.caculate_target()
         
         return json_response(status=STATUS_SUCCESS, data=merged_data)
@@ -47,7 +47,11 @@ def update_origin_cash(request):
         if cash is None:
             return json_response(status=STATUS_ERROR, message="参数cash不能为空")
         
-        Info.objects.filter(key="originCash").update(value=cash)
+        Info.objects.update_or_create(
+            user=request.user,
+            info_type=Info.InfoType.ORIGIN_CASH,
+            defaults={'value': str(cash)}
+        )
         logger.info(f"用户 {request.user.username} 更新本金: {cash}")
         
         return json_response(status=STATUS_SUCCESS, message="更新本金成功")
@@ -72,7 +76,11 @@ def update_income_cash(request):
         if income_cash is None:
             return json_response(status=STATUS_ERROR, message="参数incomeCash不能为空")
         
-        Info.objects.filter(key="incomeCash").update(value=income_cash)
+        Info.objects.update_or_create(
+            user=request.user,
+            info_type=Info.InfoType.INCOME_CASH,
+            defaults={'value': str(income_cash)}
+        )
         logger.info(f"用户 {request.user.username} 更新收益现金: {income_cash}")
         
         return json_response(status=STATUS_SUCCESS, message="更新收益现金成功")
@@ -93,7 +101,7 @@ def refresh_divident(request):
     try:
         logger.info(f"refresh_divident - 用户: {request.user.username}, IP: {get_client_ip(request)}")
         
-        stock_caculator = Integrate.caculator(request.user.username, False)
+        stock_caculator = Integrate.caculator(request.user, False)
         codes = stock_caculator.generate_dividend()
         
         return json_response(status=STATUS_SUCCESS, data=codes, message="刷新除权除息信息成功")

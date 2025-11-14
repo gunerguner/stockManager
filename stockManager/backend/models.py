@@ -1,40 +1,39 @@
-import datetime
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import User
 from django.db import models
-from django.utils import timezone
-
-# Create your models here.
+from django.utils.translation import gettext_lazy as _
 
 
 class Operation(models.Model):
+    """股票操作记录模型"""
+    
     class operationType(models.TextChoices):
         BUY = "BUY", _("买入")
         SELL = "SELL", _("卖出")
         Divident = "DV", _("除权除息")
 
-    code = models.CharField(max_length=200)
-    date = models.DateField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operations', verbose_name="用户")
+    code = models.CharField(max_length=200, verbose_name="股票代码")
+    date = models.DateField(verbose_name="交易日期")
     operationType = models.CharField(
-        max_length=4, choices=operationType.choices, default=operationType.BUY
+        max_length=4, 
+        choices=operationType.choices, 
+        default=operationType.BUY,
+        verbose_name="操作类型"
     )
-    price = models.FloatField(default=0)
-    count = models.IntegerField(default=0, blank=True)
-    fee = models.FloatField(default=0)
-    comment = models.CharField(max_length=200, blank=True)
-    cash = models.FloatField(default=0)  # 分红
-    stock = models.FloatField(default=0)  # 送股
-    reserve = models.FloatField(default=0)  # 派股
+    price = models.FloatField(default=0, verbose_name="价格")
+    count = models.IntegerField(default=0, blank=True, verbose_name="数量")
+    fee = models.FloatField(default=0, verbose_name="手续费")
+    comment = models.CharField(max_length=200, blank=True, verbose_name="备注")
+    cash = models.FloatField(default=0, verbose_name="分红")
+    stock = models.FloatField(default=0, verbose_name="送股")
+    reserve = models.FloatField(default=0, verbose_name="转增")
+
+    class Meta:
+        verbose_name = "股票操作记录"
+        verbose_name_plural = "股票操作记录"
 
     def __str__(self):
-        return (
-            self.code
-            + " "
-            + str(self.date)
-            + " "
-            + self.operationType
-            + " "
-            + str(self.count)
-        )
+        return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
 
     def to_dict(self):
         to_return = {}
@@ -62,14 +61,28 @@ class Operation(models.Model):
 
 
 class Info(models.Model):
-    key = models.CharField(max_length=200)
-    value = models.CharField(max_length=200, blank=True)
+    """用户资金信息模型"""
+    
+    class InfoType(models.TextChoices):
+        ORIGIN_CASH = "originCash", _("本金")
+        INCOME_CASH = "incomeCash", _("收益现金")
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='infos', verbose_name="用户")
+    info_type = models.CharField(max_length=20, choices=InfoType.choices, verbose_name="类型")
+    value = models.CharField(max_length=200, blank=True, verbose_name="值")
+
+    class Meta:
+        verbose_name = "用户资金信息"
+        verbose_name_plural = "用户资金信息"
+        unique_together = [['user', 'info_type']]
 
     def __str__(self):
-        return self.key + " : " + self.value
+        return f"{self.user.username} - {self.get_info_type_display()}: {self.value}"
 
 
 class StockMeta(models.Model):
+    """股票元数据模型（全局共享）"""
+    
     class stockType(models.TextChoices):
         SH60 = "SH60", _("沪市")
         SZ00 = "SZ00", _("深市")
@@ -79,14 +92,20 @@ class StockMeta(models.Model):
         CONV = "CONV", _("可转债")
         FUNDIN = "FUNDIN", _("场内基金")
         FUNDAB = "FUNDAB", _("分级基金")
-        
         OTHER = "OTHER", _("其它")
 
-    code = models.CharField(max_length=200)
-    isNew = models.BooleanField(default=False)
+    code = models.CharField(max_length=200, verbose_name="股票代码")
+    isNew = models.BooleanField(default=False, verbose_name="是否新股")
     stockType = models.CharField(
-        max_length=6, choices=stockType.choices, default=stockType.OTHER
+        max_length=6, 
+        choices=stockType.choices, 
+        default=stockType.OTHER,
+        verbose_name="股票类型"
     )
 
+    class Meta:
+        verbose_name = "股票元数据"
+        verbose_name_plural = "股票元数据"
+
     def __str__(self):
-        return self.code + "  " + self.stockType
+        return f"{self.code} - {self.get_stockType_display()}"
