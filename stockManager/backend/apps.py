@@ -6,4 +6,4 @@ class BackendConfig(AppConfig):
     
     def ready(self):
         """应用启动时执行，确保信号监听器被注册"""
-        import backend.stockMeta  # noqa: F401
+        import backend.services.stockMeta  # noqa: F401

@@ -1,17 +1,15 @@
 from django.urls import path
-
-from . import stockViews
-from . import userViews
+from .views import stock, user
 
 urlpatterns = [
     # 股票相关接口
-    path('', stockViews.show_stocks, name='index'),
-    path('divident', stockViews.refresh_divident, name='divident'),
-    path('updateOriginCash', stockViews.update_origin_cash, name='updateOriginCash'),
-    path('updateIncomeCash', stockViews.update_income_cash, name='updateIncomeCash'),
+    path('', stock.show_stocks, name='index'),
+    path('divident', stock.refresh_divident, name='divident'),
+    path('updateOriginCash', stock.update_origin_cash, name='updateOriginCash'),
+    path('updateIncomeCash', stock.update_income_cash, name='updateIncomeCash'),
     
     # 用户相关接口
-    path('currentUser', userViews.currentUser, name='currentUser'),
-    path('login', userViews.login, name='login'),
-    path('logout', userViews.logout, name='logout'),
+    path('currentUser', user.currentUser, name='currentUser'),
+    path('login', user.login, name='login'),
+    path('logout', user.logout, name='logout'),
 ]

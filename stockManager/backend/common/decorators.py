@@ -1,17 +1,14 @@
 """
-Django视图通用组件模块
-包含装饰器、日志配置、通用函数等可复用组件
+装饰器模块
+提供视图装饰器功能
 """
-from django.http import JsonResponse
-import logging
 import functools
-
-# 状态码常量
-STATUS_SUCCESS = 1  # 操作成功
-STATUS_ERROR = 0  # 操作失败
-STATUS_UNAUTHORIZED = 302  # 未登录/未授权
+from .constants import STATUS_ERROR, STATUS_UNAUTHORIZED
+from .responses import json_response
+from .utils import get_client_ip
 
 # 配置logger
+import logging
 logger = logging.getLogger(__name__)
 
 
@@ -28,73 +25,9 @@ def require_authentication(view_func):
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return JsonResponse({"status": STATUS_UNAUTHORIZED, "message": "未登录"})
+            return json_response(status=STATUS_UNAUTHORIZED, message="未登录")
         return view_func(request, *args, **kwargs)
     return wrapper
-
-def get_user_access_level(user):
-    """
-    获取用户访问权限级别
-    
-    Args:
-        user: Django User对象
-        
-    Returns:
-        str: 权限级别 - "admin"(超级管理员) / "staff"(员工) / ""(普通用户)
-    """
-    if user.is_superuser:
-        return "admin"
-    elif user.is_staff:
-        return "staff"
-    return ""
-
-
-def get_client_ip(request):
-    """
-    获取请求客户端的真实IP地址
-    支持代理服务器场景
-    
-    Args:
-        request: Django request对象
-        
-    Returns:
-        str: 客户端IP地址
-    """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        # 使用代理时获取真实IP（取第一个）
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        # 未使用代理时直接获取
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
-
-
-def json_response(status, message=None, data=None, **kwargs):
-    """
-    统一的JSON响应格式
-    
-    Args:
-        status: 响应状态码 (1: 成功, 0: 失败, 302: 未登录等)
-        message: 响应消息
-        data: 响应数据
-        **kwargs: 其他需要添加到响应中的字段
-        
-    Returns:
-        JsonResponse对象
-    """
-    response_data = {"status": status}
-    
-    if message is not None:
-        response_data["message"] = message
-        
-    if data is not None:
-        response_data["data"] = data
-        
-    # 添加其他自定义字段
-    response_data.update(kwargs)
-    
-    return JsonResponse(response_data, safe=False)
 
 
 def require_methods(methods):
@@ -153,3 +86,4 @@ def log_view_access(view_func):
             raise
             
     return wrapper
+

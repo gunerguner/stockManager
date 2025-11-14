@@ -4,7 +4,7 @@ from django.contrib import auth
 import json
 
 # 导入公共组件
-from .common import (
+from ..common import (
     STATUS_SUCCESS,
     STATUS_ERROR,
     logger,

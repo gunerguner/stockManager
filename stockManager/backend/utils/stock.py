@@ -1,16 +1,13 @@
 """
-工具函数模块
-提供股票数据查询、操作记录处理和分红信息生成等功能
+股票相关工具函数模块
+提供股票数据查询等功能
 """
-import datetime
-import re
 import urllib.request
-from typing import Dict, List, Optional
+import re
+from typing import Dict, List
 
-import baostock as bs
-
-from .common import logger
-from .models import Operation
+from ..common import logger
+from .operations import _safe_float
 
 # 常量定义
 STOCK_PRICE_API_URL = 'http://qt.gtimg.cn/q='
@@ -84,37 +81,10 @@ def query_realtime_price(code_list: List[str]) -> Dict[str, List]:
         return {}
 
 
-def format_operations(operation_list: List[Operation]) -> Dict[str, List[Operation]]:
-    """
-    格式化操作记录列表,按股票代码分组
-    
-    Args:
-        operation_list: 操作记录列表
-        
-    Returns:
-        Dict[str, List[Operation]]: 股票代码到操作记录列表的映射
-    """
-    result = {}
-    for operation in operation_list:
-        if operation.code not in result:
-            result[operation.code] = []
-        result[operation.code].append(operation)
-    
-    return result
-
-# ========== 私有辅助函数 ==========
-
-def _safe_float(value: str, default: float = 0.0) -> float:
-    """安全地将字符串转换为浮点数"""
-    try:
-        return float(value) if value else default
-    except (ValueError, TypeError):
-        return default
-
-
 def _calculate_offset_ratio(offset: float, base_price: float) -> str:
     """计算涨跌幅百分比"""
     if base_price == 0.0:
         return "0"
     ratio = (offset / base_price) * 100
     return f"{ratio:.2f}%"
+

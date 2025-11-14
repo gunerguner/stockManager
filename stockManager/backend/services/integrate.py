@@ -1,6 +1,6 @@
-from .caculator import Caculator
-from .models import Operation, Info
-from .utils import format_operations
+from .calculator import Caculator
+from ..models import Operation, Info
+from ..utils import format_operations
 
 
 class Integrate:
