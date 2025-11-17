@@ -1,7 +1,7 @@
 import { Table, Row, Col, Input, Form, App } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
-import { updateOriginCash, updateIncomeCash } from '@/services/api';
+import { updateIncomeCash } from '@/services/api';
 import { colorFromValue } from '@/utils';
 import './index.less';
 
@@ -104,43 +104,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
       title: '本金',
       dataIndex: 'originCash',
       render: (item: number) => {
-        return (
-          <Row>
-            <Col span={15}>
-              <div>{item?.toFixed(2)}</div>
-            </Col>
-            <Col>
-              <a
-                onClick={() => {
-                  modal.confirm({
-                    title: '编辑本金',
-                    content: (
-                      <Form
-                        className="form-container"
-                        form={form}
-                        layout="vertical"
-                        name="originCash"
-                      >
-                        <Form.Item name="cash" rules={[{ required: true, message: '请输入本金' }]}>
-                          <Input type="number" defaultValue={item} />
-                        </Form.Item>
-                      </Form>
-                    ),
-                    onOk: async () => {
-                      const { cash } = await form.validateFields();
-                      const response = await updateOriginCash(cash);
-                      if (props.completion) {
-                        props.completion(response.status === 1);
-                      }
-                    },
-                  });
-                }}
-              >
-                编辑
-              </a>
-            </Col>
-          </Row>
-        );
+        return <div>{item?.toFixed(2)}</div>;
       },
     },
     {

@@ -115,7 +115,7 @@
 
 
 1.  安装Python3，pip，git。
-2.  使用pip安装django，baoStock，pandas，django-cors-headers，django-extensions，django-werkzeug-debugger-runserver 等模块。
+2.  使用pip安装django，baoStock，pandas，django-cors-headers，django-extensions，django-werkzeug-debugger-runserver,whitenoise 等模块。
 3.  依次安装node，pnpm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `pnpm install` 前端部分的依赖。

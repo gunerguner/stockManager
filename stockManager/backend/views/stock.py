@@ -36,35 +36,6 @@ def show_stocks(request):
 
 @require_authentication
 @require_methods(['POST'])
-def update_origin_cash(request):
-    """
-    更新本金接口
-    """
-    try:
-        request_data = json.loads(request.body)
-        cash = request_data.get("cash")
-        
-        if cash is None:
-            return json_response(status=STATUS_ERROR, message="参数cash不能为空")
-        
-        Info.objects.update_or_create(
-            user=request.user,
-            info_type=Info.InfoType.ORIGIN_CASH,
-            defaults={'value': str(cash)}
-        )
-        logger.info(f"用户 {request.user.username} 更新本金: {cash}")
-        
-        return json_response(status=STATUS_SUCCESS, message="更新本金成功")
-    except json.JSONDecodeError:
-        logger.error("更新本金请求JSON解析失败")
-        return json_response(status=STATUS_ERROR, message="请求数据格式错误")
-    except Exception as e:
-        logger.error(f"更新本金失败: {str(e)}", exc_info=True)
-        return json_response(status=STATUS_ERROR, message="更新本金失败")
-
-
-@require_authentication
-@require_methods(['POST'])
 def update_income_cash(request):
     """
     更新收益现金接口（逆回购等收入）
@@ -108,3 +79,5 @@ def refresh_divident(request):
     except Exception as e:
         logger.error(f"刷新除权除息信息失败: {str(e)}", exc_info=True)
         return json_response(status=STATUS_ERROR, message="刷新除权除息信息失败")
+
+

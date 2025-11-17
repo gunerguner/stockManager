@@ -1,5 +1,9 @@
+from decimal import Decimal
+
+from django.db.models import Sum
+
 from .calculator import Caculator
-from ..models import Operation, Info
+from ..models import Operation, Info, CashFlow
 from ..utils import format_operations
 
 
@@ -21,16 +25,17 @@ class Integrate:
         Returns:
             tuple: (origin_cash, income_cash) 本金和收益现金
         """
-        origin_cash_info = Info.objects.filter(
-            user=user,
-            info_type=Info.InfoType.ORIGIN_CASH
-        ).first()
+        # 从 CashFlow 表计算本金（所有金额的累计）
+        total_amount = CashFlow.objects.filter(user=user).aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        origin_cash = float(total_amount)
+        
+        # 从 Info 表获取收益现金（保持不变）
         income_cash_info = Info.objects.filter(
             user=user,
             info_type=Info.InfoType.INCOME_CASH
         ).first()
-        
-        origin_cash = float(origin_cash_info.value) if origin_cash_info else 0.0
         income_cash = float(income_cash_info.value) if income_cash_info else 0.0
         
         return origin_cash, income_cash

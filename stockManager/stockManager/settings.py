@@ -64,6 +64,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # 必须在 CommonMiddleware 之前
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -184,14 +185,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# 使用 Path 替代 os.path.join
-# 生产环境：收集所有静态文件到这个目录
+# 收集所有静态文件到这个目录（运行 collectstatic 后）
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# 开发环境：额外的静态文件目录
+# 开发环境：额外的静态文件目录（Django 会自动从这里查找）
 STATICFILES_DIRS = [
     BASE_DIR / "front" / "dist",
 ]
+
+# WhiteNoise 配置：使用 WhiteNoise 中间件提供静态文件
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # 使用 Path 替代 os.path.join 
 # 生产环境：使用 /var/log/stockmanager/django/

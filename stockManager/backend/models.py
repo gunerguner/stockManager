@@ -80,6 +80,35 @@ class Info(models.Model):
         return f"{self.user.username} - {self.get_info_type_display()}: {self.value}"
 
 
+class CashFlow(models.Model):
+    """出入金记录模型（金额正数为入金，负数为出金）"""
+    
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='cash_flows', 
+        verbose_name="用户"
+    )
+    transaction_date = models.DateTimeField(verbose_name="交易时间")
+    amount = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        verbose_name="金额"
+    )
+    
+    class Meta:
+        verbose_name = "出入金记录"
+        verbose_name_plural = "出入金记录"
+        ordering = ['-transaction_date']
+        indexes = [
+            models.Index(fields=['user', '-transaction_date']),
+        ]
+    
+    def __str__(self):
+        transaction_type = "入金" if self.amount >= 0 else "出金"
+        return f"{self.user.username} - {transaction_type} {abs(self.amount)} ({self.transaction_date})"
+
+
 class StockMeta(models.Model):
     """股票元数据模型（全局共享）"""
     
