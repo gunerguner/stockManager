@@ -54,11 +54,6 @@ export async function getStockList(options?: RequestOptions) {
   return getRequest<API.StockResult>('/api/', options);
 }
 
-/** 更新原始资金 POST /api/updateOriginCash */
-export async function updateOriginCash(cash: number, options?: RequestOptions) {
-  return postRequest<API.BaseResult>('/api/updateOriginCash', { cash }, options);
-}
-
 /** 更新收益资金 POST /api/updateIncomeCash */
 export async function updateIncomeCash(incomeCash: number, options?: RequestOptions) {
   return postRequest<API.BaseResult>('/api/updateIncomeCash', { incomeCash }, options);
