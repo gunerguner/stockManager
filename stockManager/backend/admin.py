@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 
 from .models import Operation, Info, StockMeta, CashFlow
 
@@ -57,9 +58,21 @@ class OperationAdmin(admin.ModelAdmin):
         return fieldsets
     
     def save_model(self, request, obj, form, change):
-        """创建记录时自动关联当前用户"""
+        """创建记录时自动关联当前用户，并检查StockMeta中是否存在该股票代码"""
         if not change:  # 新建时
             obj.user = request.user
+        
+        # 检查StockMeta中是否存在该股票代码
+        if obj.code:
+            stock_meta_exists = StockMeta.objects.filter(code=obj.code).exists()
+            if not stock_meta_exists:
+                # 使用warning级别显示提醒，不会阻止保存
+                messages.warning(
+                    request,
+                    f'⚠️ 提醒：股票代码 "{obj.code}" 在股票元数据（StockMeta）中不存在。'
+                    f'建议先在"股票元数据"中添加该股票的元信息，以便更好地管理。'
+                )
+        
         super().save_model(request, obj, form, change)
     
     def has_change_permission(self, request, obj=None):
