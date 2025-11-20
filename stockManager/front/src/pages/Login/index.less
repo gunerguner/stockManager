@@ -1,5 +1,3 @@
-@screen-md-min: 768px;
-@screen-sm: 576px;
 @heading-color: rgba(0, 0, 0, 0.85);
 @text-color-secondary: rgba(0, 0, 0, 0.45);
 @font-size-base: 14px;
@@ -29,7 +27,8 @@
   padding: 32px 0;
 }
 
-@media (min-width: @screen-md-min) {
+// 使用 @screen-md + 1px
+@media (min-width: 769px) {
   .container {
     background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
     background-repeat: no-repeat;
@@ -79,7 +78,8 @@
 .main {
   width: 328px;
   margin: 0 auto;
-  @media screen and (max-width: @screen-sm) {
+  // 使用 antd 默认变量 @screen-md (768px)
+  @media screen and (max-width: @screen-md) {
     width: 95%;
     max-width: 328px;
   }

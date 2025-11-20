@@ -5,3 +5,13 @@
 .operation-list-row {
   margin-top: 20px;
 }
+
+// 移动端 checkbox 横向排列优化 - 使用 antd 默认变量 @screen-md (768px)
+@media (max-width: @screen-md) {
+  .ant-checkbox-wrapper {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

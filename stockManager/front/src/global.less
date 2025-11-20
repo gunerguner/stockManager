@@ -32,9 +32,7 @@ ol {
 
 // ==================== 响应式表格样式 ====================
 
-@screen-xs: 480px;
-
-@media (max-width: @screen-xs) {
+@media (max-width: @screen-md) {
   .ant-table {
     width: 100%;
     overflow-x: auto;
@@ -50,5 +48,34 @@ ol {
         }
       }
     }
+  }
+}
+
+// ==================== 移动端页面布局优化 ====================
+
+// 减少移动端页面容器的边距
+@media (max-width: @screen-md) {
+  // Ant Design Pro 页面容器
+  .ant-pro-layout .ant-pro-page-container,
+  .ant-pro-layout .ant-pro-page-container-children-content {
+    padding: 8px;
+  }
+  
+  // Ant Design Layout 内容区域
+  .ant-layout .ant-layout-content,
+  .ant-layout-content {
+    padding: 8px;
+  }
+  
+  // ProCard 容器 - 移除移动端的左右边距
+  .ant-pro-card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  // ProCard 在页面容器内的边距调整
+  .ant-pro-page-container .ant-pro-card {
+    margin-left: 0;
+    margin-right: 0;
   }
 }

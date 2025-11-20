@@ -1,6 +1,7 @@
 import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { colorFromValue } from '@/utils';
 import './index.less';
 
@@ -13,6 +14,7 @@ export type OperationListProps = {
 export const OperationList: React.FC<OperationListProps> = (props) => {
   // 维护展开行的状态
   const [expandedRowKeys, setExpandedRowKeys] = useState<readonly React.Key[]>([]);
+  const isMobile = useIsMobile();
 
   /**
    * 判断某行是否应该被隐藏
@@ -101,34 +103,36 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
       columns={columnsOperation}
       size="small"
       bordered
-      tableLayout="fixed"
+      tableLayout="auto"
       dataSource={record.operationList}
       pagination={false}
+      scroll={isMobile ? { x: 'max-content' } : undefined}
     />
   );
 
   /**
    * 股票列表列定义
+   * 移动端使用自适应布局，通过 CSS 控制样式
    */
-  const columns: ColumnsType<API.Stock> = [
-    {
-      title: '名称',
-      dataIndex: 'name',
-      width: 120,
-      fixed: 'left',
-      render: (_: string, record: API.Stock) => (
-        <Tooltip title={record.code}>
-          <a
-            className="stock-name-link"
-            target="_blank"
-            href={`https://xueqiu.com/S/${record.code}`}
-            rel="noreferrer"
-          >
-            {record.name}
-          </a>
-        </Tooltip>
-      ),
-    },
+  const columns: ColumnsType<API.Stock> = React.useMemo(() => {
+    return [
+      {
+        title: '名称',
+        dataIndex: 'name',
+        fixed: isMobile ? false : 'left',
+        render: (_: string, record: API.Stock) => (
+          <Tooltip title={record.code}>
+            <a
+              className="stock-name-link"
+              target="_blank"
+              href={`https://xueqiu.com/S/${record.code}`}
+              rel="noreferrer"
+            >
+              {record.name}
+            </a>
+          </Tooltip>
+        ),
+      },
     {
       title: '现价',
       dataIndex: 'priceNow',
@@ -187,29 +191,35 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
         );
       },
     },
-    {
-      title: '累计盈亏',
-      dataIndex: 'offsetTotal',
-      sorter: (a: API.Stock, b: API.Stock) => a.offsetTotal - b.offsetTotal,
-      render: (item: number) => (
-        <div style={{ color: colorFromValue(item) }}>{item?.toFixed(2)}</div>
-      ),
-    },
-  ];
+      {
+        title: '累计盈亏',
+        dataIndex: 'offsetTotal',
+        sorter: (a: API.Stock, b: API.Stock) => a.offsetTotal - b.offsetTotal,
+        render: (item: number) => (
+          <div style={{ color: colorFromValue(item) }}>{item?.toFixed(2)}</div>
+        ),
+      },
+    ];
+  }, [isMobile]);
 
   return (
-    <Table
-      rowKey="code"
-      columns={columns}
-      dataSource={props.data.stocks}
-      bordered
-      pagination={false}
-      rowClassName={rowClassName}
-      expandable={{
-        expandedRowRender,
-        expandedRowKeys,
-        onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
-      }}
-    />
+    <div className="operation-list-wrapper">
+      <Table
+        rowKey="code"
+        columns={columns}
+        dataSource={props.data.stocks}
+        bordered
+        pagination={false}
+        rowClassName={rowClassName}
+        expandable={{
+          expandedRowRender,
+          expandedRowKeys,
+          onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
+        }}
+        scroll={isMobile ? { x: 'max-content' } : undefined}
+        size={isMobile ? 'small' : 'middle'}
+        tableLayout="auto"
+      />
+    </div>
   );
 };

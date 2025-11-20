@@ -1,6 +1,7 @@
 import { Table } from 'antd';
 import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import './index.less';
 
 interface CostListModel {
@@ -17,6 +18,7 @@ export type CostListProps = {
 
 export const CostList: React.FC<CostListProps> = (props) => {
   const [costList, setCostList] = useState<CostListModel[]>([]);
+  const isMobile = useIsMobile();
 
   /**
    * 初始化成本统计数据
@@ -80,26 +82,32 @@ export const CostList: React.FC<CostListProps> = (props) => {
     initializeCost();
   }, [initializeCost]);
 
-  const columns: ColumnsType<CostListModel> = [
-    {
-      title: '年份',
-      dataIndex: 'id',
-      render: (item: string) => <strong>{item}</strong>,
-    },
-    {
-      title: '普通交易次数',
-      dataIndex: 'normalTradeCount',
-    },
-    {
-      title: '可转债交易次数',
-      dataIndex: 'convTradeCount',
-    },
-    {
-      title: '费用',
-      dataIndex: 'fee',
-      render: (item: number) => <div>{item?.toFixed(2)}</div>,
-    },
-  ];
+  /**
+   * 列配置
+   * 移动端使用更紧凑的布局和简短的标题，宽度由 CSS 控制
+   */
+  const columns: ColumnsType<CostListModel> = React.useMemo(() => {
+    return [
+      {
+        title: '年份',
+        dataIndex: 'id',
+        render: (item: string) => <strong>{item}</strong>,
+      },
+      {
+        title: isMobile ? '普通' : '普通交易次数',
+        dataIndex: 'normalTradeCount',
+      },
+      {
+        title: isMobile ? '转债' : '可转债交易次数',
+        dataIndex: 'convTradeCount',
+      },
+      {
+        title: '费用',
+        dataIndex: 'fee',
+        render: (item: number) => <div>{item?.toFixed(2)}</div>,
+      },
+    ];
+  }, [isMobile]);
 
   /**
    * 展开行渲染函数（显示月份明细）
@@ -110,21 +118,27 @@ export const CostList: React.FC<CostListProps> = (props) => {
       columns={columns}
       bordered
       size="small"
-      tableLayout="fixed"
+      tableLayout="auto"
       dataSource={record.subList}
       pagination={false}
       showHeader={false}
+      scroll={isMobile ? { x: 'max-content' } : undefined}
     />
   );
 
   return (
-    <Table
-      rowKey="id"
-      columns={columns}
-      dataSource={costList}
-      bordered
-      pagination={false}
-      expandable={{ expandedRowRender }}
-    />
+    <div className="cost-list-wrapper">
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={costList}
+        bordered
+        pagination={false}
+        expandable={{ expandedRowRender }}
+        scroll={isMobile ? { x: 'max-content' } : undefined}
+        size={isMobile ? 'small' : 'middle'}
+        tableLayout="auto"
+      />
+    </div>
   );
 };

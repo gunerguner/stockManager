@@ -1,7 +1,9 @@
 import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect, useCallback } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { colorFromValue } from '@/utils';
+import './index.less';
 
 interface AnalysisModel {
   type: string;
@@ -26,6 +28,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props) => {
   const [analysisList, setAnalysisList] = useState<AnalysisModel[]>([]);
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [totalLoss, setTotalLoss] = useState<number>(0);
+  const isMobile = useIsMobile();
 
   /**
    * 初始化分析数据
@@ -125,53 +128,70 @@ export const AnalysisList: React.FC<AnalysisListProps> = (props) => {
     initializeAnalysis();
   }, [initializeAnalysis]);
 
-  const columns: ColumnsType<AnalysisModel> = [
-    {
-      title: '类型',
-      dataIndex: 'type',
-      render: (item: string) => <strong>{item}</strong>,
-    },
-    {
-      title: '数量',
-      dataIndex: 'count',
-    },
-    {
-      title: '获利',
-      dataIndex: 'profit',
-      render: (item: number) => {
-        const ratio = `${((item / totalProfit) * 100).toFixed(2)}%`;
-        return (
-          <Tooltip title={ratio} color="red">
-            <div style={{ color: 'red' }}>{item.toFixed(2)}</div>
-          </Tooltip>
-        );
+  /**
+   * 列配置
+   * 使用自适应布局，通过 CSS 控制移动端样式
+   */
+  const columns: ColumnsType<AnalysisModel> = React.useMemo(() => {
+    return [
+      {
+        title: '类型',
+        dataIndex: 'type',
+        render: (item: string) => <strong>{item}</strong>,
       },
-      sorter: (a, b) => a.profit - b.profit,
-    },
-    {
-      title: '亏损',
-      dataIndex: 'loss',
-      render: (item: number) => {
-        const ratio = `${((item / totalLoss) * 100).toFixed(2)}%`;
-        return (
-          <Tooltip title={ratio} color="green">
-            <div style={{ color: 'green' }}>{item.toFixed(2)}</div>
-          </Tooltip>
-        );
+      {
+        title: '数量',
+        dataIndex: 'count',
       },
-      sorter: (a, b) => a.loss - b.loss,
-    },
-    {
-      title: '净收益',
-      dataIndex: 'netIncome',
-      render: (item: number) => (
-        <div style={{ color: colorFromValue(item) }}>{item.toFixed(2)}</div>
-      ),
-      sorter: (a, b) => a.netIncome - b.netIncome,
-    },
-  ];
+      {
+        title: '获利',
+        dataIndex: 'profit',
+        render: (item: number) => {
+          const ratio = `${((item / totalProfit) * 100).toFixed(2)}%`;
+          return (
+            <Tooltip title={ratio} color="red">
+              <div style={{ color: 'red' }}>{item.toFixed(2)}</div>
+            </Tooltip>
+          );
+        },
+        sorter: (a, b) => a.profit - b.profit,
+      },
+      {
+        title: '亏损',
+        dataIndex: 'loss',
+        render: (item: number) => {
+          const ratio = `${((item / totalLoss) * 100).toFixed(2)}%`;
+          return (
+            <Tooltip title={ratio} color="green">
+              <div style={{ color: 'green' }}>{item.toFixed(2)}</div>
+            </Tooltip>
+          );
+        },
+        sorter: (a, b) => a.loss - b.loss,
+      },
+      {
+        title: '净收益',
+        dataIndex: 'netIncome',
+        render: (item: number) => (
+          <div style={{ color: colorFromValue(item) }}>{item.toFixed(2)}</div>
+        ),
+        sorter: (a, b) => a.netIncome - b.netIncome,
+      },
+    ];
+  }, [totalProfit, totalLoss]);
 
   return (
-    <Table rowKey="type" columns={columns} dataSource={analysisList} bordered pagination={false} />
+    <div className="analysis-list-wrapper">
+      <Table
+        rowKey="type"
+        columns={columns}
+        dataSource={analysisList}
+        bordered
+        pagination={false}
+        scroll={isMobile ? { x: 'max-content' } : undefined}
+        size={isMobile ? 'small' : 'middle'}
+        tableLayout="auto"
+      />
+    </div>
   );
 };

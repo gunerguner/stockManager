@@ -42,9 +42,11 @@ const TableList: React.FC = () => {
       <FloatButton.BackTop />
       <ProCard direction="column" ghost gutter={[0, 8]}>
         {/* 整体数据面板 */}
-        <ProCard colSpan={24}>
-          <OverallBoard data={stock.overall} completion={handleOverallModifyCompletion} />
-        </ProCard>
+        {stock.overall && (
+          <ProCard colSpan={24}>
+            <OverallBoard data={stock.overall} completion={handleOverallModifyCompletion} />
+          </ProCard>
+        )}
 
         {/* 操作列表面板 */}
         <ProCard colSpan={24}>
@@ -54,12 +56,12 @@ const TableList: React.FC = () => {
                 刷新
               </Button>
             </Col>
-            <Col xs={24} sm={10} md={4} offset={0} lg={{ offset: 15 }}>
+            <Col xs={12} sm={10} md={4} offset={0} lg={{ offset: 15 }}>
               <Checkbox checked={showAll} onChange={(e) => handleShowAllChange(e.target.checked)}>
                 显示市值为零的股票
               </Checkbox>
             </Col>
-            <Col xs={24} sm={10} md={3}>
+            <Col xs={12} sm={10} md={3}>
               <Checkbox
                 checked={showConv}
                 onChange={(e) => handleShowConvChange(e.target.checked)}
