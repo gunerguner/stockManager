@@ -4,8 +4,25 @@ import { history } from '@umijs/max';
 
 const loginPath = '/login';
 
+// StockData 的默认初始值，确保 overall 和 stocks 始终存在
+const defaultStockData: API.StockData = {
+  stocks: [],
+  overall: {
+    offsetCurrent: 0,
+    offsetTotal: 0,
+    totalValue: 0,
+    offsetCurrentRatio: '0%',
+    offsetToday: 0,
+    totalCash: 0,
+    incomeCash: 0,
+    originCash: 0,
+    totalAsset: 0,
+    totalCost: 0,
+  },
+};
+
 export default () => {
-  const [stock, setStock] = useState({} as API.StockData);
+  const [stock, setStock] = useState<API.StockData>(defaultStockData);
   const [initialized, setInitialized] = useState(false);
 
   /**
@@ -43,7 +60,7 @@ export default () => {
    * 用于用户登出或重新登录时清空数据
    */
   const resetStockData = useCallback(() => {
-    setStock({} as API.StockData);
+    setStock(defaultStockData);
     setInitialized(false);
   }, []);
 

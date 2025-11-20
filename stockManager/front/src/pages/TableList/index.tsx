@@ -42,11 +42,9 @@ const TableList: React.FC = () => {
       <FloatButton.BackTop />
       <ProCard direction="column" ghost gutter={[0, 8]}>
         {/* 整体数据面板 */}
-        {stock.overall && (
-          <ProCard colSpan={24}>
-            <OverallBoard data={stock.overall} completion={handleOverallModifyCompletion} />
-          </ProCard>
-        )}
+        <ProCard colSpan={24}>
+          <OverallBoard data={stock.overall} completion={handleOverallModifyCompletion} />
+        </ProCard>
 
         {/* 操作列表面板 */}
         <ProCard colSpan={24}>
@@ -71,6 +69,7 @@ const TableList: React.FC = () => {
             </Col>
           </Row>
 
+          {/* 操作列表 */}
           <Row className="operation-list-row">
             <Col span={24}>
               <OperationList showAll={showAll} showConv={showConv} data={stock} />
