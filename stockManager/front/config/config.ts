@@ -86,7 +86,7 @@ export default defineConfig({
    */
   mfsu: {
     strategy: 'normal',
-    esbuild: true,
+    esbuild: true
   },
   
   /**
@@ -120,6 +120,10 @@ export default defineConfig({
    */
   alias: {
     querystring: require.resolve('querystring-es3'),
+    // 生产环境强制使用 CommonJS 版本，避免 ES 模块解析问题
+    ...(isProduction && {
+      'chinese-days': require.resolve('chinese-days/dist/index.min.js'),
+    }),
   },
   
   /**
@@ -133,6 +137,7 @@ export default defineConfig({
         contextRegExp: /dayjs$/,
       },
     ]);
+    
     
     // 生产环境代码分割优化
     if (isProduction) {

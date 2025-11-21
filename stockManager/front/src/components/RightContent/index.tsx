@@ -3,7 +3,9 @@ import React, { useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import Avatar from './AvatarDropdown';
 import ThemeSwitch from './ThemeSwitch';
+import TradingTime from './TradingTime';
 import { getEnv } from '@/utils';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './index.less';
 
 
@@ -20,6 +22,7 @@ const ENV_TAG_COLORS = {
  */
 const RightContent: React.FC = () => {
   const { initialState } = useModel('@@initialState');
+  const isMobile = useIsMobile();
 
   // 计算样式类名 - 根据 navTheme 判断是否使用暗色样式
   const className = useMemo(() => {
@@ -45,10 +48,12 @@ const RightContent: React.FC = () => {
   const env = getEnv();
   
   return (
-    <Space className={className} size={0} align="center">
+    <Space className={className} size={isMobile ? 4 : 0} align="center" wrap={isMobile}>
+      <TradingTime />
       <ThemeSwitch />
       <Avatar />
-      {env && env in ENV_TAG_COLORS && (
+      {/* 移动端隐藏环境标签，节省空间 */}
+      {!isMobile && env && env in ENV_TAG_COLORS && (
         <Tag color={ENV_TAG_COLORS[env as keyof typeof ENV_TAG_COLORS]}>
           {env}
         </Tag>
