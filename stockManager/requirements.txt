@@ -1,0 +1,15 @@
+# Django 核心框架
+Django>=5.2.7,<6.0.0
+
+# 数据获取和处理
+baostock>=0.8.9
+pandas
+
+# Django 扩展插件
+django-cors-headers
+django-extensions
+django-werkzeug-debugger-runserver
+
+# 静态文件服务
+whitenoise
+

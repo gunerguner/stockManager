@@ -40,14 +40,14 @@ const TableList: React.FC = () => {
   return (
     <>
       <FloatButton.BackTop />
-      <ProCard direction="column" ghost gutter={[0, 8]}>
+      <div className="table-list-container">
         {/* 整体数据面板 */}
-        <ProCard colSpan={24}>
+        <ProCard>
           <OverallBoard data={stock.overall} completion={handleOverallModifyCompletion} />
         </ProCard>
 
-        {/* 操作列表面板 */}
-        <ProCard colSpan={24}>
+        {/* 筛选控制面板 */}
+        <ProCard>
           <Row align="middle" gutter={[16, 16]}>
             <Col xs={24} sm={4} md={2}>
               <Button onClick={fetchStockData} icon={<ReloadOutlined />} block>
@@ -68,15 +68,13 @@ const TableList: React.FC = () => {
               </Checkbox>
             </Col>
           </Row>
-
-          {/* 操作列表 */}
-          <Row className="operation-list-row">
-            <Col span={24}>
-              <OperationList showAll={showAll} showConv={showConv} data={stock} />
-            </Col>
-          </Row>
         </ProCard>
-      </ProCard>
+
+        {/* 操作列表面板 */}
+        <ProCard>
+          <OperationList showAll={showAll} showConv={showConv} data={stock} />
+        </ProCard>
+      </div>
     </>
   );
 };

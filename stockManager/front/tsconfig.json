@@ -9,15 +9,20 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "strict": true,
     "types": [],
+    "isolatedModules": true,
+    "incremental": true,
     "paths": {
       "@/*": ["./src/*"],
       "@@/*": ["./src/.umi/*"]
@@ -30,8 +35,7 @@
     "config/**/*",
     ".eslintrc.js",
     ".stylelintrc.js",
-    ".prettierrc.js",
-    "mock/*"
+    ".prettierrc.js"
   ],
   "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack"]
 }

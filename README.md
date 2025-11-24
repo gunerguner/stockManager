@@ -109,19 +109,18 @@
 
 
 
-
 ### 搭建方式
 
 
 
 1.  安装Python3，pip，git。
-2.  使用pip安装django，baoStock，pandas，django-cors-headers，django-extensions，django-werkzeug-debugger-runserver，whitenoise 等模块。
-3.  依次安装node，pnpm等前端依赖。
+2.  使用pip安装依赖模块（已有 requirements.txt）。
+3.  依次安装node(版本>=20)，pnpm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `pnpm install` 前端部分的依赖。
 6.  在front目录，`pnpm run build` 生成目标文件。
 7.  在主目录下`python3 manage.py makemigrations`，`python3 manage.py migrate` 生成数据库（或者直接copy数据库文件）。
-8.  在主目录下`pytho3 manage.py createsuperuser`生成管理密码。
+8.  在主目录下`python3 manage.py createsuperuser`生成管理密码。
 9.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
 10.  在主目录下，`python3 manage.py runserver`。 
 
