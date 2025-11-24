@@ -1,6 +1,6 @@
 {
   "name": "stock-manager",
-  "version": "0.7.5",
+  "version": "0.7.8",
   "private": true,
   "description": "Stock Manager",
   "scripts": {

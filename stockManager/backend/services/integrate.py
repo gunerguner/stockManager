@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Dict, ClassVar
 
 from django.db.models import Sum
 
@@ -12,7 +13,8 @@ class Integrate:
     集成类，用于管理和缓存 Caculator 实例
     """
 
-    caculator_map = {}
+    # 类变量：用户 ID 到 Caculator 实例的映射
+    caculator_map: ClassVar[Dict[int, Caculator]] = {}
 
     @classmethod
     def _get_user_cash_info(cls, user):

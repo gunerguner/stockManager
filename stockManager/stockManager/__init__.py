@@ -1,4 +1,4 @@
-__version__ = '0.7.5'
+__version__ = '0.7.8'
 
 def get_version():
     """获取版本号字符串"""

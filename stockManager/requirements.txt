@@ -3,7 +3,10 @@ Django>=5.2.7,<6.0.0
 
 # 数据获取和处理
 baostock>=0.8.9
-pandas
+numpy>=1.26.0
+pandas>=2.2.0
+exchange_calendars
+pytz
 
 # Django 扩展插件
 django-cors-headers

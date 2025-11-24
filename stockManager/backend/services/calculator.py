@@ -10,7 +10,8 @@ import baostock as bs
 from ..common import logger
 from ..models import Operation
 from .stockMeta import StockMeta
-from ..utils import _safe_float, query_realtime_price
+from ..utils import _safe_float
+from .realtimePrice import RealtimePrice
 from django.contrib.auth.models import User
 
 # 常量定义
@@ -53,7 +54,7 @@ class Caculator(object):
 
         # 动态获取所有股票的实时价格（一次性获取，提升性能）
         code_list = list(self.operation_list.keys())
-        realtime_price_list = query_realtime_price(code_list)
+        realtime_price_list = RealtimePrice.query(code_list)
 
         # 个股指标
         for key in self.operation_list.keys():
@@ -260,7 +261,7 @@ class Caculator(object):
         to_return = {}
 
         # 带上股票的标签（优化：使用字典查找，O(1) 复杂度）
-        stock_meta = StockMeta().get_dict().get(key)
+        stock_meta = StockMeta.get_dict().get(key)
         if stock_meta:
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew

@@ -4,9 +4,11 @@
 import os
 import sys
 
+# 在导入 Django 之前禁用 Watchman，避免超时错误
+os.environ['DJANGO_USE_WATCHMAN'] = 'false'
+
 
 def main():
-    os.environ.setdefault('DJANGO_USE_WATCHMAN', 'false')
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stockManager.settings')
     try:
         from django.core.management import execute_from_command_line
