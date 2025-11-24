@@ -6,6 +6,7 @@ import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';
 import { login } from '@/services/api';
+import { RESPONSE_STATUS } from '@/utils/constants';
 import styles from './index.less';
 
 interface LoginMessageProps {
@@ -82,7 +83,7 @@ const Login: React.FC = () => {
     setSubmitting(true);
     try {
       const msg = await login({ ...values });
-      if (msg.status === 1) {
+      if (msg.status === RESPONSE_STATUS.SUCCESS) {
         message.success('登录成功！');
         // 重置股票数据状态，确保重新登录后能刷新数据
         resetStockData();
@@ -134,7 +135,7 @@ const Login: React.FC = () => {
                 handleSubmit(values as API.LoginParams);
               }}
             >
-              {userLoginState?.status === 0 && <LoginMessage content="账户或密码错误" />}
+              {userLoginState?.status === RESPONSE_STATUS.ERROR && <LoginMessage content="账户或密码错误" />}
               <ProFormText
                 name="username"
                 fieldProps={{

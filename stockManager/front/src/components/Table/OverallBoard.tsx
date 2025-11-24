@@ -4,6 +4,7 @@ import { UpOutlined, DownOutlined } from '@ant-design/icons';
 import { updateIncomeCash } from '@/services/api';
 import { colorFromValue } from '@/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { RESPONSE_STATUS } from '@/utils/constants';
 import './index.less';
 
 export type OverallBoardProps = {
@@ -95,7 +96,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
         const { incomeCash } = await form.validateFields();
         const response = await updateIncomeCash(incomeCash);
         if (props.completion) {
-          props.completion(response.status === 1);
+          props.completion(response.status === RESPONSE_STATUS.SUCCESS);
         }
       },
     });

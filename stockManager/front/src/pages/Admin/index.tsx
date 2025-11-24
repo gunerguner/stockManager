@@ -4,6 +4,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import ProCard from '@ant-design/pro-card';
 import { history } from '@umijs/max';
 import { updateDividend } from '../../services/api';
+import { RESPONSE_STATUS } from '@/utils/constants';
 
 /**
  * 管理员页面
@@ -25,7 +26,7 @@ const Admin: React.FC = () => {
           setDividendLoading(true);
           const response = await updateDividend();
 
-          if (response.status === 1 && response.data) {
+          if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
             const hasUpdates = response.data.length > 0;
             const modalTitle = hasUpdates ? '有更新股票' : '无更新股票';
 
@@ -39,7 +40,7 @@ const Admin: React.FC = () => {
                 </>
               ),
             });
-          } else if (response.status === 302) {
+          } else if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
             history.push('/login');
           }
         } catch (error) {

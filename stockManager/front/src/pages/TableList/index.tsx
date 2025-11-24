@@ -1,9 +1,9 @@
-import { Button, Row, Col, Checkbox, FloatButton } from 'antd';
+import { FloatButton } from 'antd';
 import React, { useState, useCallback } from 'react';
 import ProCard from '@ant-design/pro-card';
-import { ReloadOutlined } from '@ant-design/icons';
 import { OverallBoard } from '@/components/Table/OverallBoard';
 import { OperationList } from '@/components/Table/OperationList';
+import { FilterPanel } from '@/components/Table/FilterPanel';
 import { useStocks } from '@/hooks/useStocks';
 import './index.less';
 
@@ -48,26 +48,13 @@ const TableList: React.FC = () => {
 
         {/* 筛选控制面板 */}
         <ProCard>
-          <Row align="middle" gutter={[16, 16]}>
-            <Col xs={24} sm={4} md={2}>
-              <Button onClick={fetchStockData} icon={<ReloadOutlined />} block>
-                刷新
-              </Button>
-            </Col>
-            <Col xs={12} sm={10} md={4} offset={0} lg={{ offset: 15 }}>
-              <Checkbox checked={showAll} onChange={(e) => handleShowAllChange(e.target.checked)}>
-                显示市值为零的股票
-              </Checkbox>
-            </Col>
-            <Col xs={12} sm={10} md={3}>
-              <Checkbox
-                checked={showConv}
-                onChange={(e) => handleShowConvChange(e.target.checked)}
-              >
-                显示可转债
-              </Checkbox>
-            </Col>
-          </Row>
+          <FilterPanel
+            showAll={showAll}
+            showConv={showConv}
+            onRefresh={fetchStockData}
+            onShowAllChange={handleShowAllChange}
+            onShowConvChange={handleShowConvChange}
+          />
         </ProCard>
 
         {/* 操作列表面板 */}

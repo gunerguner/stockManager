@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getStockList } from '@/services/api';
 import { history } from '@umijs/max';
+import { RESPONSE_STATUS } from '@/utils/constants';
 
 const loginPath = '/login';
 
@@ -32,11 +33,11 @@ export default () => {
     try {
       const response = await getStockList();
       
-      if (response.status === 1 && response.data) {
+      if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
         setStock(response.data);
         setInitialized(true);
         return true;
-      } else if (response.status === 302) {
+      } else if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
         history.push(loginPath);
         return false;
       }

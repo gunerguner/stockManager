@@ -12,15 +12,15 @@ const DataPage: React.FC = () => {
   // 使用自定义 Hook 自动加载股票数据
   const { stock } = useStocks();
 
-  // 格式化总费用，避免运行时错误
+  // 格式化总费用
   const formattedTotalCost = useMemo(() => {
-    const totalCost = stock?.overall?.totalCost ?? 0;
+    const totalCost = stock.overall.totalCost;
     return totalCost.toFixed(2);
-  }, [stock?.overall?.totalCost]);
+  }, [stock.overall.totalCost]);
 
-  // 安全获取数据
-  const stocksData = stock?.stocks ?? [];
-  const incomeCash = stock?.overall?.incomeCash ?? 0;
+  // 获取数据
+  const stocksData = stock.stocks;
+  const incomeCash = stock.overall.incomeCash;
 
   return (
     <ProCard gutter={[0, 16]}>
