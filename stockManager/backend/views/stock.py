@@ -52,6 +52,8 @@ def update_income_cash(request):
             info_type=Info.InfoType.INCOME_CASH,
             defaults={'value': str(income_cash)}
         )
+        # 清除缓存，确保下次获取时使用最新数据
+        Integrate.clear_cache(request.user.id)
         logger.info(f"用户 {request.user.username} 更新收益现金: {income_cash}")
         
         return json_response(status=STATUS_SUCCESS, message="更新收益现金成功")

@@ -1,11 +1,14 @@
 from decimal import Decimal
-from typing import Dict, ClassVar
+from typing import Dict, ClassVar, Tuple, Optional
 
 from django.db.models import Sum
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 from .calculator import Caculator
 from ..models import Operation, Info, CashFlow
 from ..utils import format_operations
+from ..common import logger
 
 
 class Integrate:
@@ -17,7 +20,7 @@ class Integrate:
     caculator_map: ClassVar[Dict[int, Caculator]] = {}
 
     @classmethod
-    def _get_user_cash_info(cls, user):
+    def _get_user_cash_info(cls, user) -> Tuple[float, float]:
         """
         获取用户的资金信息
         
@@ -42,10 +45,11 @@ class Integrate:
         
         return origin_cash, income_cash
 
+
     @classmethod
     def caculator(cls, user):
         """
-        获取或创建 Caculator 实例
+        获取或创建 Caculator 实例（带缓存机制）
         
         Args:
             user: User 对象
@@ -53,32 +57,70 @@ class Integrate:
         Returns:
             Caculator 实例
         """
-        # 获取该用户的操作记录并格式化
-        operations = Operation.objects.filter(user=user).order_by("date")
-        new_operation_list = format_operations(operations)
-
-        # 获取用户的资金信息（每次查询数据库）
-        origin_cash, income_cash = cls._get_user_cash_info(user)
-
-        # 使用用户 ID 作为缓存 key
         user_id = user.id
         cached_caculator = cls.caculator_map.get(user_id)
-
-        # 创建或更新 Caculator 实例（实时价格在需要时动态获取）
-        if cached_caculator is None:
-            # 创建新实例
-            new_caculator = Caculator(
-                new_operation_list, 
-                user,
-                origin_cash,
-                income_cash
-            )
-            cls.caculator_map[user_id] = new_caculator
-            return new_caculator
-        else:
-            # 更新已有实例
-            cached_caculator.operation_list = new_operation_list
-            cached_caculator.user = user  # 确保 user 是最新的
-            cached_caculator.origin_cash = origin_cash
-            cached_caculator.income_cash = income_cash
+        
+        # 如果缓存存在，直接返回（数据变化时会通过信号自动清除缓存）
+        if cached_caculator is not None:
+            logger.debug(f"缓存命中 - 用户 ID: {user_id}, 用户名: {user.username}")
             return cached_caculator
+        
+        # 缓存不存在，需要创建
+        logger.debug(f"缓存未命中 - 用户 ID: {user_id}, 用户名: {user.username}, 开始创建 Caculator 实例")
+        
+        # 获取操作记录并格式化
+        operations = Operation.objects.filter(user=user).order_by("date")
+        operation_list = format_operations(operations)
+        
+        # 获取用户的资金信息
+        origin_cash, income_cash = cls._get_user_cash_info(user)
+        
+        # 创建新实例
+        new_caculator = Caculator(
+            operation_list, 
+            user,
+            origin_cash,
+            income_cash
+        )
+        cls.caculator_map[user_id] = new_caculator
+        return new_caculator
+
+    @classmethod
+    def clear_cache(cls, user_id: Optional[int] = None):
+        """
+        清除缓存
+        
+        Args:
+            user_id: 用户 ID，如果为 None 则清除所有缓存
+        """
+        if user_id is None:
+            cls.caculator_map.clear()
+        else:
+            cls.caculator_map.pop(user_id, None)
+
+
+# 信号监听器：监听模型变化，自动清除缓存
+
+def clear_integrate_cache(sender, instance, **kwargs):
+    """
+    监听 Operation、CashFlow、Info 模型保存和删除信号，自动清除对应用户的缓存
+    
+    Args:
+        sender: 发送信号的模型类
+        instance: 模型实例
+        **kwargs: 其他参数
+    """
+    # Info 模型只有 INCOME_CASH 类型才需要清除缓存
+    if sender == Info:
+        if not (instance.user_id and instance.info_type == Info.InfoType.INCOME_CASH):
+            return
+    
+    # Operation 和 CashFlow 直接清除缓存
+    if instance.user_id:
+        Integrate.clear_cache(instance.user_id)
+
+
+# 为三个模型注册信号监听器
+for signal in [post_save, post_delete]:
+    for model in [Operation, CashFlow, Info]:
+        signal.connect(clear_integrate_cache, sender=model)
