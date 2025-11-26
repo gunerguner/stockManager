@@ -24,7 +24,9 @@ const Admin: React.FC = () => {
       async onOk() {
         try {
           setDividendLoading(true);
-          const response = await updateDividend();
+          const response = await updateDividend({
+            timeout: 20000,
+          });
 
           if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
             const hasUpdates = response.data.length > 0;

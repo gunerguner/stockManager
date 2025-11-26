@@ -1,6 +1,6 @@
 """股票计算器模块"""
 import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..common import logger
 from ..common.constants import OperationType
@@ -11,6 +11,7 @@ from .realtimePrice import RealtimePrice, RealtimePriceData
 # 常量定义
 MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无效
 MIN_VALUE_THRESHOLD = 0.1  # 最小市值阈值，用于判断昨日市值是否有效
+MIN_HOLD_COUNT_THRESHOLD = 0.001  # 最小持股数阈值，用于浮点数比较
 
 
 class Calculator:
@@ -22,16 +23,7 @@ class Calculator:
         return datetime.date.today()
 
     @classmethod
-    def get_holding_stocks(cls, operation_list: Dict[str, List[Operation]]) -> List[str]:
-        """获取当前持有的股票代码列表"""
-        return [
-            stock
-            for stock in operation_list.keys()
-            if cls._calculate_single_holdCount(operation_list[stock]) > 0
-        ]
-
-    @classmethod
-    def calculate_target(cls, operation_list: Dict[str, List[Operation]], origin_cash: float = 0.0, income_cash: float = 0.0) -> Dict:
+    def calculate_target(cls, operation_list: Dict[str, List[Operation]], origin_cash: float = 0.0, income_cash: float = 0.0) -> Dict[str, Any]:
         code_list = list(operation_list.keys())
         realtime_price_list = RealtimePrice.query(code_list)
         stock_list = [
@@ -45,7 +37,7 @@ class Calculator:
 
 
     @classmethod
-    def _calculate_single_target(cls, operation_list: Dict[str, List[Operation]], key: str, single_real_time: Optional[RealtimePriceData]) -> Dict:
+    def _calculate_single_target(cls, operation_list: Dict[str, List[Operation]], key: str, single_real_time: Optional[RealtimePriceData]) -> Dict[str, Any]:
         """计算单个股票的指标"""
         to_return = {}
 
@@ -83,9 +75,12 @@ class Calculator:
         
         to_return["holdCount"] = current_hold_count  # 持股数
         to_return["holdCost"] = current_hold_cost  # 持仓成本
+        # 摊薄成本：使用更严格的浮点数比较，避免除零错误
         to_return["overallCost"] = (
-            current_overall / current_hold_count if current_hold_count > 0 else 0
-        )  # 摊薄成本
+            current_overall / current_hold_count 
+            if abs(current_hold_count) >= MIN_HOLD_COUNT_THRESHOLD 
+            else 0.0
+        )
         to_return["totalValue"] = (
             single_real_time.currentPrice * current_hold_count
         )  # 今日市值
@@ -97,10 +92,11 @@ class Calculator:
             single_real_time.currentPrice - current_hold_cost
         ) * current_hold_count
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏额
+        # 浮动盈亏率：使用更严格的浮点数比较，避免除零错误
         current_offset_ratio = (
             (single_real_time.currentPrice - current_hold_cost) / current_hold_cost
-            if current_hold_cost > 0
-            else 0
+            if abs(current_hold_cost) >= MIN_PRICE_THRESHOLD
+            else 0.0
         )
         to_return["offsetCurrentRatio"] = "%.2f%%" % (
             current_offset_ratio * 100
@@ -112,8 +108,9 @@ class Calculator:
 
         to_return["totalCost"] = total_fee  # 所有费用
 
-        total_offset_today = 0
-        if to_return["totalValueYesterday"] < 0.1:
+        total_offset_today = 0.0
+        # 使用常量判断昨日市值是否有效，消除魔法数字
+        if to_return["totalValueYesterday"] < MIN_VALUE_THRESHOLD:
             total_offset_today = current_offset  # 今天新买的,今日盈亏等于浮动盈亏
         else:
             total_offset_today = (
@@ -132,7 +129,7 @@ class Calculator:
         return to_return
 
     @classmethod
-    def _calculate_single_metrics_optimized(cls, single_operation_list: List[Operation]) -> Dict:
+    def _calculate_single_metrics_optimized(cls, single_operation_list: List[Operation]) -> Dict[str, Any]:
         """一次遍历计算所有指标"""
         today = cls._get_today()
         
@@ -165,7 +162,8 @@ class Calculator:
             is_today = operation.date == today
             
             if op_type == OperationType.BUY:
-                # 买入操作
+                # 买入操作：
+                
                 previous_hold = current_hold
                 current_hold += operation.count
                 
@@ -230,8 +228,14 @@ class Calculator:
             duration = (today - holding_start_date).days
             total_holding_days += duration
         
-        # 计算持仓成本
-        current_hold_cost = hold_total_pay / hold_total_count if hold_total_count > 0 else 0.0
+        # 计算持仓成本：使用更严格的浮点数比较，避免除零错误
+        current_hold_cost = (
+            hold_total_pay / hold_total_count 
+            if abs(hold_total_count) >= MIN_HOLD_COUNT_THRESHOLD 
+            else 0.0
+        )
+        
+
         
         return {
             'current_hold_count': current_hold,
@@ -244,36 +248,12 @@ class Calculator:
         }
 
     @classmethod
-    def _calculate_single_operation_list(cls, single_operation_list: List[Operation]) -> List[Dict]:
+    def _calculate_single_operation_list(cls, single_operation_list: List[Operation]) -> List[Dict[str, Any]]:
         """将操作列表转换为字典列表并反转顺序"""
         return [op.to_dict() for op in reversed(single_operation_list)]
 
     @classmethod
-    def _calculate_single_holdCount(cls, single_operation_list: List, yesterday: int = 0) -> float:
-        """计算某个股票当前持股数"""
-        current_hold = 0
-        today = cls._get_today()
-        
-        for single_operation in single_operation_list:
-            if yesterday == 1:
-                # 只计算到昨天的持仓
-                if single_operation.date >= today:
-                    continue
-
-            if single_operation.operationType == OperationType.BUY:
-                current_hold += single_operation.count
-            elif single_operation.operationType == OperationType.SELL:
-                current_hold -= single_operation.count
-            elif single_operation.operationType == OperationType.DIVIDEND:
-                current_hold += current_hold * (
-                    single_operation.reserve + single_operation.stock
-                )
-
-        return current_hold
-
-
-    @classmethod
-    def _calculate_overall_target(cls, single_target_list: List[Dict], origin_cash: float, income_cash: float) -> Dict:
+    def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], origin_cash: float, income_cash: float) -> Dict[str, Any]:
         """计算整体指标"""
         to_return = {}
 
@@ -288,7 +268,12 @@ class Calculator:
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
         to_return["offsetTotal"] = total_offset + income_cash  # 累计盈亏
         to_return["totalValue"] = total_value  # 总市值
-        to_return["offsetCurrentRatio"] = f"{(current_offset / total_value * 100) if total_value > 0 else 0:.2f}%"  # 浮动盈亏率
+        # 浮动盈亏率：使用更严格的浮点数比较，避免除零错误
+        to_return["offsetCurrentRatio"] = (
+            f"{(current_offset / total_value * 100):.2f}%" 
+            if abs(total_value) >= MIN_VALUE_THRESHOLD 
+            else "0.00%"
+        )
         to_return["offsetToday"] = total_offset_today  # 今日盈亏
         to_return["totalCash"] = origin_cash + total_offset + income_cash - total_value  # 总现金
         to_return["totalAsset"] = origin_cash + total_offset + income_cash  # 总资产
