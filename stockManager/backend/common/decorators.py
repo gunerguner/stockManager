@@ -3,9 +3,8 @@
 提供视图装饰器功能
 """
 import functools
-from .constants import STATUS_ERROR, STATUS_UNAUTHORIZED
-from .responses import json_response
-from .utils import get_client_ip
+from .constants import ResponseStatus
+from .middleware import json_response, get_client_ip
 
 # 配置logger
 import logging
@@ -25,7 +24,7 @@ def require_authentication(view_func):
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return json_response(status=STATUS_UNAUTHORIZED, message="未登录")
+            return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -54,7 +53,7 @@ def require_methods(methods):
             if request.method not in methods:
                 allowed = ', '.join(methods)
                 return json_response(
-                    status=STATUS_ERROR,
+                    status=ResponseStatus.ERROR,
                     message=f"不支持的请求方法，仅支持: {allowed}"
                 )
             return view_func(request, *args, **kwargs)

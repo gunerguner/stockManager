@@ -4,145 +4,36 @@
 """
 import urllib.request
 import re
+from dataclasses import dataclass
 from typing import Dict, List, Optional, ClassVar
 from datetime import datetime
-import pytz
-
-from exchange_calendars import get_calendar
 
 from ..common import logger
+from ..common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
 from ..utils import _safe_float
+
+
+@dataclass
+class RealtimePriceData:
+    """实时价格数据类（支持点号访问）"""
+    name: str  # 股票名称
+    currentPrice: float  # 现价
+    priceOffset: float  # 涨跌额
+    offsetRatio: str  # 涨跌幅（百分比字符串）
+    yesterdayClose: float  # 昨收价
 
 # 常量定义
 STOCK_PRICE_API_URL = 'http://qt.gtimg.cn/q='
 MIN_RESPONSE_LENGTH = 10
 ENCODING_GB18030 = 'gb18030'
 
-# A股时区（北京时间）
-TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
-
 
 class RealtimePrice:
     """股票实时价格查询服务（使用类方法和类变量）"""
     
     # 类变量：缓存数据和缓存时间
-    _cache: ClassVar[Dict[str, List]] = {}
+    _cache: ClassVar[Dict[str, RealtimePriceData]] = {}
     _cache_timestamp: ClassVar[Optional[datetime]] = None
-    
-    # 类变量：缓存交易日历对象，避免重复加载
-    _calendar: ClassVar[Optional[object]] = None
-    
-    @classmethod
-    def _get_calendar(cls):
-        """获取交易日历对象（带缓存）"""
-        if cls._calendar is None:
-            cls._calendar = get_calendar('XSHG')
-        return cls._calendar
-    
-    @staticmethod
-    def _is_time_intervals_overlap(start1: datetime, end1: datetime, start2: datetime, end2: datetime) -> bool:
-        """
-        检查两个时间区间 [start1, end1] 和 [start2, end2] 是否重叠
-        """
-        return start1 < end2 and start2 < end1
-    
-    @classmethod
-    def _is_trading_time_passed(cls, last_time: datetime, current_time: datetime) -> bool:
-        """
-        判断两个时间点之间是否经过了交易时间
-        
-        Args:
-            last_time: 上次缓存时间
-            current_time: 当前时间
-            
-        Returns:
-            bool: 如果经过了交易时间返回 True，否则返回 False
-        """
-        # 获取A股交易日历（使用缓存，避免重复加载）
-        calendar = cls._get_calendar()
-        
-        # 将时间转换为带时区的datetime（A股使用北京时间）
-        last_time_tz = TZ_SHANGHAI.localize(last_time) if last_time.tzinfo is None else last_time.astimezone(TZ_SHANGHAI)
-        current_time_tz = TZ_SHANGHAI.localize(current_time) if current_time.tzinfo is None else current_time.astimezone(TZ_SHANGHAI)
-        
-        # 确保 last_time <= current_time
-        if last_time_tz > current_time_tz:
-            last_time_tz, current_time_tz = current_time_tz, last_time_tz
-        
-        
-        # 获取包含在日期范围内的所有交易日
-        last_date = last_time_tz.date()
-        current_date = current_time_tz.date()
-        
-        # 获取日期范围内的交易日历信息
-        schedule_df = calendar.schedule.loc[last_date:current_date]
-        
-        # 如果没有交易日，说明都是非交易日，不需要更新
-        if len(schedule_df) == 0:
-            return False
-        
-        # 遍历每个交易日，检查是否与 A 股的两个交易时段有重叠
-        
-        for session_date, schedule_row in schedule_df.iterrows():
-            # 获取交易日的日期部分
-            session_date_only = session_date.date()
-            
-            # 构建上午交易时段：9:30 - 11:30
-            morning_start = TZ_SHANGHAI.localize(datetime(session_date_only.year, session_date_only.month, session_date_only.day, 9, 30))
-            morning_end = TZ_SHANGHAI.localize(datetime(session_date_only.year, session_date_only.month, session_date_only.day, 11, 30))
-            
-            # 构建下午交易时段：13:00 - 15:00
-            afternoon_start = TZ_SHANGHAI.localize(datetime(session_date_only.year, session_date_only.month, session_date_only.day, 13, 0))
-            afternoon_end = TZ_SHANGHAI.localize(datetime(session_date_only.year, session_date_only.month, session_date_only.day, 15, 0))
-            
-            # 检查 [last_time_tz, current_time_tz] 是否与上午交易时段重叠
-            if cls._is_time_intervals_overlap(last_time_tz, current_time_tz, morning_start, morning_end):
-                return True
-            
-            # 检查 [last_time_tz, current_time_tz] 是否与下午交易时段重叠
-            if cls._is_time_intervals_overlap(last_time_tz, current_time_tz, afternoon_start, afternoon_end):
-                return True
-        
-        # 如果所有交易日的交易时段都没有重叠，说明没有经过交易时间
-        return False
-    
-    @classmethod
-    def _is_in_trading_hours(cls, dt: datetime) -> bool:
-        """
-        判断指定时间是否在A股交易时间内
-        
-        Args:
-            dt: 要判断的时间（带时区）
-            
-        Returns:
-            bool: 如果在交易时间内返回 True
-        """
-        # 转换为北京时间
-        if dt.tzinfo is None:
-            dt = TZ_SHANGHAI.localize(dt)
-        else:
-            dt = dt.astimezone(TZ_SHANGHAI)
-        
-        hour = dt.hour
-        minute = dt.minute
-        
-        # 上午交易时间：9:30 - 11:30
-        morning_start = (9, 30)
-        morning_end = (11, 30)
-        
-        # 下午交易时间：13:00 - 15:00
-        afternoon_start = (13, 0)
-        afternoon_end = (15, 0)
-        
-        # 判断是否在上午交易时间
-        if (hour, minute) >= morning_start and (hour, minute) < morning_end:
-            return True
-        
-        # 判断是否在下午交易时间
-        if (hour, minute) >= afternoon_start and (hour, minute) < afternoon_end:
-            return True
-        
-        return False
     
     @classmethod
     def _calculate_offset_ratio(cls, offset: float, base_price: float) -> str:
@@ -153,7 +44,7 @@ class RealtimePrice:
         return f"{ratio:.2f}%"
     
     @classmethod
-    def query(cls, code_list: List[str]) -> Dict[str, List]:
+    def query(cls, code_list: List[str]) -> Dict[str, RealtimePriceData]:
         """
         查询股票实时价格（带缓存优化）
         
@@ -164,8 +55,7 @@ class RealtimePrice:
             code_list: 股票代码列表
             
         Returns:
-            Dict[str, List]: 股票代码到实时数据的映射
-            实时数据格式: [名称, 现价, 涨跌额, 涨跌幅, 昨收]
+            Dict[str, RealtimePriceData]: 股票代码到实时数据的映射
         """
         if not code_list:
             return {}
@@ -179,7 +69,7 @@ class RealtimePrice:
         
         if cls._cache and cls._cache_timestamp is not None:
             # 检查是否经过了交易时间
-            if not cls._is_trading_time_passed(cls._cache_timestamp, current_time):
+            if not TradingCalendar.is_trading_time_passed(cls._cache_timestamp, current_time):
                 # 缓存有效，从缓存中提取已有的股票代码数据
                 cached_result = {
                     code: cls._cache[code]
@@ -233,14 +123,14 @@ class RealtimePrice:
                 # 计算涨跌幅
                 offset_ratio = cls._calculate_offset_ratio(price_offset, yesterday_close)
                 
-                # 组装返回数据: [名称, 现价, 涨跌额, 涨跌幅, 昨收]
-                result[missing_codes[index]] = [
-                    stock_info[1],
-                    stock_info[3],
-                    price_offset,
-                    offset_ratio,
-                    stock_info[4]
-                ]
+                # 组装返回数据（直接使用转换后的 float 值，避免后续重复转换）
+                result[missing_codes[index]] = RealtimePriceData(
+                    name=stock_info[1],
+                    currentPrice=current_price,
+                    priceOffset=price_offset,
+                    offsetRatio=offset_ratio,
+                    yesterdayClose=yesterday_close
+                )
             
             # 更新缓存（只更新新获取的股票代码）
             cls._cache.update(result)
@@ -270,4 +160,17 @@ class RealtimePrice:
         """清空缓存（下次访问时会重新加载）"""
         cls._cache = {}
         cls._cache_timestamp = None
+    
+    @staticmethod
+    def get_default_data() -> RealtimePriceData:
+        """获取默认的实时价格数据（用于数据缺失时）"""
+        return RealtimePriceData(
+            name="未知",
+            currentPrice=0.0,
+            priceOffset=0.0,
+            offsetRatio="0%",
+            yesterdayClose=0.0
+        )
+
+
 

@@ -1,3 +1,4 @@
+from typing import Dict, Any
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -32,20 +33,20 @@ class Operation(models.Model):
         verbose_name = "股票操作记录"
         verbose_name_plural = "股票操作记录"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
 
-    def to_dict(self):
-        to_return = {}
-        to_return["date"] = str(self.date)
-        to_return["type"] = self.operationType
-        to_return["price"] = self.price
-        to_return["count"] = self.count
-        to_return["fee"] = self.fee
+    def to_dict(self) -> Dict[str, Any]:
+        data = {}
+        data["date"] = str(self.date)
+        data["type"] = self.operationType
+        data["price"] = self.price
+        data["count"] = self.count
+        data["fee"] = self.fee
         if self.operationType == "BUY" or self.operationType == "SELL":
-            to_return["sum"] = self.price * self.count
+            data["sum"] = self.price * self.count
         elif self.operationType == "DV":
-            to_return["sum"] = self.cash * self.count
+            data["sum"] = self.cash * self.count
 
         if self.operationType == "DV":
             comment = ""
@@ -56,8 +57,8 @@ class Operation(models.Model):
             if self.stock > 0.0:
                 comment += ",每10股送股" + "%.2f" % (self.stock * 10)
 
-            to_return["comment"] = comment
-        return to_return
+            data["comment"] = comment
+        return data
 
 
 class Info(models.Model):
@@ -76,7 +77,7 @@ class Info(models.Model):
         verbose_name_plural = "用户资金信息"
         unique_together = [['user', 'info_type']]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user.username} - {self.get_info_type_display()}: {self.value}"
 
 
@@ -104,7 +105,7 @@ class CashFlow(models.Model):
             models.Index(fields=['user', '-transaction_date']),
         ]
     
-    def __str__(self):
+    def __str__(self) -> str:
         transaction_type = "入金" if self.amount >= 0 else "出金"
         return f"{self.user.username} - {transaction_type} {abs(self.amount)} ({self.transaction_date})"
 
@@ -136,5 +137,5 @@ class StockMeta(models.Model):
         verbose_name = "股票元数据"
         verbose_name_plural = "股票元数据"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.code} - {self.get_stockType_display()}"

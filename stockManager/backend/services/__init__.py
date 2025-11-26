@@ -2,15 +2,19 @@
 业务逻辑服务层
 提供股票计算、集成管理、元数据管理等业务逻辑
 """
-from .calculator import Caculator
+from .calculator import Calculator
 from .integrate import Integrate
+from .userData import UserData
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice
+from .dividend import Dividend
 
 __all__ = [
-    'Caculator',
+    'Calculator',
     'Integrate',
+    'UserData',
     'StockMeta',
     'RealtimePrice',
+    'Dividend',
 ]
 

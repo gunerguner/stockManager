@@ -1,263 +1,52 @@
-"""
-股票计算器模块
-提供股票指标计算、分红处理等功能
-"""
+"""股票计算器模块"""
 import datetime
 from typing import Dict, List, Optional
 
-import baostock as bs
-
 from ..common import logger
+from ..common.constants import OperationType
 from ..models import Operation
 from .stockMeta import StockMeta
-from ..utils import _safe_float
-from .realtimePrice import RealtimePrice
-from django.contrib.auth.models import User
+from .realtimePrice import RealtimePrice, RealtimePriceData
 
 # 常量定义
-OPERATION_TYPE_BUY = "BUY"
-OPERATION_TYPE_SELL = "SELL"
-OPERATION_TYPE_DIVIDEND = "DV"
-DIVIDEND_DATE_CHECK_RANGE = 5  # 分红日期检查范围（前后天数）
+MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无效
+MIN_VALUE_THRESHOLD = 0.1  # 最小市值阈值，用于判断昨日市值是否有效
 
 
-class Caculator(object):
-    """股票计算器类，用于计算股票相关指标"""
+class Calculator:
+    """股票计算器类"""
     
-    def __init__(self, operation_list: Dict, user: User, origin_cash: float = 0.0, income_cash: float = 0.0):
-        """
-        初始化计算器
-        
-        Args:
-            operation_list: 交易操作列表字典
-            user: 用户对象
-            origin_cash: 本金
-            income_cash: 收益现金
-        """
-        self.operation_list = operation_list
-        self.user = user
-        self.origin_cash = origin_cash
-        self.income_cash = income_cash
-    
-    @property
-    def _today(self) -> datetime.date:
-        """
-        获取今天的日期（使用property确保跨天时获取正确日期）
-        注意：在需要多次使用的方法中，建议将其赋值给局部变量以提升性能
-        """
+    @classmethod
+    def _get_today(cls) -> datetime.date:
+        """获取今天的日期"""
         return datetime.date.today()
 
-    # 聚合接口,所有的股票数据+总和
-    def caculate_target(self):
-        to_return = {}
-        stock_list = []
-
-        # 动态获取所有股票的实时价格（一次性获取，提升性能）
-        code_list = list(self.operation_list.keys())
-        realtime_price_list = RealtimePrice.query(code_list)
-
-        # 个股指标
-        for key in self.operation_list.keys():
-            single_real_time = realtime_price_list.get(key)
-            single_target = self.__caculate_single_target(key, single_real_time)
-            stock_list.append(single_target)
-
-        to_return["stocks"] = stock_list
-
-        # 整体指标
-        to_return["overall"] = self.__caculate_overall_target(stock_list)
-
-        return to_return
-
-    def generate_dividend(self):
-        hold_stocks = self.all_stocks(True)
-
-        to_return = []
-        bs.login()
-        for single_code in hold_stocks:
-            code = self.__generate_dividend_single(single_code)
-            if code:
-                to_return.append(code)
-
-        bs.logout()
-
-        return to_return
-
-    # 现有持仓
-    def all_stocks(self, hold=False):
-        """获取所有股票代码，如果 hold=True 则只返回持仓股票"""
-        overall_stocks = list(self.operation_list.keys())
-        if not hold:
-            return overall_stocks
-
-        hold_stocks = [
+    @classmethod
+    def get_holding_stocks(cls, operation_list: Dict[str, List[Operation]]) -> List[str]:
+        """获取当前持有的股票代码列表"""
+        return [
             stock
-            for stock in overall_stocks
-            if self.__caculate_single_holdCount(self.operation_list[stock]) > 0
+            for stock in operation_list.keys()
+            if cls._calculate_single_holdCount(operation_list[stock]) > 0
         ]
 
-        return hold_stocks
-
-    def __is_date_near_existing(self, date_str: str, existing_dates: set, today: datetime.date) -> bool:
-        """
-        检查日期是否在已有日期列表中,或在已有日期的前后指定天数范围内
-        
-        Args:
-            date_str: 要检查的日期字符串 (格式: YYYY-MM-DD)
-            existing_dates: 已存在的日期集合
-            today: 今天的日期对象，避免重复调用
-            
-        Returns:
-            bool: True 表示日期已存在或接近已有日期或是未来日期, False 表示是新日期
-        """
-        if date_str in existing_dates:
-            return True
-        
-        try:
-            # 将字符串转换为日期对象
-            current_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            
-            # 检查除权除息日是否晚于今天(未来日期不允许)
-            if current_date > today:
-                return True
-            
-            # 检查前后指定天数范围
-            for days_offset in range(1, DIVIDEND_DATE_CHECK_RANGE + 1):
-                one_day = datetime.timedelta(days=days_offset)
-                previous_day = (current_date - one_day).strftime('%Y-%m-%d')
-                next_day = (current_date + one_day).strftime('%Y-%m-%d')
-                
-                # 如果前后任意一天在已有日期中,认为是重复的
-                if previous_day in existing_dates or next_day in existing_dates:
-                    return True
-                
-            return False
-            
-        except (ValueError, TypeError) as e:
-            logger.warning(f"日期格式解析失败: {date_str}, 错误: {e}")
-            # 如果日期格式有问题,只检查是否完全相同
-            return date_str in existing_dates
+    @classmethod
+    def calculate_target(cls, operation_list: Dict[str, List[Operation]], origin_cash: float = 0.0, income_cash: float = 0.0) -> Dict:
+        code_list = list(operation_list.keys())
+        realtime_price_list = RealtimePrice.query(code_list)
+        stock_list = [
+            cls._calculate_single_target(operation_list, key, realtime_price_list.get(key))
+            for key in operation_list.keys()
+        ]
+        return {
+            "stocks": stock_list,
+            "overall": cls._calculate_overall_target(stock_list, origin_cash, income_cash)
+        }
 
 
-    def __generate_dividend_single(self, code: Optional[str]) -> str:
-        """
-        生成个股除权除息信息
-        
-        Args:
-            code: 股票代码
-            
-        Returns:
-            str: 如果有更新返回股票代码，否则返回空字符串
-        """
-        if code is None:
-            return ""
-
-        try:
-            # 在方法开始时获取today并赋值给局部变量，避免重复调用property
-            today = self._today
-            update_count = 0
-            single_operation_list = self.operation_list[code]
-
-            # 获取已存在的分红操作记录
-            exist_dv_operations = [
-                op for op in single_operation_list 
-                if op.operationType == OPERATION_TYPE_DIVIDEND
-            ]
-            # 将日期列表转换为集合,提升查找效率(O(1) vs O(n))
-            date_set = {str(op.date) for op in exist_dv_operations}
-
-            first_year = single_operation_list[0].date.year
-            year_now = today.year
-            # 转换股票代码格式: sz000001 -> sz.000001
-            formatted_code = f"{code[:2]}.{code[2:]}"
-
-            # 查询并保存分红数据
-            for year in range(first_year, year_now + 1):
-                try:
-                    result_set = bs.query_dividend_data(
-                        code=formatted_code, 
-                        year=str(year), 
-                        yearType="operate"
-                    )
-                    
-                    while result_set.error_code == "0" and result_set.next():
-                        data = result_set.get_row_data()
-                        
-                        # 解析分红数据
-                        dividend_date = data[6]
-                        cash = _safe_float(data[9])
-                        reserve = _safe_float(data[11])
-                        stock = _safe_float(data[13])
-         
-                        # 如果该日期不在已有列表中,也不在前后指定天数范围内,且不晚于今天,则创建
-                        if not self.__is_date_near_existing(dividend_date, date_set, today):
-                            Operation.objects.create(
-                                user=self.user,
-                                date=dividend_date,
-                                code=code,
-                                operationType=OPERATION_TYPE_DIVIDEND,
-                                cash=cash,
-                                reserve=reserve,
-                                stock=stock,
-                            )
-                            update_count += 1
-                            # 将新日期添加到已有日期集合中
-                            date_set.add(dividend_date)
-                            
-                except Exception as e:
-                    logger.error(f"查询股票 {code} 第 {year} 年分红数据失败: {e}")
-                    continue
-
-            # 更新分红记录的持仓数量
-            update_count -= self.__update_dividend_holdings(code)
-
-            return code if update_count > 0 else ""
-            
-        except Exception as e:
-            logger.error(f"生成股票 {code} 分红信息失败: {e}")
-            return ""
-    
-    def __update_dividend_holdings(self, code: str) -> int:
-        """更新分红记录的持仓数量并删除无效记录"""
-        operations = Operation.objects.filter(user=self.user, code=code).order_by("date")
-        current_hold = 0
-        deleted_count = 0
-        
-        for operation in operations:
-            # 根据操作类型更新持仓
-            if operation.operationType == OPERATION_TYPE_BUY:
-                current_hold += operation.count
-            elif operation.operationType == OPERATION_TYPE_SELL:
-                current_hold -= operation.count
-            elif operation.operationType == OPERATION_TYPE_DIVIDEND:
-                # 如果分红时没有持仓,删除该分红记录
-                if current_hold == 0:
-                    operation.delete()
-                    deleted_count += 1
-                else:
-                    # 更新分红记录的持仓数量
-                    operation.count = current_hold
-                    operation.save()
-                    # 分红后更新持仓(送股和转增)
-                    current_hold += current_hold * (operation.reserve + operation.stock)
-        
-        return deleted_count
-
-
-    # 计算个股指标
-    def __caculate_single_target(self, key, single_real_time: Optional[List]):
-        """
-        计算单个股票的指标
-        
-        Args:
-            key: 股票代码
-            single_real_time: 实时价格数据 [名称, 现价, 涨跌额, 涨跌幅, 昨收]
-            
-        Returns:
-            Dict: 个股指标字典
-        """
-        if key is None:
-            return ""
+    @classmethod
+    def _calculate_single_target(cls, operation_list: Dict[str, List[Operation]], key: str, single_real_time: Optional[RealtimePriceData]) -> Dict:
+        """计算单个股票的指标"""
         to_return = {}
 
         # 带上股票的标签（优化：使用字典查找，O(1) 复杂度）
@@ -266,24 +55,23 @@ class Caculator(object):
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew
 
-        single_operation_list = self.operation_list[key]
+        single_operation_list = operation_list[key]
         if not single_real_time:
             logger.warning(f"无法获取股票 {key} 的实时价格")
             # 使用默认值
-            single_real_time = ["未知", "0", 0, "0%", "0"]
+            single_real_time = RealtimePrice.get_default_data()
 
         to_return["code"] = key
-        to_return["name"] = single_real_time[0]  # 名称
-        to_return["priceNow"] = single_real_time[1]  # 现价
-        if float(to_return["priceNow"]) < 0.001:
+        to_return["name"] = single_real_time.name  # 名称
+        to_return["priceNow"] = single_real_time.currentPrice  # 现价（已经是 float）
+        if to_return["priceNow"] < MIN_PRICE_THRESHOLD:
             to_return["offsetToday"] = 0  # 今日股价涨跌
             to_return["offsetTodayRatio"] = "0%"  # 今日涨跌率
         else:
-            to_return["offsetToday"] = single_real_time[2]  # 今日股价涨跌
-            to_return["offsetTodayRatio"] = single_real_time[3]  # 今日涨跌率
+            to_return["offsetToday"] = single_real_time.priceOffset  # 今日股价涨跌
+            to_return["offsetTodayRatio"] = single_real_time.offsetRatio  # 今日涨跌率
 
-        # 优化：一次遍历计算所有指标
-        metrics = self.__caculate_single_metrics_optimized(single_operation_list)
+        metrics = cls._calculate_single_metrics_optimized(single_operation_list)
         
         current_hold_count = metrics['current_hold_count']
         yesterday_hold_count = metrics['yesterday_hold_count']
@@ -299,18 +87,18 @@ class Caculator(object):
             current_overall / current_hold_count if current_hold_count > 0 else 0
         )  # 摊薄成本
         to_return["totalValue"] = (
-            float(single_real_time[1]) * current_hold_count
+            single_real_time.currentPrice * current_hold_count
         )  # 今日市值
         to_return["totalValueYesterday"] = (
-            float(single_real_time[4]) * yesterday_hold_count
+            single_real_time.yesterdayClose * yesterday_hold_count
         )  # 昨日市值,不显示
 
         current_offset = (
-            float(single_real_time[1]) - current_hold_cost
+            single_real_time.currentPrice - current_hold_cost
         ) * current_hold_count
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏额
         current_offset_ratio = (
-            (float(single_real_time[1]) - current_hold_cost) / current_hold_cost
+            (single_real_time.currentPrice - current_hold_cost) / current_hold_cost
             if current_hold_cost > 0
             else 0
         )
@@ -319,7 +107,7 @@ class Caculator(object):
         )  # 浮动盈亏率
 
         to_return["offsetTotal"] = (
-            float(single_real_time[1]) * current_hold_count - current_overall
+            single_real_time.currentPrice * current_hold_count - current_overall
         )  # 累计盈亏额
 
         to_return["totalCost"] = total_fee  # 所有费用
@@ -329,8 +117,8 @@ class Caculator(object):
             total_offset_today = current_offset  # 今天新买的,今日盈亏等于浮动盈亏
         else:
             total_offset_today = (
-                float(single_real_time[1]) * current_hold_count
-                - float(single_real_time[4]) * yesterday_hold_count
+                single_real_time.currentPrice * current_hold_count
+                - single_real_time.yesterdayClose * yesterday_hold_count
                 - today_input
             )
 
@@ -339,31 +127,14 @@ class Caculator(object):
         # 持股时长（已在 metrics 中计算）
         to_return["holdingDuration"] = holding_duration
 
-        to_return["operationList"] = self.__caculate_single_operation_list(
-            single_operation_list
-        )
+        to_return["operationList"] = cls._calculate_single_operation_list(single_operation_list)
 
         return to_return
 
-    def __caculate_single_metrics_optimized(self, single_operation_list: List) -> Dict:
-        """
-        优化：一次遍历计算所有指标
-        合并了原来的多个方法：
-        - __caculate_single_holdCount (今天和昨天)
-        - __caculate_single_hold_cost
-        - __caculate_single_overall
-        - __caculate_single_today_input
-        - __caculate_single_fee
-        - __caculate_holding_duration (持股时长)
-        
-        Args:
-            single_operation_list: 操作记录列表
-            
-        Returns:
-            Dict: 包含所有计算指标的字典
-        """
-        # 获取今天的日期（只调用一次）
-        today = self._today
+    @classmethod
+    def _calculate_single_metrics_optimized(cls, single_operation_list: List[Operation]) -> Dict:
+        """一次遍历计算所有指标"""
+        today = cls._get_today()
         
         # 初始化所有累计变量
         current_hold = 0.0  # 当前持股数
@@ -393,7 +164,7 @@ class Caculator(object):
             # 判断是否是今天的操作
             is_today = operation.date == today
             
-            if op_type == OPERATION_TYPE_BUY:
+            if op_type == OperationType.BUY:
                 # 买入操作
                 previous_hold = current_hold
                 current_hold += operation.count
@@ -413,7 +184,7 @@ class Caculator(object):
                 if previous_hold < 1 and current_hold >= 1:
                     holding_start_date = operation.date
                     
-            elif op_type == OPERATION_TYPE_SELL:
+            elif op_type == OperationType.SELL:
                 # 卖出操作
                 previous_hold = current_hold
                 current_hold -= operation.count
@@ -437,7 +208,7 @@ class Caculator(object):
                     hold_total_pay = 0.0
                     hold_total_count = 0.0
                     
-            elif op_type == OPERATION_TYPE_DIVIDEND:
+            elif op_type == OperationType.DIVIDEND:
                 # 分红操作
                 dividend_multiplier = operation.reserve + operation.stock
                 
@@ -472,24 +243,16 @@ class Caculator(object):
             'holding_duration': total_holding_days,
         }
 
-    def __caculate_single_operation_list(self, single_operation_list):
+    @classmethod
+    def _calculate_single_operation_list(cls, single_operation_list: List[Operation]) -> List[Dict]:
         """将操作列表转换为字典列表并反转顺序"""
         return [op.to_dict() for op in reversed(single_operation_list)]
 
-    def __caculate_single_holdCount(self, single_operation_list: List, yesterday: int = 0) -> float:
-        """
-        计算某个股票当前持股数
-        
-        Args:
-            single_operation_list: 操作记录列表（假设已按时间排序）
-            yesterday: 1表示只计算到昨天的持仓，0表示计算到今天
-            
-        Returns:
-            float: 持股数量
-        """
+    @classmethod
+    def _calculate_single_holdCount(cls, single_operation_list: List, yesterday: int = 0) -> float:
+        """计算某个股票当前持股数"""
         current_hold = 0
-        # 在方法开始时获取today并赋值给局部变量
-        today = self._today
+        today = cls._get_today()
         
         for single_operation in single_operation_list:
             if yesterday == 1:
@@ -497,11 +260,11 @@ class Caculator(object):
                 if single_operation.date >= today:
                     continue
 
-            if single_operation.operationType == OPERATION_TYPE_BUY:
+            if single_operation.operationType == OperationType.BUY:
                 current_hold += single_operation.count
-            elif single_operation.operationType == OPERATION_TYPE_SELL:
+            elif single_operation.operationType == OperationType.SELL:
                 current_hold -= single_operation.count
-            elif single_operation.operationType == OPERATION_TYPE_DIVIDEND:
+            elif single_operation.operationType == OperationType.DIVIDEND:
                 current_hold += current_hold * (
                     single_operation.reserve + single_operation.stock
                 )
@@ -509,21 +272,10 @@ class Caculator(object):
         return current_hold
 
 
-    def __caculate_overall_target(self, single_target_list: List[Dict]) -> Dict:
-        """
-        计算整体指标
-        
-        Args:
-            single_target_list: 个股指标列表
-            
-        Returns:
-            Dict: 整体指标字典
-        """
+    @classmethod
+    def _calculate_overall_target(cls, single_target_list: List[Dict], origin_cash: float, income_cash: float) -> Dict:
+        """计算整体指标"""
         to_return = {}
-
-        # 使用传入的资金数据（已在 Integrate 中获取）
-        origin_cash = self.origin_cash
-        income_cash = self.income_cash
 
         # 使用 sum() 简化累加
         current_offset = sum(target["offsetCurrent"] for target in single_target_list)
