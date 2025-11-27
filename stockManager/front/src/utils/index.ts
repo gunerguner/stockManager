@@ -16,6 +16,29 @@ export const colorFromValue = (value: number): string => {
   return value > 0 ? 'red' : value < 0 ? 'green' : '';
 };
 
+/**
+ * 格式化价格：最少2位小数，最多3位小数
+ * @param value - 价格值（数字或字符串）
+ * @returns 格式化后的价格字符串
+ */
+export const formatPrice = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue)) return String(value);
+  
+  // 四舍五入到3位小数
+  const rounded = Math.round(numValue * 1000) / 1000;
+  const str = rounded.toString();
+  const decimalIndex = str.indexOf('.');
+  
+  // 没有小数部分或小数位数少于2位，补0到2位
+  if (decimalIndex === -1 || str.substring(decimalIndex + 1).length < 2) {
+    return rounded.toFixed(2);
+  }
+  
+  // 小数位数在2-3位之间，保持原样
+  return str;
+};
+
 // ==================== 环境变量工具 ====================
 
 /**

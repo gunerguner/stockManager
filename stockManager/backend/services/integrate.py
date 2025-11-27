@@ -8,6 +8,7 @@ from django.db.models.signals import post_save, post_delete
 from .userData import UserData
 from ..models import Operation, Info, CashFlow
 from ..utils import format_operations
+from ..common import logger
 
 
 class Integrate:
@@ -36,8 +37,10 @@ class Integrate:
     def get_user_data(cls, user: User) -> UserData:
         """获取或创建 UserData 实例（带缓存机制）"""
         if user.id in cls.user_data_map:
+            logger.debug(f"缓存命中: 用户 {user.id} ({user.username}) 的 UserData 从缓存中获取")
             return cls.user_data_map[user.id]
         
+        logger.debug(f"缓存未命中: 为用户 {user.id} ({user.username}) 创建新的 UserData 实例")
         origin_cash, income_cash = cls._get_user_cash_info(user)
         user_data = UserData(user, cls._get_operation_list(user), income_cash, origin_cash)
         cls.user_data_map[user.id] = user_data

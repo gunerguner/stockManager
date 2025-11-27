@@ -1,4 +1,4 @@
-import { Statistic, Row, Col, Input, Form, App, Divider } from 'antd';
+import { Statistic, Row, Col, InputNumber, Form, App, Divider } from 'antd';
 import React, { useState } from 'react';
 import { UpOutlined, DownOutlined } from '@ant-design/icons';
 import { updateIncomeCash } from '@/services/api';
@@ -80,15 +80,54 @@ export const OverallBoard: React.FC<OverallBoardProps> = (props) => {
    * 处理编辑现金收入
    */
   const handleEditIncomeCash = (): void => {
+    const initialIncomeCash = data.incomeCash || 0;
+    const initialTotalAsset = data.totalAsset || 0;
+    
+    // 计算固定部分（总资产 = 本金 + 累计盈亏 + 现金收入）
+    // 所以：固定部分 = 总资产 - 现金收入 = 本金 + 累计盈亏
+    const fixedPart = initialTotalAsset - initialIncomeCash;
+
+    // 重置表单并设置初始值
+    form.setFieldsValue({
+      incomeCash: initialIncomeCash,
+      totalAsset: initialTotalAsset,
+    });
+
     modal.confirm({
       title: '编辑现金收入',
       content: (
         <Form className="form-container" form={form} layout="vertical" name="incomeCash">
           <Form.Item
+            label="现金收入"
             name="incomeCash"
             rules={[{ required: true, message: '请输入现金收入' }]}
           >
-            <Input type="number" defaultValue={data.incomeCash || 0} />
+            <InputNumber
+              style={{ width: '100%' }}
+              precision={2}
+              step={0.01}
+              onChange={(value) => {
+                const newIncomeCash = (value as number) || 0;
+                const newTotalAsset = fixedPart + newIncomeCash;
+                form.setFieldsValue({ totalAsset: newTotalAsset });
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="总资产"
+            name="totalAsset"
+            rules={[{ required: true, message: '请输入总资产' }]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              precision={2}
+              step={0.01}
+              onChange={(value) => {
+                const newTotalAsset = (value as number) || 0;
+                const newIncomeCash = newTotalAsset - fixedPart;
+                form.setFieldsValue({ incomeCash: newIncomeCash });
+              }}
+            />
           </Form.Item>
         </Form>
       ),

@@ -2,7 +2,7 @@ import { Table, Tooltip } from 'antd';
 import React, { useState, useEffect } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue } from '@/utils';
+import { colorFromValue, formatPrice } from '@/utils';
 import './index.less';
 
 export type OperationListProps = {
@@ -73,6 +73,7 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
     {
       title: '成交价',
       dataIndex: 'price',
+      render: (item: number) => <div>{formatPrice(item)}</div>,
     },
     {
       title: '数量',
@@ -136,6 +137,7 @@ export const OperationList: React.FC<OperationListProps> = (props) => {
     {
       title: '现价',
       dataIndex: 'priceNow',
+      render: (item: string) => <div>{formatPrice(item)}</div>,
     },
     {
       title: '涨跌',
