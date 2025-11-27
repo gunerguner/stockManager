@@ -8,6 +8,7 @@ interface CostListModel {
   id: string;
   normalTradeCount: number;
   convTradeCount: number;
+  dividendCount: number;
   fee: number;
   subList?: CostListModel[];
 }
@@ -31,9 +32,6 @@ export const CostList: React.FC<CostListProps> = (props) => {
     for (const stock of props.data) {
       // 遍历每个股票的操作记录
       for (const operation of stock.operationList) {
-        // 跳过分红操作
-        if (operation.type === 'DV') continue;
-
         const year = operation.date.substring(0, 4);
         const month = operation.date.substring(5, 7);
 
@@ -41,7 +39,7 @@ export const CostList: React.FC<CostListProps> = (props) => {
         let yearMap = costs.find((value) => value.id === year);
 
         if (!yearMap) {
-          yearMap = { id: year, normalTradeCount: 0, convTradeCount: 0, fee: 0, subList: [] };
+          yearMap = { id: year, normalTradeCount: 0, convTradeCount: 0, dividendCount: 0, fee: 0, subList: [] };
           costs.push(yearMap);
         }
 
@@ -49,11 +47,18 @@ export const CostList: React.FC<CostListProps> = (props) => {
         let monthMap = yearMap.subList?.find((value) => value.id === month);
 
         if (!monthMap) {
-          monthMap = { id: month, normalTradeCount: 0, convTradeCount: 0, fee: 0 };
+          monthMap = { id: month, normalTradeCount: 0, convTradeCount: 0, dividendCount: 0, fee: 0 };
           yearMap.subList?.push(monthMap);
         }
 
-        // 统计交易次数和费用
+        // 处理除权除息操作
+        if (operation.type === 'DV') {
+          monthMap.dividendCount++;
+          yearMap.dividendCount++;
+          continue;
+        }
+
+        // 统计普通交易次数和费用（不包括除权除息）
         const isConvertible = stock.stockType === 'CONV';
         
         if (isConvertible) {
