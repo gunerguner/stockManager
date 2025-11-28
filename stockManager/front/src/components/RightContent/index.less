@@ -1,6 +1,9 @@
+// ==================== 变量 ====================
 
 @pro-header-hover-bg: rgba(0, 0, 0, 0.06);
 @primary-color: #1890ff;
+
+// ==================== 下拉菜单 ====================
 
 .menu {
   :global(.anticon) {
@@ -11,14 +14,15 @@
   }
 }
 
+// ==================== 右侧容器 ====================
+
 .right {
   display: flex;
   float: right;
   height: 48px;
   margin-left: auto;
   overflow: hidden;
-  
-  // 通用 action 样式
+
   .action {
     display: flex;
     align-items: center;
@@ -27,66 +31,59 @@
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 4px;
-    
+
     > span {
       vertical-align: middle;
     }
-    
-    &:hover {
-      background: @pro-header-hover-bg;
-    }
-    
+
+    &:hover,
     &:global(.opened) {
       background: @pro-header-hover-bg;
     }
   }
-  
+
   .search {
     padding: 0 12px;
     &:hover {
       background: transparent;
     }
   }
-  
-  .account {
-    .avatar {
-      margin-right: 8px;
-      color: @primary-color;
-      vertical-align: top;
-      background: rgba(255, 255, 255, 0.85);
-    }
+
+  .account .avatar {
+    margin-right: 8px;
+    color: @primary-color;
+    vertical-align: top;
+    background: rgba(255, 255, 255, 0.85);
   }
-  
-  // 移动端优化
-  @media (max-width: 768px) {
+}
+
+// ==================== 暗色主题 ====================
+
+.dark .action {
+  &:hover,
+  &:global(.opened) {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+// ==================== 响应式 ====================
+
+@media (max-width: 768px) {
+  .right {
     height: auto;
     min-height: 48px;
     flex-wrap: wrap;
     gap: 4px;
-    
-    // 移动端减小间距
+
     :global(.ant-space-item) {
       flex-shrink: 0;
     }
-    
-    // 移动端 Tag 字体更小
+
     :global(.ant-tag) {
       font-size: 11px;
       padding: 2px 6px;
       line-height: 18px;
       margin: 0;
-    }
-  }
-}
-
-// 暗色主题下的 hover 效果
-.dark {
-  .action {
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    &:global(.opened) {
-      background: rgba(255, 255, 255, 0.08);
     }
   }
 }

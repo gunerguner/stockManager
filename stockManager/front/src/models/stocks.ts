@@ -3,10 +3,9 @@ import { getStockList } from '@/services/api';
 import { history } from '@umijs/max';
 import { RESPONSE_STATUS } from '@/utils/constants';
 
-const loginPath = '/login';
+// ==================== 配置 ====================
 
-// StockData 的默认初始值，确保 overall 和 stocks 始终存在
-const defaultStockData: API.StockData = {
+const DEFAULT_STOCK_DATA: API.StockData = {
   stocks: [],
   overall: {
     offsetCurrent: 0,
@@ -22,13 +21,12 @@ const defaultStockData: API.StockData = {
   },
 };
 
+// ==================== Model ====================
+
 export default () => {
-  const [stock, setStock] = useState<API.StockData>(defaultStockData);
+  const [stock, setStock] = useState<API.StockData>(DEFAULT_STOCK_DATA);
   const [initialized, setInitialized] = useState(false);
 
-  /**
-   * 获取股票数据
-   */
   const fetchStockData = useCallback(async () => {
     try {
       const response = await getStockList();
@@ -37,9 +35,9 @@ export default () => {
         setStock(response.data);
         setInitialized(true);
         return true;
-      } else if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
-        history.push(loginPath);
-        return false;
+      }
+      if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
+        history.push('/login');
       }
       return false;
     } catch (error) {
@@ -48,28 +46,15 @@ export default () => {
     }
   }, []);
 
-  /**
-   * 手动设置股票数据（兼容旧的用法）
-   */
-  const setStockData = useCallback((stockData: API.StockData) => {
-    setStock(stockData);
+  const setStockData = useCallback((data: API.StockData) => {
+    setStock(data);
     setInitialized(true);
   }, []);
 
-  /**
-   * 重置股票数据状态
-   * 用于用户登出或重新登录时清空数据
-   */
   const resetStockData = useCallback(() => {
-    setStock(defaultStockData);
+    setStock(DEFAULT_STOCK_DATA);
     setInitialized(false);
   }, []);
 
-  return { 
-    stock, 
-    initialized,
-    setStockData,
-    fetchStockData,
-    resetStockData,
-  };
+  return { stock, initialized, setStockData, fetchStockData, resetStockData };
 };

@@ -86,7 +86,8 @@ export default defineConfig({
    */
   mfsu: {
     strategy: 'normal',
-    esbuild: true
+    esbuild: true,
+    exclude: ['chinese-days'],
   },
   
   /**

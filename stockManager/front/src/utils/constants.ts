@@ -53,3 +53,12 @@ export const HTTP_STATUS = {
   GATEWAY_TIMEOUT: 504,
 } as const;
 
+/**
+ * 环境标签颜色配置
+ */
+export const ENV_TAG_COLORS = {
+  dev: 'orange',
+  test: 'green',
+  pre: '#87d068',
+} as const;
+

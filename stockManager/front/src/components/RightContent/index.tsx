@@ -1,62 +1,39 @@
 import { Tag, Space } from 'antd';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useModel } from '@umijs/max';
 import Avatar from './AvatarDropdown';
 import ThemeSwitch from './ThemeSwitch';
 import TradingTime from './TradingTime';
 import { getEnv } from '@/utils';
+import { ENV_TAG_COLORS } from '@/utils/constants';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './index.less';
 
+// ==================== 组件 ====================
 
-// 环境标签颜色配置
-const ENV_TAG_COLORS = {
-  dev: 'orange',
-  test: 'green',
-  pre: '#87d068',
-} as const;
-
-/**
- * 页面右侧内容组件
- * 显示用户头像下拉菜单和环境标签
- */
 const RightContent: React.FC = () => {
   const { initialState } = useModel('@@initialState');
   const isMobile = useIsMobile();
 
-  // 计算样式类名 - 根据 navTheme 判断是否使用暗色样式
   const className = useMemo(() => {
-    if (!initialState?.settings) {
-      return styles.right;
-    }
+    if (!initialState?.settings) return styles.right;
 
     const { navTheme, layout } = initialState.settings;
-    // 当 navTheme 是 dark 或 realDark 且布局是 top 时，或布局是 mix 且 navTheme 不是 light 时，使用暗色样式
-    const isDarkMode = 
-      ( navTheme === 'realDark') && 
-      (layout === 'top' || layout === 'mix');
-
+    const isDarkMode = navTheme === 'realDark' && (layout === 'top' || layout === 'mix');
     return isDarkMode ? `${styles.right} ${styles.dark}` : styles.right;
   }, [initialState?.settings]);
 
-  // 如果初始状态或设置不存在，返回 null
-  if (!initialState || !initialState.settings) {
-    return null;
-  }
+  if (!initialState?.settings) return null;
 
-  // 获取环境变量（构建时确定，无需 useMemo）
   const env = getEnv();
-  
+
   return (
     <Space className={className} size={isMobile ? 4 : 0} align="center" wrap={isMobile}>
       <TradingTime />
       <ThemeSwitch />
       <Avatar />
-      {/* 移动端隐藏环境标签，节省空间 */}
       {!isMobile && env && env in ENV_TAG_COLORS && (
-        <Tag color={ENV_TAG_COLORS[env as keyof typeof ENV_TAG_COLORS]}>
-          {env}
-        </Tag>
+        <Tag color={ENV_TAG_COLORS[env as keyof typeof ENV_TAG_COLORS]}>{env}</Tag>
       )}
     </Space>
   );
