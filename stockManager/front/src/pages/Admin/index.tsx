@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import { Button, Row, Space, App } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import ProCard from '@ant-design/pro-card';
 import { history } from '@umijs/max';
 import { updateDividend } from '../../services/api';
@@ -20,7 +19,7 @@ const Admin: React.FC = () => {
   const handleDividendUpdate = useCallback(() => {
     modal.confirm({
       title: '确定更新除权信息？',
-      icon: <ExclamationCircleOutlined />,
+      icon: null,
       async onOk() {
         try {
           setDividendLoading(true);
@@ -34,6 +33,7 @@ const Admin: React.FC = () => {
 
             modal.info({
               title: modalTitle,
+              icon: null,
               content: (
                 <>
                   {response.data.map((dividend: string) => (
@@ -49,6 +49,7 @@ const Admin: React.FC = () => {
           console.error('更新除权信息失败:', error);
           modal.error({
             title: '操作失败',
+            icon: null,
             content: '更新除权信息失败，请稍后重试',
           });
         } finally {

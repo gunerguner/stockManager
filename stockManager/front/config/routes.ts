@@ -9,7 +9,7 @@
     name: '持仓盈亏',
     icon: 'table',
     path: '/list',
-    component: './TableList',
+    component: './StockList',
   },
   {
     path: '/data',

@@ -31,7 +31,7 @@ VERSION = __version__
 SECRET_KEY = '=2tfcp7f#j^+(!5m(ennkrmntjb5p9oq3!6g7uu3dpe%_frs_n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS =  ['*']
 

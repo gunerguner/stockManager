@@ -1,8 +1,11 @@
+// ==================== 变量 ====================
+
 @heading-color: rgba(0, 0, 0, 0.85);
 @text-color-secondary: rgba(0, 0, 0, 0.45);
 @font-size-base: 14px;
 @primary-color: #1890ff;
-@ant-prefix: ant;
+
+// ==================== 容器布局 ====================
 
 .container {
   display: flex;
@@ -10,36 +13,26 @@
   height: 100vh;
   overflow: auto;
   background: #f0f2f5 !important;
-}
 
-.lang {
-  width: 100%;
-  height: 40px;
-  line-height: 44px;
-  text-align: right;
-  :global(.ant-dropdown-trigger) {
-    margin-right: 24px;
+  // PC 端背景图
+  @media (min-width: 769px) {
+    background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
+    background-repeat: no-repeat;
+    background-position: center 110px;
+    background-size: 100%;
   }
 }
 
 .content {
   flex: 1;
   padding: 32px 0;
-}
 
-// 使用 @screen-md + 1px
-@media (min-width: 769px) {
-  .container {
-    background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
-    background-repeat: no-repeat;
-    background-position: center 110px;
-    background-size: 100%;
-  }
-
-  .content {
+  @media (min-width: 769px) {
     padding: 32px 0 24px;
   }
 }
+
+// ==================== 头部区域 ====================
 
 .top {
   text-align: center;
@@ -48,15 +41,10 @@
 .header {
   height: 44px;
   line-height: 44px;
+
   a {
     text-decoration: none;
   }
-}
-
-.logo {
-  height: 44px;
-  margin-right: 16px;
-  vertical-align: top;
 }
 
 .title {
@@ -75,48 +63,21 @@
   font-size: @font-size-base;
 }
 
+// ==================== 表单区域 ====================
+
 .main {
   width: 328px;
   margin: 0 auto;
-  // 使用 antd 默认变量 @screen-md (768px)
-  @media screen and (max-width: @screen-md) {
+
+  @media (max-width: @screen-md) {
     width: 95%;
     max-width: 328px;
   }
+}
 
-  :global {
-    .@{ant-prefix}-tabs-nav-list {
-      margin: auto;
-      font-size: 16px;
-    }
-  }
-
-  .icon {
-    margin-left: 16px;
-    color: rgba(0, 0, 0, 0.2);
-    font-size: 24px;
-    vertical-align: middle;
-    cursor: pointer;
-    transition: color 0.3s;
-
-    &:hover {
-      color: @primary-color;
-    }
-  }
-
-  .other {
-    margin-top: 24px;
-    line-height: 22px;
-    text-align: left;
-    .register {
-      float: right;
-    }
-  }
-
-  .prefixIcon {
-    color: @primary-color;
-    font-size: @font-size-base;
-  }
+.prefixIcon {
+  color: @primary-color;
+  font-size: @font-size-base;
 }
 
 .loginMessage {
@@ -125,4 +86,16 @@
 
 .submitButton {
   width: 100%;
+}
+
+// ==================== Footer 样式覆盖 ====================
+
+// 使 Footer 背景与页面一致
+.container {
+  :global {
+    .ant-pro-global-footer,
+    .ant-layout-footer {
+      background: transparent !important;
+    }
+  }
 }

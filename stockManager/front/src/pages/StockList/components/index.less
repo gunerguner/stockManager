@@ -1,0 +1,156 @@
+// ==================== 通用样式 ====================
+
+.hide {
+  display: none;
+}
+
+// ==================== OperationList 组件样式 ====================
+
+.operation-list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+
+  .stock-name-link {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+    font-size: 13px;
+  }
+}
+
+// ==================== OverallBoard 组件样式 ====================
+
+.form-container {
+  margin-top: 30px;
+}
+
+.overall-board-wrapper {
+  width: 100%;
+
+  .main-statistic .ant-statistic {
+    &-title {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    &-content {
+      font-size: 28px;
+      line-height: 1.2;
+    }
+  }
+
+  .expand-divider-wrapper {
+    cursor: pointer;
+    user-select: none;
+    margin-top: 12px;
+
+    &.collapsed {
+      margin-bottom: 0;
+    }
+    &.expanded {
+      margin-bottom: 8px;
+    }
+
+    .expand-divider {
+      margin: 0;
+      border-color: #e8e8e8;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #1890ff;
+        .expand-icon {
+          color: #1890ff;
+        }
+      }
+
+      .expand-icon {
+        font-size: 14px;
+        color: #8c8c8c;
+        transition: all 0.3s ease;
+        padding: 0 8px;
+      }
+    }
+  }
+
+  .expanded-statistics-row {
+    margin-top: 24px;
+  }
+}
+
+// ==================== 响应式样式 ====================
+
+@media (max-width: @screen-md) {
+  // 表格通用
+  .ant-table {
+    &-thead > tr > th,
+    &-tbody > tr > td {
+      padding: 8px 4px;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+  }
+
+  // OperationList
+  .operation-list-wrapper {
+    .ant-table {
+      &-thead > tr > th,
+      &-tbody > tr > td {
+        &:nth-child(1) {
+          min-width: 80px;
+        }
+        &:nth-child(n + 2) {
+          min-width: 70px;
+        }
+      }
+    }
+    .stock-name-link {
+      font-size: 12px;
+    }
+  }
+
+  // OverallBoard
+  .overall-board-wrapper {
+    .main-statistic .ant-statistic {
+      &-title {
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      &-content {
+        font-size: 24px;
+      }
+    }
+
+    .ant-statistic {
+      &-title {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      &-content {
+        font-size: 18px;
+      }
+    }
+
+    .expand-divider-wrapper {
+      margin: 12px 0;
+      .expand-icon {
+        font-size: 12px;
+      }
+    }
+
+    .expanded-statistics-row {
+      margin-top: 16px;
+    }
+  }
+}
+
+@media (min-width: 769px) {
+  .overall-board-wrapper .ant-statistic {
+    &-title {
+      font-size: 13px;
+    }
+    &-content {
+      font-size: 20px;
+    }
+  }
+}

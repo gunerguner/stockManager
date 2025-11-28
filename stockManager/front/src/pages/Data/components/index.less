@@ -1,0 +1,123 @@
+// ==================== 通用样式 ====================
+
+// 展开行表格样式
+.expanded-row-table {
+  margin: 10px 0;
+}
+
+// 可点击的单元格样式
+.clickable-cell {
+  cursor: pointer;
+  color: #1890ff;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #40a9ff;
+    text-decoration: underline;
+  }
+}
+
+// 移动端表格通用样式
+@media (max-width: @screen-md) {
+  .ant-table {
+    &-thead > tr > th,
+    &-tbody > tr > td {
+      padding: 8px 4px;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+  }
+}
+
+// ==================== CostList 组件样式 ====================
+
+// 成本列表包装器
+.cost-list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  
+  // 头部样式
+  .cost-list-header {
+    margin-bottom: 20px;
+  }
+  
+  // 表格容器样式
+  .cost-list-table-container {
+    width: 100%;
+  }
+  
+  // 展开按钮列优化（所有设备）
+  .ant-table {
+    &-row-expand-icon-cell {
+      width: 32px;
+      min-width: 32px;
+      padding: 8px 4px !important;
+    }
+  }
+  
+  // 移动端优化
+  @media (max-width: @screen-md) {
+    .ant-table {
+      &-row-expand-icon-cell {
+        width: 28px;
+        min-width: 28px;
+        padding: 8px 2px !important;
+      }
+      
+      &-thead > tr > th,
+      &-tbody > tr > td {
+        // 年份列最小宽度（注意：展开按钮列是第一列，所以年份列是第二列）
+        &:nth-child(2) {
+          min-width: 60px;
+        }
+        
+        // 数字列使用更小的最小宽度
+        &:nth-child(3),
+        &:nth-child(4) {
+          min-width: 70px;
+        }
+        
+        // 费用列最小宽度
+        &:nth-child(5) {
+          min-width: 80px;
+        }
+      }
+    }
+    
+    .expanded-row-table {
+      margin: 8px 0;
+      
+      .ant-table {
+        &-thead > tr > th,
+        &-tbody > tr > td {
+          padding: 4px 2px;
+        }
+      }
+    }
+  }
+}
+
+// ==================== AnalysisList 组件样式 ====================
+
+// 分析列表包装器
+.analysis-list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  
+  // 移动端优化
+  @media (max-width: @screen-md) {
+    .ant-table {
+      &-thead > tr > th,
+      &-tbody > tr > td {
+        // 数字列使用更小的宽度
+        &:nth-child(2),
+        &:nth-child(3),
+        &:nth-child(4),
+        &:nth-child(5) {
+          min-width: 70px;
+        }
+      }
+    }
+  }
+}
+
