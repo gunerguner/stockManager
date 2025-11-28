@@ -3,6 +3,11 @@
  * 定义应用级别的基础样式
  */
 
+// ==================== 全局变量 ====================
+// 注：仅供 global.less 内部使用，CSS Modules 文件需自行定义
+
+@primary-color: #1890ff;
+
 // ==================== 基础布局样式 ====================
 
 html,
@@ -51,6 +56,29 @@ ol {
   }
 }
 
+// ==================== 通用工具类 ====================
+// 注：以下类名可直接在 JSX 中使用，如 className="clickable-cell"
+
+// 可点击元素
+.clickable-cell {
+  cursor: pointer;
+  color: @primary-color;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #40a9ff;
+    text-decoration: underline;
+  }
+}
+
+// 空数据提示
+.empty-data {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+  font-size: 14px;
+}
+
 // ==================== 移动端页面布局优化 ====================
 
 // 减少移动端页面容器的边距
@@ -77,5 +105,23 @@ ol {
   .ant-pro-page-container .ant-pro-card {
     margin-left: 0;
     margin-right: 0;
+  }
+
+  // 表格通用样式
+  .ant-table {
+    &-thead > tr > th,
+    &-tbody > tr > td {
+      padding: 8px 4px;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+  }
+
+  // checkbox 横向排列优化
+  .ant-checkbox-wrapper {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
