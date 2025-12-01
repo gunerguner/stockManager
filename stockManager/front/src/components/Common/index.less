@@ -1,22 +1,17 @@
 // ==================== TradeDetailModal 组件样式 ====================
 
-// 交易详情 Modal 样式
 .trade-detail-modal {
   .ant-modal-body {
     max-height: none;
   }
 }
 
-// 交易详情内容样式（单股票和分组模式统一）
 .trade-detail-content {
   .trade-group-item {
     margin-bottom: 16px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
+    &:last-child { margin-bottom: 0; }
   }
-  
+
   .stock-group-header {
     padding: 8px 12px;
     background-color: rgba(0, 0, 0, 0.02);
@@ -26,64 +21,63 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    
+
     .stock-header-left {
       flex: 1;
       min-width: 0;
     }
-    
+
     .trade-count {
       flex-shrink: 0;
       white-space: nowrap;
     }
   }
-  
-  // 暗黑模式适配
+
+  // 暗黑模式
   [data-theme='dark'] & .stock-group-header {
     background-color: rgba(255, 255, 255, 0.04);
   }
-  
-  // 移动端优化
-  @media (max-width: @screen-md) {
+}
+
+.trade-detail-table {
+  .ant-table { font-size: 13px; }
+}
+
+.stock-group-link {
+  font-weight: bold;
+  &:hover { opacity: 0.8; }
+}
+
+// ==================== 移动端适配 ====================
+
+@media (max-width: @screen-md) {
+  .trade-detail-content {
     .stock-group-header {
       flex-direction: column;
       align-items: stretch;
       padding: 12px;
       gap: 0;
-      
+
       .stock-header-left {
         width: 100%;
-        
-        .ant-space {
-          margin-bottom: 12px;
-        }
+        .ant-space { margin-bottom: 12px; }
       }
-      
+
       .stock-info-row {
         padding-top: 8px;
-        padding-bottom: 0;
-        margin-bottom: 0;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
-        
-        .ant-space {
-          gap: 8px !important;
-        }
-        
-        .ant-space-item {
-          line-height: 1.4;
-        }
+        .ant-space { gap: 8px !important; }
+        .ant-space-item { line-height: 1.4; }
       }
-      
+
       .trade-count {
         padding-top: 4px;
-        padding-bottom: 0;
-        margin-top: 0;
         text-align: right;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
       }
     }
-    
-    // 暗黑模式移动端适配
+
+    // 暗黑模式
     [data-theme='dark'] & .stock-group-header {
       .stock-info-row,
       .trade-count {
@@ -91,36 +85,12 @@
       }
     }
   }
-}
 
-// 交易详情表格样式
-.trade-detail-table {
-  .ant-table {
-    font-size: 13px;
+  .trade-detail-table .ant-table {
+    font-size: 12px;
+    &-thead > tr > th { font-size: 11px; }
   }
-  
-  @media (max-width: @screen-md) {
-    .ant-table {
-      font-size: 12px;
-      
-      &-thead > tr > th {
-        font-size: 11px;
-      }
-    }
-  }
-}
 
-// 股票分组链接样式（单股票和分组模式通用）
-.stock-group-link {
-  font-weight: bold;
-  
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-// Modal 移动端优化
-@media (max-width: @screen-md) {
   .trade-detail-modal {
     .ant-modal {
       margin: 0;
@@ -128,44 +98,37 @@
       top: 0;
       padding-bottom: 0;
     }
-    
+
     .ant-modal-content {
       border-radius: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
-    
+
     .ant-modal-header {
       padding: 12px 16px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
-    
-    .ant-modal-title {
-      font-size: 16px;
-    }
-    
+
+    .ant-modal-title { font-size: 16px; }
+
     .ant-modal-body {
       max-height: none;
       padding: 12px;
       flex: 1;
       overflow-y: auto;
-      // 隐藏垂直滚动条
-      scrollbar-width: none; // Firefox
-      
-      &::-webkit-scrollbar {
-        display: none; // Chrome, Safari, Opera
-      }
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
     }
-    
+
     .ant-modal-close {
       top: 12px;
       right: 16px;
     }
-    
+
     [data-theme='dark'] & .ant-modal-header {
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
   }
 }
-

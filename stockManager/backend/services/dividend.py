@@ -2,7 +2,7 @@
 分红服务模块
 提供股票分红数据查询和处理功能
 """
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 import datetime
 
 import baostock as bs

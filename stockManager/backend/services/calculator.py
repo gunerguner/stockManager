@@ -124,7 +124,7 @@ class Calculator:
         # 持股时长（已在 metrics 中计算）
         to_return["holdingDuration"] = holding_duration
 
-        to_return["operationList"] = cls._calculate_single_operation_list(single_operation_list)
+        to_return["operationList"] = [op.to_dict() for op in reversed(single_operation_list)]
 
         return to_return
 
@@ -246,11 +246,6 @@ class Calculator:
             'total_fee': total_fee,
             'holding_duration': total_holding_days,
         }
-
-    @classmethod
-    def _calculate_single_operation_list(cls, single_operation_list: List[Operation]) -> List[Dict[str, Any]]:
-        """将操作列表转换为字典列表并反转顺序"""
-        return [op.to_dict() for op in reversed(single_operation_list)]
 
     @classmethod
     def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], origin_cash: float, income_cash: float) -> Dict[str, Any]:
