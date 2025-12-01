@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { colorFromValue, formatPrice } from '@/utils';
+import { renderAmount } from '@/utils/renderAmount';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import './index.less';
 
@@ -100,7 +101,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
       title: '累计盈亏',
       dataIndex: 'offsetTotal',
       sorter: (a, b) => a.offsetTotal - b.offsetTotal,
-      render: (v) => <div style={{ color: colorFromValue(v) }}>{v.toFixed(2)}</div>,
+      render: (v) => <div>{renderAmount(v)}</div>,
     },
   ], [isMobile, data.overall.totalValue]);
 

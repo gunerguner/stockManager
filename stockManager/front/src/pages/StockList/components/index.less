@@ -39,12 +39,8 @@
     user-select: none;
     margin-top: 12px;
 
-    &.collapsed {
-      margin-bottom: 0;
-    }
-    &.expanded {
-      margin-bottom: 8px;
-    }
+    &.collapsed { margin-bottom: 0; }
+    &.expanded { margin-bottom: 8px; }
 
     .expand-divider {
       margin: 0;
@@ -53,15 +49,13 @@
 
       &:hover {
         border-color: #1890ff;
-        .expand-icon {
-          color: #1890ff;
-        }
+        .expand-icon { color: #1890ff; }
       }
 
       .expand-icon {
         font-size: 14px;
         color: #8c8c8c;
-        transition: all 0.3s ease;
+        transition: inherit;
         padding: 0 8px;
       }
     }
@@ -75,34 +69,23 @@
 // ==================== 响应式样式 ====================
 
 @media (max-width: @screen-md) {
-  // OperationList
   .operation-list-wrapper {
-    .ant-table {
-      &-thead > tr > th,
-      &-tbody > tr > td {
-        &:nth-child(1) {
-          min-width: 80px;
-        }
-        &:nth-child(n + 2) {
-          min-width: 70px;
-        }
-      }
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      &:first-child { min-width: 80px; }
+      &:nth-child(n + 2) { min-width: 70px; }
     }
-    .stock-name-link {
-      font-size: 12px;
-    }
+
+    .stock-name-link { font-size: 12px; }
   }
 
-  // OverallBoard
   .overall-board-wrapper {
     .main-statistic .ant-statistic {
       &-title {
         font-size: 12px;
         margin-bottom: 6px;
       }
-      &-content {
-        font-size: 24px;
-      }
+      &-content { font-size: 24px; }
     }
 
     .ant-statistic {
@@ -110,31 +93,21 @@
         font-size: 12px;
         margin-bottom: 4px;
       }
-      &-content {
-        font-size: 18px;
-      }
+      &-content { font-size: 18px; }
     }
 
     .expand-divider-wrapper {
       margin: 12px 0;
-      .expand-icon {
-        font-size: 12px;
-      }
+      .expand-icon { font-size: 12px; }
     }
 
-    .expanded-statistics-row {
-      margin-top: 16px;
-    }
+    .expanded-statistics-row { margin-top: 16px; }
   }
 }
 
 @media (min-width: 769px) {
   .overall-board-wrapper .ant-statistic {
-    &-title {
-      font-size: 13px;
-    }
-    &-content {
-      font-size: 20px;
-    }
+    &-title { font-size: 13px; }
+    &-content { font-size: 20px; }
   }
 }

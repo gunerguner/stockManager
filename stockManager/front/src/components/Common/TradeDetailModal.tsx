@@ -2,7 +2,8 @@ import { Table, Typography, Space, Divider, App } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatPrice } from '@/utils';
+import { formatPrice } from '@/utils';
+import { renderAmount } from '@/utils/renderAmount';
 import './index.less';
 
 const { Text, Link } = Typography;
@@ -65,12 +66,7 @@ const renderStockInfoPC = (stock: API.Stock) => (
     <Divider type="vertical" />
     <Text>现价：{formatPrice(stock.priceNow)}</Text>
     <Text>持股：{stock.holdCount}</Text>
-    <Text>
-      累计盈亏：
-      <span style={{ color: colorFromValue(stock.offsetTotal) }}>
-        {stock.offsetTotal.toFixed(2)}
-      </span>
-    </Text>
+    <Text>累计盈亏：{renderAmount(stock.offsetTotal)}</Text>
   </>
 );
 
@@ -80,12 +76,7 @@ const renderStockInfoMobile = (stock: API.Stock) => (
     <Space size="small" wrap>
       <Text>现价：{formatPrice(stock.priceNow)}</Text>
       <Text>持股：{stock.holdCount}</Text>
-      <Text>
-        累计盈亏：
-        <span style={{ color: colorFromValue(stock.offsetTotal) }}>
-          {stock.offsetTotal.toFixed(2)}
-        </span>
-      </Text>
+      <Text>累计盈亏：{renderAmount(stock.offsetTotal)}</Text>
     </Space>
   </div>
 );

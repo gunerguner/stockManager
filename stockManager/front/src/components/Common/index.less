@@ -1,10 +1,49 @@
-// ==================== TradeDetailModal 组件样式 ====================
+// ==================== 通用样式 ====================
 
+// 卡片头部样式
+.stock-profit-header,
+.stock-group-header {
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  margin-bottom: 12px;
+
+  [data-theme='dark'] & {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+}
+
+// 表格字体
+.stock-profit-table,
+.trade-detail-table {
+  .ant-table { font-size: 13px; }
+}
+
+// Modal body
+.stock-profit-modal,
 .trade-detail-modal {
   .ant-modal-body {
     max-height: none;
   }
 }
+
+// ==================== StockProfitModal 组件样式 ====================
+
+.stock-profit-content {
+  .stock-profit-header {
+    .category-name {
+      margin-bottom: 8px;
+    }
+  }
+
+  .empty-data {
+    text-align: center;
+    padding: 20px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// ==================== TradeDetailModal 组件样式 ====================
 
 .trade-detail-content {
   .trade-group-item {
@@ -13,10 +52,6 @@
   }
 
   .stock-group-header {
-    padding: 8px 12px;
-    background-color: rgba(0, 0, 0, 0.02);
-    border-radius: 4px;
-    margin-bottom: 12px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -32,15 +67,6 @@
       white-space: nowrap;
     }
   }
-
-  // 暗黑模式
-  [data-theme='dark'] & .stock-group-header {
-    background-color: rgba(255, 255, 255, 0.04);
-  }
-}
-
-.trade-detail-table {
-  .ant-table { font-size: 13px; }
 }
 
 .stock-group-link {
@@ -51,46 +77,74 @@
 // ==================== 移动端适配 ====================
 
 @media (max-width: @screen-md) {
+  // 卡片头部移动端样式
+  .stock-profit-header,
+  .stock-group-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 0;
+  }
+
+  // StockProfit 移动端
+  .stock-profit-content {
+    .stock-profit-header {
+      .category-name {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .summary-info-row {
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        .ant-space { gap: 8px !important; }
+        .ant-space-item { line-height: 1.4; }
+
+        [data-theme='dark'] & {
+          border-top-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+  }
+
+  // TradeDetail 移动端
   .trade-detail-content {
     .stock-group-header {
-      flex-direction: column;
-      align-items: stretch;
-      padding: 12px;
-      gap: 0;
-
       .stock-header-left {
         width: 100%;
         .ant-space { margin-bottom: 12px; }
       }
 
-      .stock-info-row {
+      .stock-info-row,
+      .trade-count {
         padding-top: 8px;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
         .ant-space { gap: 8px !important; }
         .ant-space-item { line-height: 1.4; }
+
+        [data-theme='dark'] & {
+          border-top-color: rgba(255, 255, 255, 0.1);
+        }
       }
 
       .trade-count {
         padding-top: 4px;
         text-align: right;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-      }
-    }
-
-    // 暗黑模式
-    [data-theme='dark'] & .stock-group-header {
-      .stock-info-row,
-      .trade-count {
-        border-top-color: rgba(255, 255, 255, 0.1);
       }
     }
   }
 
-  .trade-detail-table .ant-table {
-    font-size: 12px;
-    &-thead > tr > th { font-size: 11px; }
+  // 表格移动端字体
+  .stock-profit-table,
+  .trade-detail-table {
+    .ant-table {
+      font-size: 12px;
+      &-thead > tr > th { font-size: 11px; }
+    }
   }
 
+  // Modal 移动端全屏样式
+  .stock-profit-modal,
   .trade-detail-modal {
     .ant-modal {
       margin: 0;
@@ -109,6 +163,10 @@
     .ant-modal-header {
       padding: 12px 16px;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+      [data-theme='dark'] & {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
     }
 
     .ant-modal-title { font-size: 16px; }
@@ -125,10 +183,6 @@
     .ant-modal-close {
       top: 12px;
       right: 16px;
-    }
-
-    [data-theme='dark'] & .ant-modal-header {
-      border-bottom-color: rgba(255, 255, 255, 0.1);
     }
   }
 }

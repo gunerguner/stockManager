@@ -1,11 +1,20 @@
-import { Table, Tooltip } from 'antd';
+import { Col, Row, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { colorFromValue } from '@/utils';
+import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
 
 // ==================== 类型定义 ====================
+
+interface StockDetail {
+  code: string;
+  name: string;
+  profit: number;
+  loss: number;
+  netIncome: number;
+}
 
 interface AnalysisModel {
   type: string;
@@ -13,12 +22,7 @@ interface AnalysisModel {
   profit: number;
   loss: number;
   netIncome: number;
-}
-
-interface StockTypeStats {
-  profit: number;
-  loss: number;
-  count: number;
+  stocks: StockDetail[];
 }
 
 export type AnalysisListProps = {
@@ -48,69 +52,85 @@ const API_TYPE_MAP = new Map(
     .map(([key, , apiType]) => [apiType!, key]),
 );
 
-// ==================== 工具函数 ====================
-
-/** 创建空的统计对象 */
-const createEmptyStats = (): StockTypeStats => ({ profit: 0, loss: 0, count: 0 });
-
-/** 累加统计数据 */
-const accumulateStats = (stats: StockTypeStats, offsetTotal: number): void => {
-  if (offsetTotal > 0) stats.profit += offsetTotal;
-  if (offsetTotal < 0) stats.loss += offsetTotal;
-  stats.count++;
-};
-
 // ==================== 组件 ====================
 
 export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0 }) => {
   const isMobile = useIsMobile();
+  const { showStockProfit } = useStockProfitModal();
 
   /** 计算分析数据 */
   const { analysisList, totalProfit, totalLoss } = useMemo(() => {
     // 初始化统计对象
-    const stats = new Map<string, StockTypeStats>(
-      STOCK_TYPE_CONFIGS.map(([key]) => [key, createEmptyStats()]),
+    const stats = new Map<string, AnalysisModel>(
+      STOCK_TYPE_CONFIGS.map(([key, label]) => [
+        key,
+        { type: label, count: 0, profit: 0, loss: 0, netIncome: 0, stocks: [] },
+      ]),
     );
 
     // 统计各类型股票数据
-    for (const { stockType, isNew, offsetTotal } of data) {
+    for (const stock of data) {
+      const { stockType, isNew, offsetTotal } = stock;
       const key = isNew ? 'isNew' : API_TYPE_MAP.get(stockType);
       const stat = key ? stats.get(key) : undefined;
-      if (stat) accumulateStats(stat, offsetTotal);
+      
+      if (stat) {
+        const profit = offsetTotal > 0 ? offsetTotal : 0;
+        const loss = offsetTotal < 0 ? offsetTotal : 0;
+        
+        stat.profit += profit;
+        stat.loss += loss;
+        stat.count++;
+        stat.netIncome += offsetTotal;
+        stat.stocks.push({
+          code: stock.code,
+          name: stock.name,
+          profit,
+          loss,
+          netIncome: offsetTotal,
+        });
+      }
     }
 
-    // 计算总盈亏
-    const allStats = [...stats.values()];
-    const totalProfitValue = allStats.reduce((sum, s) => sum + s.profit, 0);
-    const totalLossValue = allStats.reduce((sum, s) => sum + s.loss, 0);
-
-    // 构建分析数据
-    const analysis: AnalysisModel[] = STOCK_TYPE_CONFIGS.map(([key, label]) => {
-      const stat = stats.get(key)!;
-      return {
-        type: label,
-        count: stat.count,
-        profit: stat.profit,
-        loss: stat.loss,
-        netIncome: stat.profit + stat.loss,
-      };
-    });
+    // 构建分析数据并计算总盈亏
+    const analysisList = [...stats.values()];
+    const totalProfit = analysisList.reduce((sum, s) => sum + s.profit, 0);
+    const totalLoss = analysisList.reduce((sum, s) => sum + s.loss, 0);
 
     // 添加逆回购（如果有）
     if (incomeCash > 0) {
-      analysis.push({
+      analysisList.push({
         type: '逆回购',
         count: 1,
         profit: incomeCash,
         loss: 0,
         netIncome: incomeCash,
+        stocks: [],
       });
     }
 
-    return { analysisList: analysis, totalProfit: totalProfitValue, totalLoss: totalLossValue };
+    return { analysisList, totalProfit, totalLoss };
   }, [data, incomeCash]);
 
-  /** 表格列配置 */
+  /** 渲染金额 */
+  const renderAmount = (value: number, color: string) => (
+    <span style={{ color }}>{value.toFixed(2)}</span>
+  );
+
+  /** 处理行点击事件 */
+  const handleRowClick = (record: AnalysisModel) => {
+    if (record.stocks.length === 0) return;
+    
+    showStockProfit({
+      data: record.stocks,
+      categoryName: record.type,
+      profit: record.profit,
+      loss: record.loss,
+      netIncome: record.netIncome,
+    });
+  };
+
+  /** 主表格列配置 */
   const columns: ColumnsType<AnalysisModel> = useMemo(
     () => [
       {
@@ -128,7 +148,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         sorter: (a, b) => a.profit - b.profit,
         render: (value: number) => (
           <Tooltip title={`${((value / totalProfit) * 100).toFixed(2)}%`} color="red">
-            <span style={{ color: 'red' }}>{value.toFixed(2)}</span>
+            {renderAmount(value, 'red')}
           </Tooltip>
         ),
       },
@@ -138,7 +158,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         sorter: (a, b) => a.loss - b.loss,
         render: (value: number) => (
           <Tooltip title={`${((value / totalLoss) * 100).toFixed(2)}%`} color="green">
-            <span style={{ color: 'green' }}>{value.toFixed(2)}</span>
+            {renderAmount(value, 'green')}
           </Tooltip>
         ),
       },
@@ -146,9 +166,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         title: '净收益',
         dataIndex: 'netIncome',
         sorter: (a, b) => a.netIncome - b.netIncome,
-        render: (value: number) => (
-          <span style={{ color: colorFromValue(value) }}>{value.toFixed(2)}</span>
-        ),
+        render: (value: number) => renderAmount(value, colorFromValue(value)),
       },
     ],
     [totalProfit, totalLoss],
@@ -156,16 +174,37 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
 
   return (
     <div className="analysis-list-wrapper">
-      <Table
-        rowKey="type"
-        columns={columns}
-        dataSource={analysisList}
-        bordered
-        pagination={false}
-        scroll={isMobile ? { x: 'max-content' } : undefined}
-        size={isMobile ? 'small' : 'middle'}
-        tableLayout="auto"
-      />
+      <Row gutter={[16, 16]} className="analysis-list-header">
+        <Col span={isMobile ? 12 : 6}>
+          <Statistic title="总获利" value={totalProfit.toFixed(2)} valueStyle={{ color: 'red' }} />
+        </Col>
+        <Col span={isMobile ? 12 : 6}>
+          <Statistic title="总亏损" value={totalLoss.toFixed(2)} valueStyle={{ color: 'green' }} />
+        </Col>
+        <Col span={isMobile ? 12 : 6}>
+          <Statistic
+            title="净收益"
+            value={(totalProfit + totalLoss).toFixed(2)}
+            valueStyle={{ color: colorFromValue(totalProfit + totalLoss) }}
+          />
+        </Col>
+      </Row>
+      <div className="analysis-list-table-container">
+        <Table
+          rowKey="type"
+          columns={columns}
+          dataSource={analysisList}
+          bordered
+          pagination={false}
+          scroll={isMobile ? { x: 'max-content' } : undefined}
+          size={isMobile ? 'small' : 'middle'}
+          tableLayout="auto"
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: record.stocks.length > 0 ? { cursor: 'pointer' } : undefined,
+          })}
+        />
+      </div>
     </div>
   );
 };
