@@ -25,6 +25,15 @@ export type ShowStockProfitParams = {
 
 // ==================== 渲染函数 ====================
 
+/** 渲染汇总信息项 */
+const renderSummaryItems = (profit: number, loss: number, netIncome: number) => (
+  <>
+    <Text>获利：{renderAmount(profit, 'red')}</Text>
+    <Text>亏损：{renderAmount(loss, 'green')}</Text>
+    <Text>净盈亏：{renderAmount(netIncome)}</Text>
+  </>
+);
+
 /** 渲染汇总信息 */
 const renderSummaryHeader = (
   categoryName: string,
@@ -33,46 +42,40 @@ const renderSummaryHeader = (
   netIncome: number,
   isMobile: boolean,
 ): React.ReactNode => {
-  if (isMobile) {
-    return (
-      <div className="stock-profit-header">
-        <div className="category-name">
-          <strong>{categoryName}</strong>
-        </div>
-        <div className="summary-info-row">
-          <Space size="small" wrap>
-            <Text>获利：{renderAmount(profit, 'red')}</Text>
-            <Text>亏损：{renderAmount(loss, 'green')}</Text>
-            <Text>净盈亏：{renderAmount(netIncome)}</Text>
-          </Space>
-        </div>
-      </div>
-    );
-  }
+  const summaryItems = renderSummaryItems(profit, loss, netIncome);
 
   return (
     <div className="stock-profit-header">
-      <Space size="middle" wrap>
-        <strong>{categoryName}</strong>
-        <Text>获利：{renderAmount(profit, 'red')}</Text>
-        <Text>亏损：{renderAmount(loss, 'green')}</Text>
-        <Text>净盈亏：{renderAmount(netIncome)}</Text>
-      </Space>
+      {isMobile ? (
+        <>
+          <div className="category-name">
+            <strong>{categoryName}</strong>
+          </div>
+          <div className="summary-info-row">
+            <Space size="small" wrap>{summaryItems}</Space>
+          </div>
+        </>
+      ) : (
+        <Space size="middle" wrap>
+          <strong>{categoryName}</strong>
+          {summaryItems}
+        </Space>
+      )}
     </div>
   );
 };
 
+/** 渲染浮层内容 */
 const renderStockProfitContent = (
   params: ShowStockProfitParams,
   isMobile: boolean,
 ): React.ReactNode => {
   const { data, categoryName, profit, loss, netIncome } = params;
 
-  if (!data || data.length === 0) {
+  if (!data?.length) {
     return <div className="empty-data">暂无数据</div>;
   }
 
-  // 按净盈亏降序排列
   const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
 
   const columns: ColumnsType<StockProfitData> = [
