@@ -17,12 +17,8 @@ export default defineConfig({
    * @description antd 插件配置
    */
   antd: {
-    // 配置 antd 主题
-    theme: {
-      token: {
-        colorPrimary: defaultSettings.colorPrimary || '#1890ff',
-      },
-    },
+    // Ant Design 6 使用 CSS 变量模式
+    style: 'css',
   },
   
   /**
