@@ -28,16 +28,6 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 
 // ==================== 表格列配置 ====================
 
-const formatOperationPrice = (value?: number) => {
-  if (value === undefined || value === null || Number.isNaN(value)) {
-    return '-';
-  }
-
-  // 先格式化到3位小数，如果第3位是0则只保留2位
-  const fixed3 = value.toFixed(3);
-  return fixed3.endsWith('0') ? value.toFixed(2) : fixed3;
-};
-
 const getColumnsOperation = (isMobile: boolean): ColumnsType<API.Operation> => [
   { title: '交易日期', dataIndex: 'date', width: isMobile ? 90 : 110 },
   {
@@ -50,7 +40,7 @@ const getColumnsOperation = (isMobile: boolean): ColumnsType<API.Operation> => [
     title: '成交价',
     dataIndex: 'price',
     width: isMobile ? 70 : 90,
-    render: (v: number) => <div>{formatOperationPrice(v)}</div>,
+    render: (v: number) => <div>{formatPrice(v)}</div>,
   },
   { title: '数量', dataIndex: 'count', width: isMobile ? 60 : 80 },
   {

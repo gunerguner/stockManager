@@ -12,21 +12,16 @@ export const colorFromValue = (value: number): string => {
 };
 
 /**
- * 格式化价格：最少2位小数，最多3位小数
+ * 格式化价格：如果第三位小数非 0 则保留 3 位，否则保留 2 位
  */
-export const formatPrice = (value: number | string): string => {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(numValue)) return String(value);
+export const formatPrice = (value?: number | string | null): string => {
+  if (value === undefined || value === null || value === '') return '-';
 
-  const rounded = Math.round(numValue * 1000) / 1000;
-  const str = rounded.toString();
-  const decimalIndex = str.indexOf('.');
+  const numValue = typeof value === 'string' ? Number(value) : value;
+  if (Number.isNaN(numValue)) return '-';
 
-  if (decimalIndex === -1 || str.substring(decimalIndex + 1).length < 2) {
-    return rounded.toFixed(2);
-  }
-
-  return str;
+  const fixed3 = numValue.toFixed(3);
+  return fixed3.endsWith('0') ? numValue.toFixed(2) : fixed3;
 };
 
 // ==================== 环境变量工具 ====================
