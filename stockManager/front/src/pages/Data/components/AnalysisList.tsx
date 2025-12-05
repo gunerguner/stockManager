@@ -2,7 +2,7 @@ import { Col, Row, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue } from '@/utils';
+import { colorFromValue, renderAmount as renderAmountTool } from '@/utils/renderTool';
 import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
 
@@ -112,10 +112,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
     return { analysisList, totalProfit, totalLoss };
   }, [data, incomeCash]);
 
-  /** 渲染金额 */
-  const renderAmount = (value: number, color: string) => (
-    <span style={{ color }}>{value.toFixed(2)}</span>
-  );
+  /** 渲染金额（复用通用渲染工具） */
+  const renderAmount = (value: number, color: string) => renderAmountTool(value, color);
 
   /** 处理行点击事件 */
   const handleRowClick = (record: AnalysisModel) => {
@@ -172,20 +170,43 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
     [totalProfit, totalLoss],
   );
 
+  /** 头部 Statistic 样式（使用 css-in-js） */
+  const getHeaderStatisticStyles = (color?: string) => ({
+    title: {
+      fontSize: isMobile ? 12 : '',
+      marginBottom: 4,
+    },
+    content: {
+      fontSize: isMobile ? 18 : '',
+      ...(color ? { color } : {}),
+    },
+  });
+
   return (
     <div className="analysis-list-wrapper">
       <Row gutter={[16, 16]} className="analysis-list-header">
         <Col span={isMobile ? 12 : 6}>
-          <Statistic title="总获利" value={totalProfit.toFixed(2)} valueStyle={{ color: 'red' }} />
+          <Statistic
+            title="总获利"
+            value={totalProfit}
+            precision={2}
+            styles={getHeaderStatisticStyles('red')}
+          />
         </Col>
         <Col span={isMobile ? 12 : 6}>
-          <Statistic title="总亏损" value={totalLoss.toFixed(2)} valueStyle={{ color: 'green' }} />
+          <Statistic
+            title="总亏损"
+            value={totalLoss}
+            precision={2}
+            styles={getHeaderStatisticStyles('green')}
+          />
         </Col>
         <Col span={isMobile ? 12 : 6}>
           <Statistic
             title="净收益"
-            value={(totalProfit + totalLoss).toFixed(2)}
-            valueStyle={{ color: colorFromValue(totalProfit + totalLoss) }}
+            value={totalProfit + totalLoss}
+            precision={2}
+            styles={getHeaderStatisticStyles(colorFromValue(totalProfit + totalLoss))}
           />
         </Col>
       </Row>

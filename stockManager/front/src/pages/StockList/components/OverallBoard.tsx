@@ -2,7 +2,7 @@ import { Statistic, Row, Col, InputNumber, Form, App, Divider } from 'antd';
 import { useState } from 'react';
 import { UpOutlined, DownOutlined } from '@ant-design/icons';
 import { updateIncomeCash } from '@/services/api';
-import { colorFromValue } from '@/utils';
+import { colorFromValue } from '@/utils/renderTool';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { RESPONSE_STATUS } from '@/utils/constants';
 import './index.less';
@@ -60,8 +60,16 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
   const colSpan = isMobile ? 12 : 6;
   const clickable = !!onClick;
 
-  const valueStyle: React.CSSProperties = {
+  // 统一通过 Statistic 的 styles 控制样式，而不是依赖 CSS 选择器
+  const titleStyle: React.CSSProperties = {
+    fontSize: isMobile ? 12 : isMain ? 14 : 13,
+    marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
+  };
+
+  const contentStyle: React.CSSProperties = {
     fontWeight: isMain ? 'bold' : 'normal',
+    fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 28 : 20,
+    lineHeight: isMain && !isMobile ? 1.2 : 1.2,
     ...(showColor && { color: colorFromValue(value) }),
     ...(clickable && { color: '#1890ff' }),
   };
@@ -72,8 +80,7 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
         title={title}
         value={value}
         precision={2}
-        className={isMain ? 'main-statistic' : ''}
-        valueStyle={valueStyle}
+        styles={{ title: titleStyle, content: contentStyle }}
       />
     </Col>
   );
@@ -153,7 +160,13 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Divider className="expand-divider">
+        <Divider
+          className="expand-divider"
+          styles={{
+            root: { margin: 0 },
+            content: { margin: '0 8px' },
+          }}
+        >
           {isExpanded ? <UpOutlined className="expand-icon" /> : <DownOutlined className="expand-icon" />}
         </Divider>
       </div>

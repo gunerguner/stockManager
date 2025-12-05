@@ -2,8 +2,7 @@ import { Table, Typography, Space, Divider, App } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { formatPrice } from '@/utils';
-import { renderAmount } from '@/utils/renderAmount';
+import { formatPrice, renderAmount } from '@/utils/renderTool';
 import './index.less';
 
 const { Text, Link } = Typography;

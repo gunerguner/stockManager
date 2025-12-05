@@ -2,7 +2,7 @@ import { App, Space, Table, Tooltip, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount } from '@/utils/renderAmount';
+import { renderAmount } from '@/utils/renderTool';
 import './index.less';
 
 const { Text } = Typography;

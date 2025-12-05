@@ -2,8 +2,7 @@ import { Table, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatPrice } from '@/utils';
-import { renderAmount } from '@/utils/renderAmount';
+import { colorFromValue, formatPrice, renderAmount } from '@/utils/renderTool';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import './index.less';
 
@@ -55,7 +54,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
       dataIndex: 'offsetTodayRatio',
       render: (_, r) => (
         <div style={{ color: colorFromValue(r.offsetToday) }}>
-          {`${r.offsetToday.toFixed(3)} (${r.offsetTodayRatio})`}
+          {`${formatPrice(r.offsetToday)} (${r.offsetTodayRatio})`}
         </div>
       ),
     },
@@ -92,7 +91,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
         const todayTotal = r.offsetToday * r.holdCount;
         return (
           <Tooltip title={todayTotal.toFixed(2)} color={colorFromValue(todayTotal)}>
-            <div style={{ color: colorFromValue(r.offsetCurrent) }}>{r.offsetCurrent.toFixed(2)}</div>
+            <div>{renderAmount(r.offsetCurrent)}</div>
           </Tooltip>
         );
       },

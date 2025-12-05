@@ -181,7 +181,15 @@ export const CostList: React.FC<CostListProps> = ({ data, totalCost }) => {
   return (
     <div className="cost-list-wrapper">
       <div className="cost-list-header">
-        <Statistic title="总费用" value={totalCost.toFixed(2)} />
+        <Statistic
+          title="总费用"
+          value={totalCost}
+          precision={2}
+          styles={isMobile ? {
+            title: { fontSize: 12 },
+            content: { fontSize: 18 },
+          }:{}}
+        />
       </div>
       <div className="cost-list-table-container">
         <Table
