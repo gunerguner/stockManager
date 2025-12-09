@@ -90,7 +90,7 @@ class CashFlow(models.Model):
         related_name='cash_flows', 
         verbose_name="用户"
     )
-    transaction_date = models.DateTimeField(verbose_name="交易时间")
+    transaction_date = models.DateField(verbose_name="交易日期")
     amount = models.DecimalField(
         max_digits=15, 
         decimal_places=2, 

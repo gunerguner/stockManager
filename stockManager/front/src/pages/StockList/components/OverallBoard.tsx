@@ -5,6 +5,7 @@ import { updateIncomeCash } from '@/services/api';
 import { colorFromValue } from '@/utils/renderTool';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { RESPONSE_STATUS } from '@/utils/constants';
+import { useCashFlowModal } from '@/components/Common/CashFlowModal';
 import './index.less';
 
 // ==================== 类型定义 ====================
@@ -36,7 +37,7 @@ const EXPANDED_STATISTICS: StatisticItemConfig[] = [
   { key: 'totalValue', title: '市值', showColor: true },
   { key: 'totalCash', title: '现金' },
   { key: 'incomeCash', title: '其它现金收入' },
-  { key: 'originCash', title: '本金' },
+  { key: 'originCash', title: '总入金' },
 ];
 
 // ==================== 子组件 ====================
@@ -92,6 +93,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
   const [form] = Form.useForm();
   const { modal } = App.useApp();
   const [isExpanded, setIsExpanded] = useState(false);
+  const { showCashFlow } = useCashFlowModal();
 
   /** 处理编辑现金收入 */
   const handleEditIncomeCash = () => {
@@ -134,9 +136,18 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
     });
   };
 
+  /** 处理显示出入金明细 */
+  const handleShowCashFlow = () => {
+    showCashFlow({
+      totalCashIn: data.originCash || 0,
+      cashFlowList: data.cashFlowList || [],
+    });
+  };
+
   /** 可点击项的回调映射 */
   const clickHandlers: Partial<Record<keyof API.Overall, () => void>> = {
     incomeCash: handleEditIncomeCash,
+    originCash: handleShowCashFlow,
   };
 
   /** 渲染统计项列表 */

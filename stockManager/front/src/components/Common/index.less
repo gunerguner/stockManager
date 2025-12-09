@@ -15,13 +15,15 @@
 
 // 表格字体
 .stock-profit-table,
-.trade-detail-table {
+.trade-detail-table,
+.cash-flow-table {
   .ant-table { font-size: 13px; }
 }
 
 // Modal body
 .stock-profit-modal,
-.trade-detail-modal {
+.trade-detail-modal,
+.cash-flow-modal {
   .ant-modal-body {
     max-height: none;
   }
@@ -36,6 +38,16 @@
     }
   }
 
+  .empty-data {
+    text-align: center;
+    padding: 20px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// ==================== CashFlowModal 组件样式 ====================
+
+.cash-flow-content {
   .empty-data {
     text-align: center;
     padding: 20px;
@@ -130,13 +142,16 @@
       .trade-count {
         padding-top: 4px;
         text-align: right;
+        display: block;
+        width: 100%;
       }
     }
   }
 
   // 表格移动端字体
   .stock-profit-table,
-  .trade-detail-table {
+  .trade-detail-table,
+  .cash-flow-table {
     .ant-table {
       font-size: 12px;
       &-thead > tr > th { font-size: 11px; }
@@ -145,7 +160,8 @@
 
   // Modal 移动端全屏样式
   .stock-profit-modal,
-  .trade-detail-modal {
+  .trade-detail-modal,
+  .cash-flow-modal {
     .ant-modal {
       margin: 0;
       max-width: 100vw;

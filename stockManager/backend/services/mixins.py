@@ -7,7 +7,7 @@ from .dividend import Dividend
 class CalculatorMixin:
     """计算指标能力"""
     def calculate_target(self) -> Dict:
-        return Calculator.calculate_target(self.operation_list, self.origin_cash, self.income_cash)
+        return Calculator.calculate_target(self.operation_list, self.income_cash, self.cash_flow_list)
 
 
 class DividendMixin:

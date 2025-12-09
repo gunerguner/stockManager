@@ -25,12 +25,23 @@ class Integrate:
         return format_operations(Operation.objects.filter(user=user).order_by("date"))
     
     @classmethod
-    def _get_user_cash_info(cls, user: User) -> Tuple[float, float]:
+    def _get_user_cash_info(cls, user: User) -> Tuple[float, List[Dict[str, Any]]]:
         """获取用户的资金信息"""
-        origin_cash = float(CashFlow.objects.filter(user=user).aggregate(total=Sum('amount'))['total'] or Decimal('0.00'))
+        # 获取其它现金收入
         income_cash_info = Info.objects.filter(user=user, info_type=Info.InfoType.INCOME_CASH).first()
         income_cash = float(income_cash_info.value) if income_cash_info else 0.0
-        return origin_cash, income_cash
+        
+        # 获取出入金列表
+        cash_flows = CashFlow.objects.filter(user=user).order_by('-transaction_date')
+        cash_flow_list = [
+            {
+                'date': str(flow.transaction_date),
+                'amount': float(flow.amount),
+            }
+            for flow in cash_flows
+        ]
+        
+        return income_cash, cash_flow_list
 
 
     @classmethod
@@ -41,8 +52,8 @@ class Integrate:
             return cls.user_data_map[user.id]
         
         logger.debug(f"缓存未命中: 为用户 {user.id} ({user.username}) 创建新的 UserData 实例")
-        origin_cash, income_cash = cls._get_user_cash_info(user)
-        user_data = UserData(user, cls._get_operation_list(user), income_cash, origin_cash)
+        income_cash, cash_flow_list = cls._get_user_cash_info(user)
+        user_data = UserData(user, cls._get_operation_list(user), income_cash, cash_flow_list)
         cls.user_data_map[user.id] = user_data
         return user_data
     

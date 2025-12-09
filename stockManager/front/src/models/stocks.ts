@@ -18,6 +18,7 @@ const DEFAULT_STOCK_DATA: API.StockData = {
     originCash: 0,
     totalAsset: 0,
     totalCost: 0,
+    cashFlowList: [],
   },
 };
 

@@ -50,6 +50,12 @@ declare namespace API {
     originCash: number;
     totalAsset: number;
     totalCost: number;
+    cashFlowList: CashFlowRecord[];
+  };
+
+  type CashFlowRecord = {
+    date: string;
+    amount: number;
   };
 
   type Stock = {

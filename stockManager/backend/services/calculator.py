@@ -23,7 +23,7 @@ class Calculator:
         return datetime.date.today()
 
     @classmethod
-    def calculate_target(cls, operation_list: Dict[str, List[Operation]], origin_cash: float = 0.0, income_cash: float = 0.0) -> Dict[str, Any]:
+    def calculate_target(cls, operation_list: Dict[str, List[Operation]], income_cash: float = 0.0, cash_flow_list: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         code_list = list(operation_list.keys())
         realtime_price_list = RealtimePrice.query(code_list)
         stock_list = [
@@ -32,7 +32,7 @@ class Calculator:
         ]
         return {
             "stocks": stock_list,
-            "overall": cls._calculate_overall_target(stock_list, origin_cash, income_cash)
+            "overall": cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
         }
 
 
@@ -248,7 +248,7 @@ class Calculator:
         }
 
     @classmethod
-    def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], origin_cash: float, income_cash: float) -> Dict[str, Any]:
+    def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], income_cash: float, cash_flow_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         """计算整体指标"""
         to_return = {}
 
@@ -258,6 +258,9 @@ class Calculator:
         total_value = sum(target["totalValue"] for target in single_target_list)
         total_offset_today = sum(target["totalOffsetToday"] for target in single_target_list)
         total_cost = sum(target["totalCost"] for target in single_target_list)
+
+        # 从 cash_flow_list 计算总入金（所有 amount 的总和）
+        origin_cash = sum(flow['amount'] for flow in cash_flow_list)
 
         # 计算整体指标
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
@@ -274,7 +277,15 @@ class Calculator:
         to_return["totalAsset"] = origin_cash + total_offset + income_cash  # 总资产
         to_return["totalCost"] = total_cost  # 总费用
         to_return["incomeCash"] = income_cash  # 逆回购等收入
-        to_return["originCash"] = origin_cash  # 本金
+        to_return["originCash"] = origin_cash  # 总入金（从 cash_flow_list 计算）
+        # 将 cash_flow_list 转换为前端需要的格式（date, amount）
+        to_return["cashFlowList"] = [
+            {
+                "date": flow["date"],
+                "amount": flow["amount"],
+            }
+            for flow in cash_flow_list
+        ]
 
         return to_return
 
