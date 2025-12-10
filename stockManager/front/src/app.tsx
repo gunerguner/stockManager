@@ -80,12 +80,12 @@ const errorHandler = (error: any) => {
   if (response?.status) {
     const errorText = HTTP_CODE_MESSAGE[response.status] || response.statusText;
     notification.error({
-      message: `请求错误 ${response.status}: ${response.url}`,
+      title: `请求错误 ${response.status}: ${response.url}`,
       description: errorText,
     });
   } else if (!response) {
     notification.error({
-      message: '网络异常',
+      title: '网络异常',
       description: '您的网络发生异常，无法连接服务器',
     });
   }
@@ -120,7 +120,7 @@ const responseInterceptor = (response: any) => {
   
   if (data?.message && data.status === RESPONSE_STATUS.ERROR) {
     notification.error({
-      message: '操作失败',
+      title: '操作失败',
       description: data.message,
     });
   }

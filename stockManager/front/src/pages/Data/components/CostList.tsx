@@ -132,7 +132,7 @@ export const CostList: React.FC<CostListProps> = ({ data, totalCost }) => {
     showTradeDetail({
       data: filteredData,
       title: `${year}年${month ? `${month}月` : ''}交易明细 - ${label}`,
-      displayType: 'tradeList',
+      displayType: 'tradeList'
     });
   };
 

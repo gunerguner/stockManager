@@ -1,8 +1,9 @@
-import { App, Space, Table, Tooltip, Typography } from 'antd';
+import { Space, Tooltip, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { renderAmount } from '@/utils/renderTool';
+import { useCommonModal } from './useCommonModal';
 import './index.less';
 
 const { Text } = Typography;
@@ -23,117 +24,100 @@ export type ShowStockProfitParams = {
   netIncome: number;
 };
 
-// ==================== 渲染函数 ====================
+// ==================== 组件 ====================
 
-/** 渲染汇总信息项 */
-const renderSummaryItems = (profit: number, loss: number, netIncome: number) => (
+/** 汇总信息项 */
+const SummaryItems: React.FC<{ profit: number; loss: number; netIncome: number }> = ({
+  profit,
+  loss,
+  netIncome,
+}) => (
   <>
-    <Text>获利：{renderAmount(profit, 'red')}</Text>
-    <Text>亏损：{renderAmount(loss, 'green')}</Text>
-    <Text>净盈亏：{renderAmount(netIncome)}</Text>
+    <Text>获利：{renderAmount(profit, 'red')} </Text>
+    <Text>亏损：{renderAmount(loss, 'green')} </Text>
+    <Text>净盈亏：{renderAmount(netIncome)} </Text>
   </>
 );
 
-/** 渲染汇总信息 */
-const renderSummaryHeader = (
-  categoryName: string,
-  profit: number,
-  loss: number,
-  netIncome: number,
-  isMobile: boolean,
-): React.ReactNode => {
-  const summaryItems = renderSummaryItems(profit, loss, netIncome);
+/** 汇总信息头部 */
+const SummaryHeader: React.FC<{
+  categoryName: string;
+  profit: number;
+  loss: number;
+  netIncome: number;
+}> = ({ categoryName, profit, loss, netIncome }) => {
+  const isMobile = useIsMobile();
 
   return (
-    <div className="stock-profit-header">
+    <>
       {isMobile ? (
         <>
           <div className="category-name">
             <strong>{categoryName}</strong>
           </div>
           <div className="summary-info-row">
-            <Space size="small" wrap>{summaryItems}</Space>
+            <Space size="small" wrap>
+              <SummaryItems profit={profit} loss={loss} netIncome={netIncome} />
+            </Space>
           </div>
         </>
       ) : (
         <Space size="middle" wrap>
           <strong>{categoryName}</strong>
-          {summaryItems}
+          <SummaryItems profit={profit} loss={loss} netIncome={netIncome} />
         </Space>
       )}
-    </div>
-  );
-};
-
-/** 渲染浮层内容 */
-const renderStockProfitContent = (
-  params: ShowStockProfitParams,
-  isMobile: boolean,
-): React.ReactNode => {
-  const { data, categoryName, profit, loss, netIncome } = params;
-
-  if (!data?.length) {
-    return <div className="empty-data">暂无数据</div>;
-  }
-
-  const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
-
-  const columns: ColumnsType<StockProfitData> = [
-    {
-      title: '股票名称',
-      dataIndex: 'name',
-      width: isMobile ? 120 : 200,
-      render: (name: string, record: StockProfitData) => (
-        <Tooltip title={record.code}>
-          <span>{name}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: '净盈亏',
-      dataIndex: 'netIncome',
-      width: isMobile ? 100 : 150,
-      render: (value: number) => renderAmount(value),
-    },
-  ];
-
-  return (
-    <div className="stock-profit-content">
-      {renderSummaryHeader(categoryName, profit, loss, netIncome, isMobile)}
-      <Table
-        className="stock-profit-table"
-        columns={columns}
-        dataSource={sortedData}
-        rowKey="code"
-        size="small"
-        bordered
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-      />
-    </div>
+    </>
   );
 };
 
 // ==================== Hook ====================
 
 export const useStockProfitModal = () => {
-  const { modal } = App.useApp();
+  const { showSingleTable } = useCommonModal();
   const isMobile = useIsMobile();
 
   const showStockProfit = React.useCallback(
     (params: ShowStockProfitParams) => {
-      modal.info({
+      const { data, categoryName, profit, loss, netIncome } = params;
+
+      if (!data?.length) {
+        return;
+      }
+
+      const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
+
+      const columns: ColumnsType<StockProfitData> = [
+        {
+          title: '股票名称',
+          dataIndex: 'name',
+          width: isMobile ? 120 : 200,
+          render: (name: string, record: StockProfitData) => (
+            <Tooltip title={record.code}>
+              <span>{name}</span>
+            </Tooltip>
+          ),
+        },
+        {
+          title: '净盈亏',
+          dataIndex: 'netIncome',
+          width: isMobile ? 100 : 150,
+          render: (value: number) => renderAmount(value),
+        },
+      ];
+
+      const headerView = (
+        <SummaryHeader categoryName={categoryName} profit={profit} loss={loss} netIncome={netIncome} />
+      );
+
+      showSingleTable({
         title: '盈亏明细',
-        content: renderStockProfitContent(params, isMobile),
-        width: isMobile ? '95%' : 600,
-        className: 'stock-profit-modal',
-        icon: null,
-        footer: null,
-        closable: true,
-        maskClosable: true,
+        headerView,
+        columns,
+        dataSource: sortedData,
       });
     },
-    [modal, isMobile],
+    [showSingleTable, isMobile],
   );
 
   return { showStockProfit };

@@ -42,47 +42,37 @@ const EXPANDED_STATISTICS: StatisticItemConfig[] = [
 
 // ==================== 子组件 ====================
 
-type StatisticItemProps = {
-  title: string;
+type StatisticItemProps = StatisticItemConfig & {
   value: number;
-  showColor?: boolean;
-  isMain?: boolean;
   onClick?: () => void;
 };
 
 const StatisticItem: React.FC<StatisticItemProps> = ({
   title,
   value,
-  showColor = false,
-  isMain = false,
+  showColor,
+  isMain,
   onClick,
 }) => {
   const isMobile = useIsMobile();
-  const colSpan = isMobile ? 12 : 6;
   const clickable = !!onClick;
-
-  // 统一通过 Statistic 的 styles 控制样式，而不是依赖 CSS 选择器
-  const titleStyle: React.CSSProperties = {
-    fontSize: isMobile ? 12 : isMain ? 14 : 13,
-    marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
-  };
-
-  const contentStyle: React.CSSProperties = {
-    fontWeight: isMain ? 'bold' : 'normal',
-    fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 28 : 20,
-    lineHeight: isMain && !isMobile ? 1.2 : 1.2,
-    ...(showColor && { color: colorFromValue(value) }),
-    ...(clickable && { color: '#1890ff' }),
+  const styles = {
+    title: {
+      fontSize: isMobile ? 12 : isMain ? 14 : 13,
+      marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
+    },
+    content: {
+      fontWeight: isMain ? 'bold' : 'normal',
+      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 28 : 20,
+      lineHeight: 1.2,
+      ...(showColor && { color: colorFromValue(value) }),
+      ...(clickable && { color: '#1890ff' }),
+    },
   };
 
   return (
-    <Col span={colSpan} onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
-      <Statistic
-        title={title}
-        value={value}
-        precision={2}
-        styles={{ title: titleStyle, content: contentStyle }}
-      />
+    <Col span={isMobile ? 12 : 6} onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
+      <Statistic title={title} value={value} precision={2} styles={styles} />
     </Col>
   );
 };
@@ -94,72 +84,59 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
   const { modal } = App.useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const { showCashFlow } = useCashFlowModal();
-
-  /** 处理编辑现金收入 */
-  const handleEditIncomeCash = () => {
-    const initialIncomeCash = data.incomeCash || 0;
-    const initialTotalAsset = data.totalAsset || 0;
-    const fixedPart = initialTotalAsset - initialIncomeCash;
-
-    form.setFieldsValue({ incomeCash: initialIncomeCash, totalAsset: initialTotalAsset });
-
-    modal.confirm({
-      title: '编辑现金收入',
-      icon: null,
-      content: (
-        <Form className="form-container" form={form} layout="vertical" name="incomeCash">
-          <Form.Item label="现金收入" name="incomeCash" rules={[{ required: true, message: '请输入现金收入' }]}>
-            <InputNumber
-              style={{ width: '100%' }}
-              precision={2}
-              step={0.01}
-              onChange={(v) => form.setFieldsValue({ totalAsset: fixedPart + ((v as number) || 0) })}
-            />
-          </Form.Item>
-          <Form.Item label="总资产" name="totalAsset" rules={[{ required: true, message: '请输入总资产' }]}>
-            <InputNumber
-              style={{ width: '100%' }}
-              precision={2}
-              step={0.01}
-              onChange={(v) => form.setFieldsValue({ incomeCash: ((v as number) || 0) - fixedPart })}
-            />
-          </Form.Item>
-        </Form>
-      ),
-      onOk: async () => {
-        const { incomeCash } = await form.validateFields();
-        const response = await updateIncomeCash(incomeCash);
-        if (response.status === RESPONSE_STATUS.SUCCESS) {
-          onModifySuccess?.();
-        }
-      },
-    });
-  };
-
-  /** 处理显示出入金明细 */
-  const handleShowCashFlow = () => {
-    showCashFlow({
-      totalCashIn: data.originCash || 0,
-      cashFlowList: data.cashFlowList || [],
-    });
-  };
+  const isMobile = useIsMobile();
 
   /** 可点击项的回调映射 */
   const clickHandlers: Partial<Record<keyof API.Overall, () => void>> = {
-    incomeCash: handleEditIncomeCash,
-    originCash: handleShowCashFlow,
+    incomeCash: () => {
+
+      const totalAsset = data.totalAsset || 0;
+      const incomeCash = data.incomeCash || 0;
+      form.setFieldsValue({ incomeCash: incomeCash, totalAsset: totalAsset });
+      
+      const fixedPart = totalAsset - incomeCash;
+
+      modal.confirm({
+        title: '编辑现金收入',
+        icon: null,
+        content: (
+          <Form className="form-container" form={form} layout="vertical" name="incomeCash">
+            <Form.Item label="现金收入" name="incomeCash" rules={[{ required: true, message: '请输入现金收入' }]}>
+              <InputNumber
+                style={{ width: '100%' }}
+                precision={2}
+                step={0.01}
+                onChange={(v) => form.setFieldsValue({ totalAsset: fixedPart + ((v as number) || 0) })}
+              />
+            </Form.Item>
+            <Form.Item label="总资产" name="totalAsset" rules={[{ required: true, message: '请输入总资产' }]}>
+              <InputNumber
+                style={{ width: '100%' }}
+                precision={2}
+                step={0.01}
+                onChange={(v) => form.setFieldsValue({ incomeCash: ((v as number) || 0) - fixedPart })}
+              />
+            </Form.Item>
+          </Form>
+        ),
+        onOk: async () => {
+          const { incomeCash } = await form.validateFields();
+          const response = await updateIncomeCash(incomeCash);
+          if (response.status === RESPONSE_STATUS.SUCCESS) onModifySuccess?.();
+        },
+      });
+    },
+    originCash: () => showCashFlow({ totalCashIn: data.originCash || 0, cashFlowList: data.cashFlowList || [] }),
   };
 
   /** 渲染统计项列表 */
   const renderStatistics = (configs: StatisticItemConfig[]) =>
-    configs.map((config) => (
+    configs.map(({ key, ...config }) => (
       <StatisticItem
-        key={config.key}
-        title={config.title}
-        value={(data[config.key] as number) || 0}
-        showColor={config.showColor}
-        isMain={config.isMain}
-        onClick={clickHandlers[config.key]}
+        key={key}
+        {...config}
+        value={(data[key] as number) || 0}
+        onClick={clickHandlers[key]}
       />
     ));
 
@@ -167,26 +144,13 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
     <div className="overall-board-wrapper">
       <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS)}</Row>
 
-      <div
-        className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <Divider
-          className="expand-divider"
-          styles={{
-            root: { margin: 0 },
-            content: { margin: '0 8px' },
-          }}
-        >
+      <div className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`} onClick={() => setIsExpanded(!isExpanded)}>
+        <Divider className="expand-divider" styles={{ root: { margin: 0 }, content: { margin: '0 8px' } }}>
           {isExpanded ? <UpOutlined className="expand-icon" /> : <DownOutlined className="expand-icon" />}
         </Divider>
       </div>
 
-      {isExpanded && (
-        <Row gutter={[16, 16]} className="expanded-statistics-row">
-          {renderStatistics(EXPANDED_STATISTICS)}
-        </Row>
-      )}
+      {isExpanded && <Row gutter={[16, 16]} style={{ marginTop: isMobile ? 16 : 24 }}>{renderStatistics(EXPANDED_STATISTICS)}</Row>}
     </div>
   );
 };
