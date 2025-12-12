@@ -92,10 +92,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
       }
     }
 
-    // 构建分析数据并计算总盈亏
+    // 构建分析数据
     const analysisList = [...stats.values()];
-    const totalProfit = analysisList.reduce((sum, s) => sum + s.profit, 0);
-    const totalLoss = analysisList.reduce((sum, s) => sum + s.loss, 0);
 
     // 添加逆回购（如果有）
     if (incomeCash > 0) {
@@ -108,6 +106,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         stocks: [],
       });
     }
+
+    // 计算总盈亏（包含逆回购）
+    const totalProfit = analysisList.reduce((sum, s) => sum + s.profit, 0);
+    const totalLoss = analysisList.reduce((sum, s) => sum + s.loss, 0);
 
     return { analysisList, totalProfit, totalLoss };
   }, [data, incomeCash]);
