@@ -90,16 +90,16 @@ class RealtimePrice:
             url = STOCK_PRICE_API_URL + ','.join(missing_codes) + ','
             response_data = urllib.request.urlopen(url, timeout=10).read()
             response_array = str(response_data, encoding=ENCODING_GB18030).split(';')
-            
+
             result = {}
             for index, single_response in enumerate(response_array):
                 if len(single_response) <= MIN_RESPONSE_LENGTH:
                     continue
-                
+                    
                 content_match = re.search(r'\"([^\"]*)\"', single_response)
                 if not content_match:
                     continue
-                
+                    
                 stock_info = content_match.group().strip('"').split('~')
                 if len(stock_info) < 5:
                     continue
@@ -140,7 +140,7 @@ class RealtimePrice:
             CacheManager.set_stock_price_timestamp(current_time.isoformat())
             
             return {**cached_result, **result}
-        
+            
         except urllib.error.URLError as e:
             logger.error(f"网络请求失败: {e}")
             if cached_result:

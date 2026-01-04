@@ -69,7 +69,9 @@ const formatMinutes = (minutes: number): string => {
 
 export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatus => {
   const currentMinutes = toMinutes(currentTime);
-  const isTrading = isTradingTime(currentTime);
+  const isDay = isTradingDay(currentTime);
+  // 只有在交易日且处于交易时间段内，才算交易中
+  const isTrading = isDay && isTradingTime(currentTime);
 
   if (isTrading) {
     const closeMinutes = currentMinutes < MORNING_CLOSE ? MORNING_CLOSE : AFTERNOON_CLOSE;
@@ -80,8 +82,8 @@ export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatu
     };
   }
 
-  // 中午休市时间
-  if (isTradingDay(currentTime) && currentMinutes >= MORNING_CLOSE && currentMinutes < AFTERNOON_OPEN) {
+  // 中午休市时间（必须是交易日）
+  if (isDay && currentMinutes >= MORNING_CLOSE && currentMinutes < AFTERNOON_OPEN) {
     const openTime = createDateWithMinutes(currentTime, AFTERNOON_OPEN);
     return {
       isTrading: false,
