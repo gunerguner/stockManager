@@ -113,7 +113,7 @@
 
 
 
-1.  安装Python3，pip，git。
+1.  安装Python3,pip,git,redis。
 2.  使用pip安装依赖模块（已有 requirements.txt）。
 3.  依次安装node(版本>=20)，pnpm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager

@@ -7,7 +7,6 @@ from django.http import HttpRequest, JsonResponse
 
 from ..models import Info
 from ..services.integrate import Integrate
-# 导入公共组件
 from ..common import (
     ResponseStatus,
     logger,
@@ -17,6 +16,7 @@ from ..common import (
     require_methods,
 )
 
+
 @require_authentication
 def show_stocks(request: HttpRequest) -> JsonResponse:
     """
@@ -25,9 +25,7 @@ def show_stocks(request: HttpRequest) -> JsonResponse:
     """
     try:
         logger.info(f"show_stocks - 用户: {request.user.username}, IP: {get_client_ip(request)}")
-        
         merged_data = Integrate.calculate_target(request.user)
-        
         return json_response(status=ResponseStatus.SUCCESS, data=merged_data)
     except Exception as e:
         logger.error(f"获取股票数据失败: {str(e)}", exc_info=True)

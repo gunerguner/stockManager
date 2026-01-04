@@ -150,6 +150,38 @@ DATABASES = {
 }
 
 
+# ==================== Redis 缓存配置 ====================
+# Redis 缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # 使用 DB 1
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            # 注意：redis-py 5.0+ 中 HiredisParser 已移除，使用默认解析器即可
+            # 'PARSER_CLASS': 'redis.connection.HiredisParser',  
+            'PICKLE_VERSION': -1,  # 使用最新的 pickle 协议
+            'SOCKET_CONNECT_TIMEOUT': 5,  # 连接超时
+            'SOCKET_TIMEOUT': 5,  # 读写超时
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            # 序列化配置
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+        },
+        'KEY_PREFIX': 'stockmanager',  # 键前缀，避免冲突
+        'VERSION': 1,
+    }
+}
+
+# Redis 连接池配置
+REDIS_CONNECTION_POOL_KWARGS = {
+    'max_connections': 50,
+    'retry_on_timeout': True,
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 

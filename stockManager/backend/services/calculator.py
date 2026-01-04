@@ -41,8 +41,8 @@ class Calculator:
         """计算单个股票的指标"""
         to_return = {}
 
-        # 带上股票的标签（优化：使用字典查找，O(1) 复杂度）
-        stock_meta = StockMeta.get_dict().get(key)
+        # 带上股票的标签
+        stock_meta = StockMeta.get(key)
         if stock_meta:
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew

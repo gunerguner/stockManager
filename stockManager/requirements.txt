@@ -13,6 +13,9 @@ django-cors-headers
 django-extensions
 django-werkzeug-debugger-runserver
 
+# Redis 缓存
+django-redis>=5.4.0
+
 # 静态文件服务
 whitenoise
 
