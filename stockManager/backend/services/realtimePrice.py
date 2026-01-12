@@ -10,8 +10,8 @@ from datetime import datetime
 
 from ..common import logger
 from ..common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
-from ..utils import _safe_float
-from .cacheManager import CacheManager
+from ..common.utils import safe_float
+from .cacheRepository import CacheRepository
 
 
 @dataclass
@@ -47,12 +47,6 @@ class RealtimePrice:
         
         使用 Redis 缓存机制，如果缓存有效（未经过交易时间），直接返回缓存数据。
         如果经过了交易时间，重新获取数据并更新缓存。
-        
-        Args:
-            code_list: 股票代码列表
-            
-        Returns:
-            Dict[str, RealtimePriceData]: 股票代码到实时数据的映射
         """
         if not code_list:
             return {}
@@ -62,14 +56,14 @@ class RealtimePrice:
         missing_codes = []
         
         # 尝试从 Redis 获取缓存
-        cached_timestamp = CacheManager.get_stock_price_timestamp()
+        cached_timestamp = CacheRepository.get_stock_price_timestamp()
         
         if cached_timestamp:
             # 检查缓存是否有效
             cached_time = datetime.fromisoformat(cached_timestamp)
             if not TradingCalendar.is_trading_time_passed(cached_time, current_time):
                 # 使用 Pipeline 批量获取
-                batch_result = CacheManager.get_stock_prices_batch(code_list)
+                batch_result = CacheRepository.get_stock_prices_batch(code_list)
                 
                 # 处理批量结果
                 for code, price_data in batch_result.items():
@@ -104,8 +98,8 @@ class RealtimePrice:
                 if len(stock_info) < 5:
                     continue
                 
-                current_price = _safe_float(stock_info[3])
-                yesterday_close = _safe_float(stock_info[4])
+                current_price = safe_float(stock_info[3])
+                yesterday_close = safe_float(stock_info[4])
                 price_offset = current_price - yesterday_close
                 offset_ratio = cls._calculate_offset_ratio(price_offset, yesterday_close)
                 
@@ -118,13 +112,8 @@ class RealtimePrice:
                 )
                 result[missing_codes[index]] = price_data
                 
-                # 写入 Redis
-                ttl = (
-                    CacheManager.TTL_STOCK_PRICE_TRADING 
-                    if TradingCalendar.is_in_trading_hours(current_time) 
-                    else CacheManager.TTL_STOCK_PRICE_NON_TRADING
-                )
-                CacheManager.set_stock_price(
+                # 写入 Redis（TTL 由 CacheRepository 内部决定）
+                CacheRepository.set_stock_price(
                     missing_codes[index],
                     {
                         'name': price_data.name,
@@ -132,12 +121,11 @@ class RealtimePrice:
                         'priceOffset': price_data.priceOffset,
                         'offsetRatio': price_data.offsetRatio,
                         'yesterdayClose': price_data.yesterdayClose,
-                    },
-                    ttl
+                    }
                 )
             
             # 更新时间戳
-            CacheManager.set_stock_price_timestamp(current_time.isoformat())
+            CacheRepository.set_stock_price_timestamp(current_time.isoformat())
             
             return {**cached_result, **result}
             
@@ -155,7 +143,7 @@ class RealtimePrice:
     @classmethod
     def clear_cache(cls):
         """清空 Redis 缓存"""
-        CacheManager.clear_all_stock_prices()
+        CacheRepository.clear_all_stock_prices()
     
     @staticmethod
     def get_default_data() -> RealtimePriceData:
@@ -167,6 +155,3 @@ class RealtimePrice:
             offsetRatio="0%",
             yesterdayClose=0.0
         )
-
-
-

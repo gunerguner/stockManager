@@ -41,9 +41,9 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
   ) : (
     <>
       <Divider orientation="vertical" />
-      <Text>现价：{formatPrice(stock.priceNow)}</Text>
-      <Text>持股：{stock.holdCount}</Text>
-      <Text>累计盈亏：{renderAmount(stock.offsetTotal)}</Text>
+      <Text>现价：{formatPrice(stock.priceNow)} </Text>
+      <Text>持股：{stock.holdCount} </Text>
+      <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
     </>
   );
 

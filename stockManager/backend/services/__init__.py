@@ -4,17 +4,17 @@
 """
 from .calculator import Calculator
 from .integrate import Integrate
-from .userData import UserData
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice
 from .dividend import Dividend
+from .cacheRepository import CacheRepository
 
 __all__ = [
     'Calculator',
     'Integrate',
-    'UserData',
     'StockMeta',
     'RealtimePrice',
     'Dividend',
+    'CacheRepository',
 ]
 

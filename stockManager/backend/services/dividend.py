@@ -2,15 +2,15 @@
 分红服务模块
 提供股票分红数据查询和处理功能
 """
-from typing import Dict, List, Optional
+from typing import Dict, List
 import datetime
 
 import baostock as bs
 
 from ..common import logger
 from ..common.constants import OperationType
+from ..common.utils import safe_float
 from ..models import Operation
-from ..utils import _safe_float
 from django.contrib.auth.models import User
 
 
@@ -117,9 +117,9 @@ class Dividend:
                         
                         # 只有在有持仓时才插入分红记录
                         if hold_count_at_date > 0:
-                            cash = _safe_float(data[9])
-                            reserve = _safe_float(data[11])
-                            stock = _safe_float(data[13])
+                            cash = safe_float(data[9])
+                            reserve = safe_float(data[11])
+                            stock = safe_float(data[13])
                             
                             Operation.objects.create(
                                 user=user,

@@ -1,99 +1,73 @@
-"""用户数据集成模块，使用 Redis 缓存优化性能"""
-from datetime import datetime
+"""
+用户数据集成模块，使用 Redis 缓存优化性能
+
+集成服务(外观模式)，提供统一的业务入口，协调各个领域服务完成业务逻辑。
+"""
 from typing import Dict, Optional, List, Any
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
 
-from .userData import UserData
-from .cacheManager import CacheManager
+from .cacheRepository import CacheRepository
+from .calculator import Calculator
+from .dividend import Dividend
 from ..models import Operation, Info, CashFlow
-from ..utils import format_operations
 from ..common import logger
-from ..common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
 
 
 class Integrate:
-    """集成类，提供用户数据查询和缓存管理"""
-
-    @classmethod
-    def _get_operation_list(cls, user: User) -> Dict[str, List[Operation]]:
-        """获取用户操作记录（支持 Redis 缓存）"""
-        # 先查 Redis，未命中则查数据库并缓存
-        cached = CacheManager.get_user_operations(user)
-        if cached is not None:
-            return cached
-        
-        operations = format_operations(Operation.objects.filter(user=user).order_by("date"))
-        CacheManager.set_user_operations(user, operations)
-        return operations
+    """
+    集成服务类(外观模式)
     
-    @classmethod
-    def _get_user_cash_info(cls, user: User) -> tuple[float, List[Dict[str, Any]]]:
-        """获取用户资金信息（支持 Redis 缓存）"""
-        # 先查 Redis，未命中则查数据库并缓存
-        cached = CacheManager.get_user_cash_info(user)
-        if cached is not None:
-            return cached
-        
-        # 查询现金收入
-        income_info = Info.objects.filter(user=user, info_type=Info.InfoType.INCOME_CASH).first()
-        income_cash = float(income_info.value) if income_info else 0.0
-        
-        # 查询出入金记录
-        cash_flows = CashFlow.objects.filter(user=user).order_by('-transaction_date')
-        cash_flow_list = [
-            {'date': str(flow.transaction_date), 'amount': float(flow.amount)}
-            for flow in cash_flows
-        ]
-        
-        CacheManager.set_user_cash_info(user, income_cash, cash_flow_list)
-        return income_cash, cash_flow_list
+    提供统一的业务入口，协调用户数据获取、股票计算、分红生成等功能。
+    负责缓存管理和数据协调，不包含具体业务逻辑。
+    """
 
-    @classmethod
-    def get_user_data(cls, user: User) -> UserData:
-        """获取用户数据实例"""
-        income_cash, cash_flow_list = cls._get_user_cash_info(user)
-        operation_list = cls._get_operation_list(user)
-        return UserData(user, operation_list, income_cash, cash_flow_list)
+    # ========== 业务接口 ==========
     
     @classmethod
     def calculate_target(cls, user: User) -> Dict[str, Any]:
-        """计算股票指标（支持结果缓存）"""
+        """
+        计算股票指标（支持结果缓存）
+        
+        协调用户数据获取和股票计算服务，提供缓存优化。
+        """
         # 尝试从缓存获取
-        cached_result = CacheManager.get_calculated_target(user.id)
+        cached_result = CacheRepository.get_calculated_target(user)
         if cached_result is not None:
             return cached_result
         
-        # 缓存未命中，执行计算
-        user_data = cls.get_user_data(user)
-        result = user_data.calculate_target()
+        # 缓存未命中，获取数据并计算
+        income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
+        operation_list = CacheRepository.get_user_operations(user)
         
-        # 写入缓存（根据交易时间决定 TTL）
-        current_time = datetime.now(TZ_SHANGHAI)
-        ttl = (
-            CacheManager.TTL_CALCULATED_TARGET_TRADING 
-            if TradingCalendar.is_in_trading_hours(current_time) 
-            else CacheManager.TTL_CALCULATED_TARGET_NON_TRADING
-        )
-        CacheManager.set_calculated_target(user.id, result, ttl)
+        # 直接调用计算器服务
+        result = Calculator.calculate_target(operation_list, income_cash, cash_flow_list)
+        
+        # 写入缓存
+        CacheRepository.set_calculated_target(user.id, result)
         
         return result
     
     @classmethod
     def generate_dividend(cls, user: User) -> List[str]:
-        """生成股票分红数据"""
-        user_data = cls.get_user_data(user)
-        return user_data.generate_dividend()
+        """
+        生成股票分红数据
+        
+        协调用户数据获取和分红服务，生成分红记录。
+        """
+        operation_list = CacheRepository.get_user_operations(user)
+        # 直接调用分红服务
+        return Dividend.generate_dividend(user, operation_list)
 
+    # ========== 缓存管理 ==========
+    
     @classmethod
     def clear_cache(cls, user_id: Optional[int] = None):
         """清除用户缓存"""
         if user_id is None:
             logger.warning("不支持清除所有用户缓存")
             return
-        CacheManager.clear_user_operations(user_id)
-        CacheManager.clear_user_cash_info(user_id)
-        CacheManager.clear_calculated_target(user_id)  # 清除计算结果缓存
+        CacheRepository.clear_user_cache(user_id)
 
 
 def clear_integrate_cache(sender: Any, instance: Any, **kwargs: Any):
@@ -104,9 +78,7 @@ def clear_integrate_cache(sender: Any, instance: Any, **kwargs: Any):
     
     if instance.user_id:
         model_name = sender.__name__
-        CacheManager.clear_user_operations(instance.user_id)
-        CacheManager.clear_user_cash_info(instance.user_id)
-        CacheManager.clear_calculated_target(instance.user_id)  # 清除计算结果缓存
+        CacheRepository.clear_user_cache(instance.user_id)
         logger.info(f"[Redis] {model_name} 变化，清除用户 {instance.user_id} 的缓存")
 
 

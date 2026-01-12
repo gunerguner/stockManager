@@ -5,6 +5,7 @@
 from .constants import ResponseStatus, OperationType
 from .decorators import require_authentication, require_methods, log_view_access
 from .middleware import json_response, get_client_ip
+from .cache import Cache
 
 # 配置logger
 import logging
@@ -19,5 +20,6 @@ __all__ = [
     'log_view_access',
     'json_response',
     'get_client_ip',
+    'Cache',
 ]
 

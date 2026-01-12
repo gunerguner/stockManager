@@ -1,4 +1,7 @@
-"""股票计算器模块"""
+"""
+股票计算器模块
+提供股票指标计算功能，包括单股指标和整体指标计算
+"""
 import datetime
 from typing import Any, Dict, List, Optional
 
@@ -8,20 +11,23 @@ from ..models import Operation
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice, RealtimePriceData
 
-# 常量定义
+# ========== 常量定义 ==========
 MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无效
 MIN_VALUE_THRESHOLD = 0.1  # 最小市值阈值，用于判断昨日市值是否有效
 MIN_HOLD_COUNT_THRESHOLD = 0.001  # 最小持股数阈值，用于浮点数比较
 
 
 class Calculator:
-    """股票计算器类"""
+    """
+    股票计算器类
     
-    @classmethod
-    def _get_today(cls) -> datetime.date:
-        """获取今天的日期"""
-        return datetime.date.today()
-
+    负责计算股票相关的各项指标，包括：
+    - 单股指标：持仓成本、浮动盈亏、累计盈亏等
+    - 整体指标：总市值、总盈亏、总资产等
+    """
+    
+    # ========== 公共接口 ==========
+    
     @classmethod
     def calculate_target(cls, operation_list: Dict[str, List[Operation]], income_cash: float = 0.0, cash_flow_list: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         code_list = list(operation_list.keys())
@@ -34,8 +40,9 @@ class Calculator:
             "stocks": stock_list,
             "overall": cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
         }
-
-
+    
+    # ========== 单股计算 ==========
+    
     @classmethod
     def _calculate_single_target(cls, operation_list: Dict[str, List[Operation]], key: str, single_real_time: Optional[RealtimePriceData]) -> Dict[str, Any]:
         """计算单个股票的指标"""
@@ -127,11 +134,11 @@ class Calculator:
         to_return["operationList"] = [op.to_dict() for op in reversed(single_operation_list)]
 
         return to_return
-
+    
     @classmethod
     def _calculate_single_metrics_optimized(cls, single_operation_list: List[Operation]) -> Dict[str, Any]:
         """一次遍历计算所有指标"""
-        today = cls._get_today()
+        today = datetime.date.today()
         
         # 初始化所有累计变量
         current_hold = 0.0  # 当前持股数
@@ -246,7 +253,9 @@ class Calculator:
             'total_fee': total_fee,
             'holding_duration': total_holding_days,
         }
-
+    
+    # ========== 整体计算 ==========
+    
     @classmethod
     def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], income_cash: float, cash_flow_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         """计算整体指标"""
@@ -288,7 +297,6 @@ class Calculator:
         ]
 
         return to_return
-
 
 """
 计算公式：

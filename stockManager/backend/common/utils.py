@@ -1,4 +1,4 @@
-"""操作记录相关工具函数模块"""
+"""公共工具函数模块"""
 from typing import Dict, List
 from ..models import Operation
 
@@ -13,7 +13,7 @@ def format_operations(operation_list: List[Operation]) -> Dict[str, List[Operati
     return result
 
 
-def _safe_float(value: str, default: float = 0.0) -> float:  # noqa: F401
+def safe_float(value: str, default: float = 0.0) -> float:
     """安全地将字符串转换为浮点数"""
     try:
         return float(value) if value else default
