@@ -139,11 +139,7 @@ class RealtimePrice:
             if cached_result:
                 return cached_result
             return {}
-    
-    @classmethod
-    def clear_cache(cls):
-        """清空 Redis 缓存"""
-        CacheRepository.clear_all_stock_prices()
+
     
     @staticmethod
     def get_default_data() -> RealtimePriceData:

@@ -5,7 +5,6 @@
 import json
 from django.http import HttpRequest, JsonResponse
 
-from ..models import Info
 from ..services.integrate import Integrate
 from ..common import (
     ResponseStatus,
@@ -45,14 +44,7 @@ def update_income_cash(request: HttpRequest) -> JsonResponse:
         if income_cash is None:
             return json_response(status=ResponseStatus.ERROR, message="参数incomeCash不能为空")
         
-        Info.objects.update_or_create(
-            user=request.user,
-            info_type=Info.InfoType.INCOME_CASH,
-            defaults={'value': str(income_cash)}
-        )
-        # 清除缓存，确保下次获取时使用最新数据
-        Integrate.clear_cache(request.user.id)
-        logger.info(f"用户 {request.user.username} 更新收益现金: {income_cash}")
+        Integrate.update_income_cash(request.user, income_cash)
         
         return json_response(status=ResponseStatus.SUCCESS, message="更新收益现金成功")
     except json.JSONDecodeError:
@@ -79,5 +71,3 @@ def refresh_divident(request: HttpRequest) -> JsonResponse:
     except Exception as e:
         logger.error(f"刷新除权除息信息失败: {str(e)}", exc_info=True)
         return json_response(status=ResponseStatus.ERROR, message="刷新除权除息信息失败")
-
-

@@ -58,16 +58,24 @@ class Integrate:
         operation_list = CacheRepository.get_user_operations(user)
         # 直接调用分红服务
         return Dividend.generate_dividend(user, operation_list)
-
-    # ========== 缓存管理 ==========
     
     @classmethod
-    def clear_cache(cls, user_id: Optional[int] = None):
-        """清除用户缓存"""
-        if user_id is None:
+    def update_income_cash(cls, user: User, income_cash: float) -> None:
+        """
+        更新收益现金（逆回购等收入）
+        """
+        Info.objects.update_or_create(
+            user=user,
+            info_type=Info.InfoType.INCOME_CASH,
+            defaults={'value': str(income_cash)}
+        )
+        # 清除缓存，确保下次获取时使用最新数据
+
+        if user.id is None:
             logger.warning("不支持清除所有用户缓存")
             return
-        CacheRepository.clear_user_cache(user_id)
+        CacheRepository.clear_user_cache(user.id)
+        logger.info(f"用户 {user.username} 更新收益现金: {income_cash}")
 
 
 def clear_integrate_cache(sender: Any, instance: Any, **kwargs: Any):
