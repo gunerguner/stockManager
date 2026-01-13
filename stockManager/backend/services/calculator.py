@@ -58,7 +58,7 @@ class Calculator:
         if not single_real_time:
             logger.warning(f"无法获取股票 {key} 的实时价格")
             # 使用默认值
-            single_real_time = RealtimePrice.get_default_data()
+            single_real_time = RealtimePriceData("未知", 0.0, 0.0, "0%", 0.0)
 
         to_return["code"] = key
         to_return["name"] = single_real_time.name  # 名称

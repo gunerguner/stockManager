@@ -3,6 +3,7 @@ from typing import ClassVar, Optional
 from datetime import datetime
 import pytz
 from exchange_calendars import get_calendar, ExchangeCalendar
+import pandas as pd
 
 TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
 
@@ -57,14 +58,24 @@ class TradingCalendar:
         # 如果所有交易日的交易时段都没有重叠，说明没有经过交易时间
         return False
     
-    @staticmethod
-    def is_in_trading_hours(dt: datetime) -> bool:
-        """判断指定时间是否在A股交易时间内"""
+    @classmethod
+    def is_in_trading_hours(cls, dt: datetime) -> bool:
+        """判断指定时间是否在A股交易时间内（包括交易日检查）"""
         if dt.tzinfo is None:
             dt = TZ_SHANGHAI.localize(dt)
         else:
             dt = dt.astimezone(TZ_SHANGHAI)
         
+        # 首先检查是否是交易日
+        calendar = cls.get_calendar()
+        dt_date = dt.date()
+        
+        # 使用 calendar.is_session 方法检查是否是交易日（这是 exchange_calendars 的标准方法）
+        is_session = calendar.is_session(pd.Timestamp(dt_date))
+        if not is_session:
+            return False
+        
+        # 然后检查是否在交易时段内
         hour, minute = dt.hour, dt.minute
         return (9, 30) <= (hour, minute) < (11, 30) or (13, 0) <= (hour, minute) < (15, 0)
 
