@@ -39,7 +39,7 @@ class TradingCalendar:
             return False
         
         # 遍历每个交易日，检查是否与 A 股的两个交易时段有重叠
-        for session_date, schedule_row in schedule_df.iterrows():
+        for session_date in schedule_df.index:
             session_date_only = session_date.date()
             
             # 构建上午交易时段：9:30 - 11:30

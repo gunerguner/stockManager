@@ -117,10 +117,8 @@ export default defineConfig({
    */
   alias: {
     querystring: require.resolve('querystring-es3'),
-    // 生产环境强制使用 CommonJS 版本，避免 ES 模块解析问题
-    ...(isProduction && {
-      'chinese-days': require.resolve('chinese-days/dist/index.min.js'),
-    }),
+    // 强制使用 CommonJS 版本，避免 ES 模块解析问题
+    'chinese-days': require.resolve('chinese-days/dist/index.min.js'),
   },
   
   /**
