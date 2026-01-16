@@ -5,6 +5,8 @@
 import datetime
 from typing import Any, Dict, List, Optional
 
+from pyxirr import xirr
+
 from ..common import logger
 from ..common.constants import OperationType
 from ..models import Operation
@@ -257,6 +259,81 @@ class Calculator:
     # ========== 整体计算 ==========
     
     @classmethod
+    def _calculate_xirr(cls, cash_flow_list: List[Dict[str, Any]], total_asset: float) -> float:
+        """
+        计算 XIRR 年化收益率
+        
+        Args:
+            cash_flow_list: 出入金记录列表 [{"date": "2023-01-01", "amount": 10000}, ...]
+            total_asset: 当前总资产（作为最后一笔正现金流）
+        
+        Returns:
+            XIRR 年化收益率（小数形式，如 0.1234 代表 12.34%）
+        """
+        # 边界情况：没有现金流记录
+        if not cash_flow_list:
+            logger.info("没有现金流记录，XIRR 返回 0")
+            return 0.0
+        
+        try:
+            # 构建日期和金额列表
+            dates = []
+            amounts = []
+            
+            # 将所有现金流记录添加到列表中
+            # 入金为负（投出去），出金为正（收回来）
+            for flow in cash_flow_list:
+                date_str = flow.get('date')
+                amount = flow.get('amount', 0)
+                
+                # 跳过金额为 0 的记录
+                if amount == 0:
+                    continue
+                
+                # 解析日期
+                if isinstance(date_str, str):
+                    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                else:
+                    date_obj = date_str
+                
+                dates.append(date_obj)
+                # 转换现金流方向：入金为负，出金为正
+                # 数据库中 amount > 0 是入金，amount < 0 是出金
+                amounts.append(float(-amount))
+            
+            # 边界情况：处理后没有有效现金流
+            if not dates:
+                logger.info("没有有效的现金流记录，XIRR 返回 0")
+                return 0.0
+            
+            # 添加当前总资产作为最后一笔正现金流（假设今天全部赎回）
+            today = datetime.date.today()
+            dates.append(today)
+            amounts.append(float(total_asset))
+            
+            # 检查是否有正负现金流（XIRR 必须有资金流入和流出）
+            has_positive = any(amt > 0 for amt in amounts)
+            has_negative = any(amt < 0 for amt in amounts)
+            
+            if not (has_positive and has_negative):
+                logger.info("现金流没有正负两种方向，XIRR 无意义，返回 0")
+                return 0.0
+            
+            # 调用 pyxirr 计算 XIRR
+            result = xirr(dates, amounts)
+            
+            # pyxirr 可能返回 None
+            if result is None:
+                logger.warning("XIRR 计算返回 None，可能不收敛")
+                return 0.0
+            
+            return float(result)
+            
+        except Exception as e:
+            logger.error(f"XIRR 计算失败: {str(e)}", exc_info=True)
+            return 0.0
+    
+    @classmethod
     def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], income_cash: float, cash_flow_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         """计算整体指标"""
         to_return = {}
@@ -275,18 +352,18 @@ class Calculator:
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏
         to_return["offsetTotal"] = total_offset + income_cash  # 累计盈亏
         to_return["totalValue"] = total_value  # 总市值
-        # 浮动盈亏率：使用更严格的浮点数比较，避免除零错误
-        to_return["offsetCurrentRatio"] = (
-            f"{(current_offset / total_value * 100):.2f}%" 
-            if abs(total_value) >= MIN_VALUE_THRESHOLD 
-            else "0.00%"
-        )
         to_return["offsetToday"] = total_offset_today  # 今日盈亏
         to_return["totalCash"] = origin_cash + total_offset + income_cash - total_value  # 总现金
         to_return["totalAsset"] = origin_cash + total_offset + income_cash  # 总资产
         to_return["totalCost"] = total_cost  # 总费用
         to_return["incomeCash"] = income_cash  # 逆回购等收入
         to_return["originCash"] = origin_cash  # 总入金（从 cash_flow_list 计算）
+        
+        # 计算 XIRR 年化收益率
+        total_asset = to_return["totalAsset"]
+        xirr_rate = cls._calculate_xirr(cash_flow_list, total_asset)
+        to_return["xirrAnnualized"] = f"{(xirr_rate * 100):.2f}%"  # XIRR 年化收益率
+        
         # 将 cash_flow_list 转换为前端需要的格式（date, amount）
         to_return["cashFlowList"] = [
             {
@@ -332,5 +409,5 @@ class Calculator:
 code, name,priceNow,offsetToday,offsetTodayRatio,totalValue,holdCount,holdCost,overallCost,offsetCurrent,offsetCurrentRatio,offsetTotal
 
 整体指标
-offsetToday,offsetCurrent,offsetCurrentRatio,offsetTotal,totalValue,totalCash,originCash
+offsetToday,offsetCurrent,offsetTotal,totalValue,totalCash,totalAsset,originCash,incomeCash,xirrAnnualized
 """

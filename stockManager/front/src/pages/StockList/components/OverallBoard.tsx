@@ -28,6 +28,7 @@ type StatisticItemConfig = {
 const MAIN_STATISTICS: StatisticItemConfig[] = [
   { key: 'offsetToday', title: '当日盈亏', showColor: true, isMain: true },
   { key: 'totalAsset', title: '总资产', isMain: true },
+  { key: 'xirrAnnualized', title: 'XIRR年化', showColor: true, isMain: true },
 ];
 
 /** 展开后的统计项 */
@@ -42,20 +43,26 @@ const EXPANDED_STATISTICS: StatisticItemConfig[] = [
 
 // ==================== 子组件 ====================
 
-type StatisticItemProps = StatisticItemConfig & {
-  value: number;
+type StatisticItemProps = {
+  title: string;
+  value: string;
+  numericValue?: number;
+  showColor?: boolean;
+  isMain?: boolean;
   onClick?: () => void;
 };
 
 const StatisticItem: React.FC<StatisticItemProps> = ({
   title,
   value,
+  numericValue,
   showColor,
   isMain,
   onClick,
 }) => {
   const isMobile = useIsMobile();
   const clickable = !!onClick;
+  
   const styles = {
     title: {
       fontSize: isMobile ? 12 : isMain ? 14 : 13,
@@ -65,14 +72,14 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
       fontWeight: isMain ? 'bold' : 'normal',
       fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 28 : 20,
       lineHeight: 1.2,
-      ...(showColor && { color: colorFromValue(value) }),
+      ...(showColor && numericValue !== undefined && { color: colorFromValue(numericValue) }),
       ...(clickable && { color: '#1890ff' }),
     },
   };
 
   return (
     <Col span={isMobile ? 12 : 6} onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
-      <Statistic title={title} value={value} precision={2} styles={styles} />
+      <Statistic title={title} value={value} styles={styles} />
     </Col>
   );
 };
@@ -129,16 +136,38 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
     originCash: () => showCashFlow({ totalCashIn: data.originCash || 0, cashFlowList: data.cashFlowList || [] }),
   };
 
+  /** 格式化数值为字符串 */
+  const formatValue = (rawValue: string | number | API.CashFlowRecord[] | undefined): { value: string; numericValue: number } => {
+    if (typeof rawValue === 'string') {
+      // 已经是字符串（如百分比），提取数值用于颜色判断
+      const numericValue = parseFloat(rawValue.replace('%', '')) || 0;
+      return { value: rawValue, numericValue };
+    }
+    if (typeof rawValue === 'number') {
+      // 数字类型，格式化为两位小数的字符串
+      return { value: rawValue.toFixed(2), numericValue: rawValue };
+    }
+    // 其他类型（如数组）或 undefined，返回默认值
+    return { value: '0.00', numericValue: 0 };
+  };
+
   /** 渲染统计项列表 */
   const renderStatistics = (configs: StatisticItemConfig[]) =>
-    configs.map(({ key, ...config }) => (
-      <StatisticItem
-        key={key}
-        {...config}
-        value={(data[key] as number) || 0}
-        onClick={clickHandlers[key]}
-      />
-    ));
+    configs.map(({ key, showColor, isMain, title }) => {
+      const { value, numericValue } = formatValue(data[key]);
+      
+      return (
+        <StatisticItem
+          key={key}
+          title={title}
+          value={value}
+          numericValue={showColor ? numericValue : undefined}
+          showColor={showColor}
+          isMain={isMain}
+          onClick={clickHandlers[key]}
+        />
+      );
+    });
 
   return (
     <div className="overall-board-wrapper">

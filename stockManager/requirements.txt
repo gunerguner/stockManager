@@ -1,5 +1,5 @@
 # Django 核心框架
-Django>=5.2.7,<6.0.0
+Django
 
 # 数据获取和处理
 baostock>=0.8.9
@@ -7,6 +7,7 @@ numpy>=1.26.0
 pandas>=2.2.0
 exchange_calendars
 pytz
+pyxirr>=0.10.0
 
 # Django 扩展插件
 django-cors-headers

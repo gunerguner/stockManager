@@ -123,7 +123,7 @@ ROOT_URLCONF = 'stockManager.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['front/dist'],
+        'DIRS': [BASE_DIR / 'front' / 'dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -11,7 +11,6 @@ const DEFAULT_STOCK_DATA: API.StockData = {
     offsetCurrent: 0,
     offsetTotal: 0,
     totalValue: 0,
-    offsetCurrentRatio: '0%',
     offsetToday: 0,
     totalCash: 0,
     incomeCash: 0,
@@ -19,6 +18,7 @@ const DEFAULT_STOCK_DATA: API.StockData = {
     totalAsset: 0,
     totalCost: 0,
     cashFlowList: [],
+    xirrAnnualized: '0.00%',
   },
 };
 

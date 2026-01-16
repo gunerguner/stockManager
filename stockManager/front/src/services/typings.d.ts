@@ -43,7 +43,6 @@ declare namespace API {
     offsetCurrent: number;
     offsetTotal: number;
     totalValue: number;
-    offsetCurrentRatio: string;
     offsetToday: number;
     totalCash: number;
     incomeCash: number;
@@ -51,6 +50,7 @@ declare namespace API {
     totalAsset: number;
     totalCost: number;
     cashFlowList: CashFlowRecord[];
+    xirrAnnualized: string;
   };
 
   type CashFlowRecord = {
