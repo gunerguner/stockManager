@@ -69,9 +69,8 @@ const formatMinutes = (minutes: number): string => {
 
 export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatus => {
   const currentMinutes = toMinutes(currentTime);
-  const isDay = isTradingDay(currentTime);
-  // 只有在交易日且处于交易时间段内，才算交易中
-  const isTrading = isDay && isTradingTime(currentTime);
+  const isTodayTradingDay = isTradingDay(currentTime);
+  const isTrading = isTodayTradingDay && isTradingTime(currentTime);
 
   if (isTrading) {
     const closeMinutes = currentMinutes < MORNING_CLOSE ? MORNING_CLOSE : AFTERNOON_CLOSE;
@@ -82,28 +81,27 @@ export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatu
     };
   }
 
-  // 中午休市时间（必须是交易日）
-  if (isDay && currentMinutes >= MORNING_CLOSE && currentMinutes < AFTERNOON_OPEN) {
-    const openTime = createDateWithMinutes(currentTime, AFTERNOON_OPEN);
-    return {
-      isTrading: false,
-      message: `距开盘 ${formatMinutes(diffMinutes(openTime, currentTime))}`,
-    };
-  }
+  let openMinutes: number;
+  let openDate: Date;
 
-  // 查找下一个交易日
-  let checkDate = createDateWithMinutes(currentTime, 0, 1);
-  for (let i = 0; i < 10; i++) {
-    if (isTradingDay(checkDate)) {
-      const openTime = createDateWithMinutes(checkDate, MORNING_OPEN);
-      return {
-        isTrading: false,
-        message: `距开盘 ${formatMinutes(diffMinutes(openTime, currentTime))}`,
-      };
+  if (isTodayTradingDay && currentMinutes < MORNING_OPEN) {
+    openMinutes = MORNING_OPEN;
+    openDate = currentTime;
+  } else if (isTodayTradingDay && currentMinutes >= MORNING_CLOSE && currentMinutes < AFTERNOON_OPEN) {
+    openMinutes = AFTERNOON_OPEN;
+    openDate = currentTime;
+  } else {
+    openMinutes = MORNING_OPEN;
+    openDate = createDateWithMinutes(currentTime, 0, 1);
+    while (!isTradingDay(openDate)) {
+      openDate.setDate(openDate.getDate() + 1);
     }
-    checkDate.setDate(checkDate.getDate() + 1);
   }
 
-  return { isTrading: false, message: '赌场关门了' };
+  const openTime = createDateWithMinutes(openDate, openMinutes);
+  return {
+    isTrading: false,
+    message: `距开盘 ${formatMinutes(diffMinutes(openTime, currentTime))}`,
+  };
 };
 
