@@ -37,6 +37,11 @@ class Operation(models.Model):
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
 
     def to_dict(self) -> Dict[str, Any]:
+        def format_price(value: float) -> str:
+            """格式化价格：如果第三位小数非 0 则保留 3 位，否则保留 2 位"""
+            fixed3 = f"{value:.3f}"
+            return fixed3[:-1] if fixed3.endswith('0') else fixed3
+
         data = {}
         data["date"] = str(self.date)
         data["type"] = self.operationType
@@ -51,11 +56,11 @@ class Operation(models.Model):
         if self.operationType == "DV":
             comment = ""
             if self.cash > 0.0:
-                comment += "每10股股息" + "%.2f" % (self.cash * 10)
+                comment += "每10股股息" + format_price(self.cash * 10)
             if self.reserve > 0.0:
-                comment += ",每10股转增" + "%.2f" % (self.reserve * 10)
+                comment += ",每10股转增" + format_price(self.reserve * 10)
             if self.stock > 0.0:
-                comment += ",每10股送股" + "%.2f" % (self.stock * 10)
+                comment += ",每10股送股" + format_price(self.stock * 10)
 
             data["comment"] = comment
         return data
