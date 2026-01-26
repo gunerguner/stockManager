@@ -121,13 +121,13 @@ class CacheRepository:
     
     @classmethod
     def get_calculated_target(cls, user: User) -> Optional[Dict[str, Any]]:
-        if TradingCalendar.is_in_trading_hours(datetime.now(TZ_SHANGHAI)):
+        if TradingCalendar.is_current_time_in_trading_hours():
             return None
         return cache.get(cls.KEY_CALCULATED_TARGET.format(user_id=user.id))
     
     @classmethod
     def set_calculated_target(cls, user_id: int, result: Dict[str, Any]) -> None:
-        if TradingCalendar.is_in_trading_hours(datetime.now(TZ_SHANGHAI)):
+        if TradingCalendar.is_current_time_in_trading_hours():
             return
         cache.set(cls.KEY_CALCULATED_TARGET.format(user_id=user_id), result, cls.TTL_CALCULATED_TARGET)
     
@@ -196,8 +196,7 @@ class CacheRepository:
         if not code_list:
             return {}, []
         
-        current_time = datetime.now(TZ_SHANGHAI)
-        if TradingCalendar.is_in_trading_hours(current_time):
+        if TradingCalendar.is_current_time_in_trading_hours():
             return {}, code_list.copy()
         
         cached_timestamp = cls.get_stock_price_timestamp()
@@ -205,6 +204,7 @@ class CacheRepository:
             return {}, code_list.copy()
         
         cached_time = datetime.fromisoformat(cached_timestamp)
+        current_time = datetime.now(TZ_SHANGHAI)
         if TradingCalendar.is_trading_time_passed(cached_time, current_time):
             return {}, code_list.copy()
         

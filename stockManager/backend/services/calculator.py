@@ -18,7 +18,6 @@ MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无�
 MIN_VALUE_THRESHOLD = 0.1  # 最小市值阈值，用于判断昨日市值是否有效
 MIN_HOLD_COUNT_THRESHOLD = 0.001  # 最小持股数阈值，用于浮点数比较
 
-
 class Calculator:
     """
     股票计算器类
@@ -27,7 +26,6 @@ class Calculator:
     - 单股指标：持仓成本、浮动盈亏、累计盈亏等
     - 整体指标：总市值、总盈亏、总资产等
     """
-    
     # ========== 公共接口 ==========
     
     @classmethod
@@ -218,13 +216,10 @@ class Calculator:
             elif op_type == OperationType.DIVIDEND:
                 # 分红操作
                 dividend_multiplier = operation.reserve + operation.stock
-                
                 # 持仓成本计算
                 hold_total_count += hold_total_count * dividend_multiplier
-                
                 # 摊薄成本计算
                 overall_sum -= current_hold * operation.cash
-                
                 # 更新持股数（送股和转增）
                 current_hold += current_hold * dividend_multiplier
             
@@ -243,9 +238,7 @@ class Calculator:
             if abs(hold_total_count) >= MIN_HOLD_COUNT_THRESHOLD 
             else 0.0
         )
-        
 
-        
         return {
             'current_hold_count': current_hold,
             'yesterday_hold_count': yesterday_hold,
@@ -260,74 +253,37 @@ class Calculator:
     
     @classmethod
     def _calculate_xirr(cls, cash_flow_list: List[Dict[str, Any]], total_asset: float) -> float:
-        """
-        计算 XIRR 年化收益率
-        
-        Args:
-            cash_flow_list: 出入金记录列表 [{"date": "2023-01-01", "amount": 10000}, ...]
-            total_asset: 当前总资产（作为最后一笔正现金流）
-        
-        Returns:
-            XIRR 年化收益率（小数形式，如 0.1234 代表 12.34%）
-        """
-        # 边界情况：没有现金流记录
+        """计算 XIRR 年化收益率"""
         if not cash_flow_list:
-            logger.info("没有现金流记录，XIRR 返回 0")
             return 0.0
         
         try:
-            # 构建日期和金额列表
             dates = []
             amounts = []
-            
             # 将所有现金流记录添加到列表中
             # 入金为负（投出去），出金为正（收回来）
             for flow in cash_flow_list:
-                date_str = flow.get('date')
                 amount = flow.get('amount', 0)
-                
-                # 跳过金额为 0 的记录
                 if amount == 0:
                     continue
                 
-                # 解析日期
-                if isinstance(date_str, str):
-                    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-                else:
-                    date_obj = date_str
+                date_str = flow.get('date')
+                date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if isinstance(date_str, str) else date_str
                 
                 dates.append(date_obj)
-                # 转换现金流方向：入金为负，出金为正
-                # 数据库中 amount > 0 是入金，amount < 0 是出金
                 amounts.append(float(-amount))
             
-            # 边界情况：处理后没有有效现金流
             if not dates:
-                logger.info("没有有效的现金流记录，XIRR 返回 0")
                 return 0.0
             
-            # 添加当前总资产作为最后一笔正现金流（假设今天全部赎回）
-            today = datetime.date.today()
-            dates.append(today)
+            dates.append(datetime.date.today())
             amounts.append(float(total_asset))
             
-            # 检查是否有正负现金流（XIRR 必须有资金流入和流出）
-            has_positive = any(amt > 0 for amt in amounts)
-            has_negative = any(amt < 0 for amt in amounts)
-            
-            if not (has_positive and has_negative):
-                logger.info("现金流没有正负两种方向，XIRR 无意义，返回 0")
+            if not (any(amt > 0 for amt in amounts) and any(amt < 0 for amt in amounts)):
                 return 0.0
             
-            # 调用 pyxirr 计算 XIRR
             result = xirr(dates, amounts)
-            
-            # pyxirr 可能返回 None
-            if result is None:
-                logger.warning("XIRR 计算返回 None，可能不收敛")
-                return 0.0
-            
-            return float(result)
+            return float(result) if result is not None else 0.0
             
         except Exception as e:
             logger.error(f"XIRR 计算失败: {str(e)}", exc_info=True)

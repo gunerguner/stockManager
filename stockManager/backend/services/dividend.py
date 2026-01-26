@@ -13,8 +13,6 @@ from ..common.utils import safe_float
 from ..models import Operation
 from django.contrib.auth.models import User
 
-
-
 class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
     
