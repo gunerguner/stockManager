@@ -1,7 +1,6 @@
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { Avatar, Dropdown } from 'antd';
 import { history, useModel } from '@umijs/max';
-import { stringify } from 'querystring';
 import { logout } from '@/services/api';
 import styles from './index.less';
 
@@ -21,9 +20,10 @@ const AvatarDropdown: React.FC = () => {
       resetStockData();
 
       setTimeout(() => {
+        const params = new URLSearchParams({ redirect: history.location.pathname });
         history.replace({
           pathname: '/login',
-          search: stringify({ redirect: history.location.pathname }),
+          search: params.toString(),
         });
       }, 50);
     } catch (error) {
