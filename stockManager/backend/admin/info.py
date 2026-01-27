@@ -23,9 +23,7 @@ class InfoAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """普通用户只能看到自己的数据，超级用户可以看到所有数据"""
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(user=request.user)
+        return qs if request.user.is_superuser else qs.filter(user=request.user)
     
     def get_readonly_fields(self, request, obj=None):
         """普通用户编辑时 user 字段只读"""
@@ -67,4 +65,3 @@ class InfoAdmin(admin.ModelAdmin):
         if obj is not None and not request.user.is_superuser:
             return obj.user == request.user
         return super().has_delete_permission(request, obj)
-

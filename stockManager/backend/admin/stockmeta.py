@@ -5,7 +5,6 @@ from django.contrib import admin
 
 from .base import StockMeta
 
-
 @admin.register(StockMeta)
 class StockMetaAdmin(admin.ModelAdmin):
     """股票元数据管理（全局共享）"""
@@ -19,6 +18,4 @@ class StockMetaAdmin(admin.ModelAdmin):
             'fields': ('code', 'stockType', 'isNew')
         }),
     )
-    
     # StockMeta 是全局共享的，所有用户都可以看到和操作
-

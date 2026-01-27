@@ -141,4 +141,3 @@ class Dividend:
         except Exception as e:
             logger.error(f"生成股票 {code} 分红信息失败: {e}")
             return ""
-

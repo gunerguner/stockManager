@@ -32,9 +32,7 @@ class SessionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """只允许超级管理员访问"""
         qs = super().get_queryset(request)
-        if not request.user.is_superuser:
-            return qs.none()
-        return qs
+        return qs if request.user.is_superuser else qs.none()
     
     def has_module_permission(self, request):
         """控制是否在 admin 首页显示 Session 模块"""
@@ -56,70 +54,47 @@ class SessionAdmin(admin.ModelAdmin):
         """不允许修改 session"""
         return False
     
+    def _get_user_from_session(self, obj):
+        """从 session 对象获取用户对象"""
+        if obj is None:
+            return None
+        try:
+            user_id = obj.get_decoded().get('_auth_user_id')
+            if not user_id:
+                return None
+            return User.objects.get(pk=user_id)
+        except Exception as e:
+            logger.debug(f"解析 session 失败: {str(e)}")
+            return None
+    
     def get_user(self, obj):
         """获取 session 关联的用户（显示名称）"""
-        if obj is None:
-            return '-'
-        try:
-            session_data = obj.get_decoded()
-            user_id = session_data.get('_auth_user_id')
-            if user_id:
-                try:
-                    user = User.objects.get(pk=user_id)
-                    display_name = user.get_full_name() or user.email or user.username
-                    return display_name
-                except User.DoesNotExist:
-                    return f"用户ID: {user_id} (已删除)"
+        user = self._get_user_from_session(obj)
+        if user is None:
             return '匿名用户'
-        except Exception as e:
-            # 记录异常但不抛出，避免影响页面显示
-            logger.debug(f"解析 session 失败: {str(e)}")
-            return '解析失败'
+        return user.get_full_name() or user.email or user.username
     get_user.short_description = '用户'
     
     def get_username(self, obj):
         """获取用户名（用于搜索和过滤）"""
-        if obj is None:
-            return '-'
-        try:
-            session_data = obj.get_decoded()
-            user_id = session_data.get('_auth_user_id')
-            if user_id:
-                try:
-                    user = User.objects.get(pk=user_id)
-                    return user.username
-                except User.DoesNotExist:
-                    return f"ID:{user_id}"
-            return '-'
-        except Exception as e:
-            logger.debug(f"解析 session 用户名失败: {str(e)}")
-            return '-'
+        user = self._get_user_from_session(obj)
+        return user.username if user else '-'
     get_username.short_description = '用户名'
     
     def get_user_info(self, obj):
         """获取用户详细信息（详情页显示）"""
-        if obj is None:
-            return '-'
-        try:
-            session_data = obj.get_decoded()
-            user_id = session_data.get('_auth_user_id')
-            if user_id:
-                try:
-                    user = User.objects.get(pk=user_id)
-                    return format_html(
-                        '用户名: {}<br>邮箱: {}<br>全名: {}<br>是否超级管理员: {}<br>是否员工: {}',
-                        user.username,
-                        user.email or '未设置',
-                        user.get_full_name() or '未设置',
-                        '是' if user.is_superuser else '否',
-                        '是' if user.is_staff else '否'
-                    )
-                except User.DoesNotExist:
-                    return f"用户ID: {user_id} (用户已被删除)"
+        user = self._get_user_from_session(obj)
+        if user is None:
             return '匿名用户（未登录）'
-        except Exception as e:
-            logger.debug(f"解析 session 用户信息失败: {str(e)}")
-            return f'解析失败: {str(e)}'
+        
+        return format_html(
+            '用户名: {}<br>邮箱: {}<br>全名: {}<br>是否超级管理员: {}<br>是否员工: {}',
+            user.username,
+            user.email or '未设置',
+            user.get_full_name() or '未设置',
+            '是' if user.is_superuser else '否',
+            '是' if user.is_staff else '否'
+        )
     get_user_info.short_description = '用户信息'
     
     def is_expired(self, obj):
@@ -133,90 +108,64 @@ class SessionAdmin(admin.ModelAdmin):
     is_expired.boolean = True
     is_expired.short_description = '已过期'
     
-    # 注意：clear_expired_sessions 和 clear_all_sessions 不需要选中项
-    # 但 Django admin 默认要求至少选中一项，所以我们需要在函数中处理空 queryset
     actions = ['clear_selected_sessions', 'clear_expired_sessions', 'clear_all_sessions']
     
     def get_actions(self, request):
         """重写 get_actions 以移除默认的删除 action 并确保 allow_empty 生效"""
         actions = super().get_actions(request)
-        
-        # 移除默认的删除 action
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
+        actions.pop('delete_selected', None)
         
         for action_name in ['clear_expired_sessions', 'clear_all_sessions']:
             if action_name in actions:
                 func, name, description = actions[action_name]
-                # 强制设置 allow_empty 属性
                 func.allow_empty = True
-                # 重新组装 actions 字典
                 actions[action_name] = (func, name, description)
         
         return actions
     
+    def _delete_and_notify(self, request, queryset, success_msg, empty_msg, msg_level=messages.SUCCESS):
+        """通用删除和通知方法"""
+        count = queryset.count()
+        if count == 0:
+            self.message_user(request, empty_msg, messages.INFO)
+            return
+        
+        with transaction.atomic():
+            queryset.delete()
+        self.message_user(request, success_msg.format(count=count), msg_level)
+    
     def clear_selected_sessions(self, request, queryset):
         """清理选中的 session"""
         if queryset.count() == 0:
-            self.message_user(
-                request,
-                '请至少选择一个 session',
-                messages.WARNING
-            )
+            self.message_user(request, '请至少选择一个 session', messages.WARNING)
             return
         
-        count = queryset.count()
-        with transaction.atomic():
-            queryset.delete()
-        self.message_user(
-            request,
-            f'成功清理 {count} 个 session',
-            messages.SUCCESS
+        self._delete_and_notify(
+            request, queryset, 
+            '成功清理 {count} 个 session', 
+            '没有选中的 session'
         )
     clear_selected_sessions.short_description = '清理选中的 session'
     
     def clear_expired_sessions(self, request, queryset):
         """清理所有过期的 session（不需要选中项）"""
         expired_sessions = Session.objects.filter(expire_date__lt=timezone.now())
-        count = expired_sessions.count()
-        
-        if count == 0:
-            self.message_user(
-                request,
-                '当前没有过期的 session',
-                messages.INFO
-            )
-            return
-        
-        with transaction.atomic():
-            expired_sessions.delete()
-        self.message_user(
-            request,
-            f'成功清理 {count} 个过期的 session',
-            messages.SUCCESS
+        self._delete_and_notify(
+            request, expired_sessions, 
+            '成功清理 {count} 个过期的 session', 
+            '当前没有过期的 session'
         )
     clear_expired_sessions.short_description = '清理所有过期的 session'
     clear_expired_sessions.allow_empty = True
     
     def clear_all_sessions(self, request, queryset):
         """清理所有 session（危险操作，不需要选中项）"""
-        count = Session.objects.count()
-        
-        if count == 0:
-            self.message_user(
-                request,
-                '当前没有 session',
-                messages.INFO
-            )
-            return
-        
-        with transaction.atomic():
-            Session.objects.all().delete()
-        self.message_user(
-            request,
-            f'成功清理所有 {count} 个 session，所有用户将被登出',
+        all_sessions = Session.objects.all()
+        self._delete_and_notify(
+            request, all_sessions, 
+            '成功清理所有 {count} 个 session，所有用户将被登出', 
+            '当前没有 session', 
             messages.WARNING
         )
     clear_all_sessions.short_description = '清理所有 session（所有用户将被登出）'
     clear_all_sessions.allow_empty = True
-
