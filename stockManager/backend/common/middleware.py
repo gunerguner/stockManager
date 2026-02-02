@@ -21,4 +21,3 @@ def get_client_ip(request: HttpRequest) -> str:
     """获取请求客户端的真实IP地址"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     return x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR', '')
-

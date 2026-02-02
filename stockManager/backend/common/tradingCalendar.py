@@ -82,4 +82,3 @@ class TradingCalendar:
 
 
 TradingCalendar.get_calendar()  # 预加载交易日历
-

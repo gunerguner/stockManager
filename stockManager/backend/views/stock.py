@@ -39,7 +39,6 @@ def update_income_cash(request: HttpRequest, data: dict) -> JsonResponse:
         return json_response(status=ResponseStatus.ERROR, message="参数incomeCash不能为空")
     
     Integrate.update_income_cash(request.user, income_cash)
-    
     return json_response(status=ResponseStatus.SUCCESS, message="更新收益现金成功")
 
 
@@ -53,5 +52,4 @@ def refresh_divident(request: HttpRequest) -> JsonResponse:
     logger.info(f"refresh_divident - 用户: {request.user.username}, IP: {get_client_ip(request)}")
     
     codes = Integrate.generate_dividend(request.user)
-    
     return json_response(status=ResponseStatus.SUCCESS, data=codes, message="刷新除权除息信息成功")

@@ -12,4 +12,3 @@ from ..models import Operation, Info, StockMeta, CashFlow
 User = get_user_model()
 
 __all__ = ['admin', 'messages', 'User', 'Operation', 'Info', 'StockMeta', 'CashFlow']
-

@@ -19,4 +19,3 @@ def safe_float(value: str, default: float = 0.0) -> float:
         return float(value) if value else default
     except (ValueError, TypeError):
         return default
-

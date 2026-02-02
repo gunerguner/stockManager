@@ -116,7 +116,6 @@ export default defineConfig({
    * @description 为 Node.js 内置模块提供浏览器 polyfill
    */
   alias: {
-    querystring: require.resolve('querystring-es3'),
     // 强制使用 CommonJS 版本，避免 ES 模块解析问题
     'chinese-days': require.resolve('chinese-days/dist/index.min.js'),
   },
