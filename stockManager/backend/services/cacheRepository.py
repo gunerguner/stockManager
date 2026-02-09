@@ -30,6 +30,22 @@ class CacheRepository:
     TTL_STOCK_PRICE = 86400
     
     @classmethod
+    def _should_refresh_cache(cls) -> bool:
+        """判断是否需要刷新缓存"""
+        # 如果当前在交易时间,需要实时查询
+        if TradingCalendar.is_current_time_in_trading_hours():
+            return True
+        
+        # 检查缓存时间戳是否过期(是否经过了交易时间)
+        cached_timestamp = cls.get_stock_price_timestamp()
+        if not cached_timestamp:
+            return True
+        
+        cached_time = datetime.fromisoformat(cached_timestamp)
+        current_time = datetime.now(TZ_SHANGHAI)
+        return TradingCalendar.is_trading_time_passed(cached_time, current_time)
+    
+    @classmethod
     def _serialize_operations(cls, operations: Dict[str, List[Operation]]) -> str:
         data = {}
         for code, op_list in operations.items():
@@ -121,7 +137,7 @@ class CacheRepository:
     
     @classmethod
     def get_calculated_target(cls, user: User) -> Optional[Dict[str, Any]]:
-        if TradingCalendar.is_current_time_in_trading_hours():
+        if cls._should_refresh_cache():
             return None
         return cache.get(cls.KEY_CALCULATED_TARGET.format(user_id=user.id))
     
@@ -196,16 +212,7 @@ class CacheRepository:
         if not code_list:
             return {}, []
         
-        if TradingCalendar.is_current_time_in_trading_hours():
-            return {}, code_list.copy()
-        
-        cached_timestamp = cls.get_stock_price_timestamp()
-        if not cached_timestamp:
-            return {}, code_list.copy()
-        
-        cached_time = datetime.fromisoformat(cached_timestamp)
-        current_time = datetime.now(TZ_SHANGHAI)
-        if TradingCalendar.is_trading_time_passed(cached_time, current_time):
+        if cls._should_refresh_cache():
             return {}, code_list.copy()
         
         batch_result = cls.get_stock_prices_batch(code_list)

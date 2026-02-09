@@ -12,6 +12,7 @@ from .calculator import Calculator
 from .dividend import Dividend
 from ..models import Operation, Info, CashFlow
 from ..common import logger
+from ..common.utils import remove_operation_list_from_result, merge_operation_list_to_result
 
 
 class Integrate:
@@ -21,7 +22,6 @@ class Integrate:
     提供统一的业务入口，协调用户数据获取、股票计算、分红生成等功能。
     负责缓存管理和数据协调，不包含具体业务逻辑。
     """
-    # ========== 业务接口 ==========
     
     @classmethod
     def calculate_target(cls, user: User) -> Dict[str, Any]:
@@ -30,20 +30,24 @@ class Integrate:
         
         协调用户数据获取和股票计算服务，提供缓存优化。
         """
-        # 尝试从缓存获取
+        # 获取 operation_list (用于后续添加到结果中)
+        operation_list = CacheRepository.get_user_operations(user)
+        
+        # 尝试从缓存获取计算结果
         cached_result = CacheRepository.get_calculated_target(user)
         if cached_result is not None:
-            return cached_result
+            # 缓存命中，添加 operationList 后返回
+            return merge_operation_list_to_result(cached_result, operation_list)
         
         # 缓存未命中，获取数据并计算
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
-        operation_list = CacheRepository.get_user_operations(user)
         
         # 直接调用计算器服务
         result = Calculator.calculate_target(operation_list, income_cash, cash_flow_list)
         
-        # 写入缓存
-        CacheRepository.set_calculated_target(user.id, result)
+        # 写入缓存前，移除 operationList (避免重复缓存)
+        result_to_cache = remove_operation_list_from_result(result)
+        CacheRepository.set_calculated_target(user.id, result_to_cache)
         
         return result
     

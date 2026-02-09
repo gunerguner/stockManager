@@ -7,7 +7,6 @@ import pandas as pd
 
 TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
 
-
 class TradingCalendar:
     """交易日历工具类"""
     _calendar: ClassVar[Optional[ExchangeCalendar]] = None
