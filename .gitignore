@@ -64,6 +64,7 @@ yarn-error.log*
 staticfiles/
 media/
 db.sqlite3
+migrations/*
 
 # Frontend build
 stockManager/front/dist/
