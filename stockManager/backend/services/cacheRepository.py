@@ -202,11 +202,7 @@ class CacheRepository:
     def set_stock_price_timestamp(cls, timestamp: str) -> None:
         cache.set(cls.KEY_STOCK_PRICE_TIMESTAMP, timestamp, cls.TTL_STOCK_PRICE)
         cls.clear_all_calculated_targets()
-    
-    @classmethod
-    def clear_all_stock_prices(cls) -> None:
-        Cache.delete_pattern("stockmanager:stock:price:*")
-    
+
     @classmethod
     def get_stock_prices_with_cache(cls, code_list: List[str]) -> tuple[Dict[str, Dict], List[str]]:
         if not code_list:

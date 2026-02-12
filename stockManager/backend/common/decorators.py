@@ -112,7 +112,7 @@ def handle_exception(view_func):
 def parse_json_body(view_func):
     """
     装饰器：自动解析JSON请求体
-    
+
     使用方法:
         @parse_json_body
         def my_view(request, data):
@@ -121,11 +121,22 @@ def parse_json_body(view_func):
     """
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
+        # 检查 Content-Type
+        content_type = request.content_type or ''
+        if 'application/json' not in content_type:
+            logger.warning(f"{view_func.__name__} Content-Type错误: {content_type}")
+            return json_response(status=ResponseStatus.ERROR, message="Content-Type 必须为 application/json")
+
+        # 检查 body 是否为空
+        if not request.body:
+            logger.warning(f"{view_func.__name__} 请求体为空")
+            return json_response(status=ResponseStatus.ERROR, message="请求体不能为空")
+
         try:
             data = json.loads(request.body)
             return view_func(request, data, *args, **kwargs)
-        except json.JSONDecodeError:
-            logger.error(f"{view_func.__name__} JSON解析失败")
+        except json.JSONDecodeError as e:
+            logger.error(f"{view_func.__name__} JSON解析失败: {e}")
             return json_response(status=ResponseStatus.ERROR, message="请求数据格式错误")
     return wrapper
 

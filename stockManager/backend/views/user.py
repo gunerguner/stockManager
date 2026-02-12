@@ -1,4 +1,4 @@
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import auth
 from django.http import HttpRequest, JsonResponse
 
@@ -14,7 +14,6 @@ from ..common import (
 )
 
 
-@csrf_exempt
 @ensure_csrf_cookie
 @require_methods(['POST'])
 @parse_json_body

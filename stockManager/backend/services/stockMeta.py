@@ -21,5 +21,5 @@ class StockMeta:
 @receiver([post_save, post_delete], sender=StockMetaModel)
 def refresh_stock_meta_cache(sender, instance, **kwargs):
     """监听模型变化，自动清除 Redis 缓存"""
-    CacheRepository.clear_stock_meta_cache()
+    CacheRepository.clear_stock_meta_all()
     logger.info("清除股票元数据 Redis 缓存")

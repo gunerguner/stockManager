@@ -42,8 +42,8 @@ export const useCommonModal = () => {
   const { modal } = App.useApp();
   const isMobile = useIsMobile();
 
-  const prefixedRowKey = (prefix: string): GetRowKey<any> => (record, index) =>
-    record?.id ?? record?.key ?? `${prefix}-${index ?? 0}`;
+  const prefixedRowKey = (prefix: string): GetRowKey<any> => (record) =>
+    record?.id ?? record?.key ?? `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
 
   const commonTableProps = React.useMemo(
     () =>
