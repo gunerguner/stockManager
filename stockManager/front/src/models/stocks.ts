@@ -31,7 +31,7 @@ export default () => {
   const fetchStockData = useCallback(async () => {
     try {
       const response = await getStockList();
-      
+
       if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
         setStock(response.data);
         setInitialized(true);
@@ -42,7 +42,7 @@ export default () => {
       }
       return false;
     } catch (error) {
-      console.error('获取股票数据失败:', error);
+      // 错误由全局 errorHandler/responseInterceptor 处理
       return false;
     }
   }, []);

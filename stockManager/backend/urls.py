@@ -4,7 +4,7 @@ from .views import stock, user
 urlpatterns = [
     # 股票相关接口
     path('', stock.show_stocks, name='index'),
-    path('divident', stock.refresh_divident, name='divident'),
+    path('dividend', stock.refresh_dividend, name='dividend'),
     path('updateIncomeCash', stock.update_income_cash, name='updateIncomeCash'),
     
     # 用户相关接口

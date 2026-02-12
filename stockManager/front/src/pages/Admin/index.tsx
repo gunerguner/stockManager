@@ -32,7 +32,7 @@ const Admin: React.FC = () => {
             history.push('/login');
           }
         } catch (error) {
-          console.error('更新除权信息失败:', error);
+          // 更新除权信息失败由全局 errorHandler 处理
           modal.error({
             title: '操作失败',
             content: '更新除权信息失败，请稍后重试',

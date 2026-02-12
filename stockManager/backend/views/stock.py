@@ -45,11 +45,11 @@ def update_income_cash(request: HttpRequest, data: dict) -> JsonResponse:
 @require_authentication
 @require_methods(['POST'])
 @handle_exception
-def refresh_divident(request: HttpRequest) -> JsonResponse:
+def refresh_dividend(request: HttpRequest) -> JsonResponse:
     """
     刷新除权除息信息接口
     """
-    logger.info(f"refresh_divident - 用户: {request.user.username}, IP: {get_client_ip(request)}")
-    
+    logger.info(f"refresh_dividend - 用户: {request.user.username}, IP: {get_client_ip(request)}")
+
     codes = Integrate.generate_dividend(request.user)
     return json_response(status=ResponseStatus.SUCCESS, data=codes, message="刷新除权除息信息成功")

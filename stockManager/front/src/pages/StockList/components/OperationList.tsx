@@ -20,10 +20,6 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
-  /** 判断行是否隐藏 */
-  const shouldHideRow = (record: API.Stock) =>
-    (record.totalValue < 0.1 && !showAll) || (record.stockType === 'CONV' && !showConv);
-
   /** 处理行点击 */
   const handleRowClick = (record: API.Stock) => {
     showTradeDetail({
@@ -31,6 +27,14 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
       displayType: 'stockInfo',
     });
   };
+
+  /** 预过滤数据，只传递需要显示的行到 Table */
+  const filteredData = useMemo(() => {
+    return data.stocks.filter(
+      (record) =>
+        !((record.totalValue < 0.1 && !showAll) || (record.stockType === 'CONV' && !showConv))
+    );
+  }, [data.stocks, showAll, showConv]);
 
   /** 表格列配置 */
   const columns: ColumnsType<API.Stock> = useMemo(() => [
@@ -63,11 +67,16 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
       dataIndex: 'totalValue',
       defaultSortOrder: 'descend',
       sorter: (a, b) => a.totalValue - b.totalValue,
-      render: (_, r) => (
-        <Tooltip title={`${((r.totalValue / data.overall.totalValue) * 100).toFixed(2)}%`}>
-          <div>{r.totalValue.toFixed(2)}</div>
-        </Tooltip>
-      ),
+      render: (_, r) => {
+        const percentage = data.overall.totalValue
+          ? ((r.totalValue / data.overall.totalValue) * 100).toFixed(2)
+          : '0.00';
+        return (
+          <Tooltip title={`${percentage}%`}>
+            <div>{r.totalValue.toFixed(2)}</div>
+          </Tooltip>
+        );
+      },
     },
     {
       title: '持仓',
@@ -109,10 +118,9 @@ export const OperationList: React.FC<OperationListProps> = ({ data, showAll, sho
       <Table
         rowKey="code"
         columns={columns}
-        dataSource={data.stocks}
+        dataSource={filteredData}
         bordered
         pagination={false}
-        rowClassName={(r) => (shouldHideRow(r) ? 'hide' : '')}
         onRow={(r) => ({ onClick: () => handleRowClick(r), style: { cursor: 'pointer' } })}
         scroll={isMobile ? { x: 'max-content' } : undefined}
         size={isMobile ? 'small' : 'middle'}

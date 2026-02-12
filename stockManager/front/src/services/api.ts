@@ -59,8 +59,8 @@ export async function updateIncomeCash(incomeCash: number, options?: RequestOpti
   return postRequest<API.BaseResult>('/api/updateIncomeCash', { incomeCash }, options);
 }
 
-/** 更新分红 POST /api/divident */
+/** 更新分红 POST /api/dividend */
 export async function updateDividend(options?: RequestOptions) {
-  return postRequest<API.DividentResult>('/api/divident', undefined, options);
+  return postRequest<API.DividendResult>('/api/dividend', undefined, options);
 }
 

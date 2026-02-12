@@ -89,7 +89,7 @@ declare namespace API {
     comment: string;
   };
 
-  type DividentResult = BaseResult & {
+  type DividendResult = BaseResult & {
     data?: string[];
   };
 }

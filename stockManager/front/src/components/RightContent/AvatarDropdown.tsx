@@ -27,7 +27,7 @@ const AvatarDropdown: React.FC = () => {
         });
       }, 50);
     } catch (error) {
-      console.error('登出失败:', error);
+      // 登出失败由全局 errorHandler 处理
     }
   };
 

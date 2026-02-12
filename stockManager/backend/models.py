@@ -10,7 +10,7 @@ class Operation(models.Model):
     class operationType(models.TextChoices):
         BUY = "BUY", _("买入")
         SELL = "SELL", _("卖出")
-        Divident = "DV", _("除权除息")
+        Dividend = "DV", _("除权除息")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operations', verbose_name="用户")
     code = models.CharField(max_length=200, verbose_name="股票代码")

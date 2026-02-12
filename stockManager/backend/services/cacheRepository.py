@@ -228,8 +228,20 @@ class CacheRepository:
     def set_stock_prices_batch(cls, prices: Dict[str, Dict], timestamp: Optional[str] = None) -> None:
         if not prices:
             return
-        for code, price_data in prices.items():
-            cls.set_stock_price(code, price_data)
+
+        # 使用 pipeline 批量设置价格数据
+        try:
+            cache.set_many(
+                {cls.KEY_STOCK_PRICE.format(code=code): price_data for code, price_data in prices.items()},
+                cls.TTL_STOCK_PRICE
+            )
+        except Exception as e:
+            logger.error(f"批量设置股价缓存失败，回退到单条设置: {e}")
+            # 如果批量设置失败，回退到单条设置
+            for code, price_data in prices.items():
+                cls.set_stock_price(code, price_data)
+
+        # 设置时间戳
         cls.set_stock_price_timestamp(
             timestamp or datetime.now(TZ_SHANGHAI).isoformat()
         )
