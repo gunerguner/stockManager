@@ -74,10 +74,10 @@ export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatu
 
   if (isTrading) {
     const closeMinutes = currentMinutes < MORNING_CLOSE ? MORNING_CLOSE : AFTERNOON_CLOSE;
-    const closeTime = createDateWithMinutes(currentTime, closeMinutes);
+    const minutesToClose = closeMinutes - currentMinutes;
     return {
       isTrading: true,
-      message: `距收盘 ${formatMinutes(diffMinutes(closeTime, currentTime))}`,
+      message: `距收盘 ${formatMinutes(minutesToClose)}`,
     };
   }
 
@@ -98,10 +98,9 @@ export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatu
     }
   }
 
-  const openTime = createDateWithMinutes(openDate, openMinutes);
+  const minutesToOpen = diffMinutes(createDateWithMinutes(openDate, openMinutes), currentTime);
   return {
     isTrading: false,
-    message: `距开盘 ${formatMinutes(diffMinutes(openTime, currentTime))}`,
+    message: `距开盘 ${formatMinutes(minutesToOpen)}`,
   };
 };
-

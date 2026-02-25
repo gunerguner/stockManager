@@ -42,7 +42,6 @@ export default () => {
       }
       return false;
     } catch (error) {
-      // 错误由全局 errorHandler/responseInterceptor 处理
       return false;
     }
   }, []);

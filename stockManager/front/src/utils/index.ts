@@ -1,14 +1,7 @@
-/**
- * 工具函数集合
- */
-
 // ==================== 环境变量工具 ====================
 
 export type EnvType = 'dev' | 'test' | 'pre' | 'prod';
 
-/**
- * 获取当前环境变量
- */
 export const getEnv = (): EnvType | undefined => {
   // @ts-ignore
   const umiEnv = process.env.UMI_ENV;
@@ -21,10 +14,6 @@ export const getEnv = (): EnvType | undefined => {
 };
 
 // ==================== CSRF Token 工具 ====================
-
-/**
- * 从 Cookie 中获取 CSRF Token
- */
 export const getCsrfToken = (): string | null => {
   const name = 'csrftoken';
   const cookies = document.cookie.split(';');
