@@ -12,7 +12,7 @@ import './index.less';
 const StockList: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
   const [showConv, setShowConv] = useState(true);
-  const { stock, fetchStockData } = useStocks();
+  const { stock, operations, fetchStockData } = useStocks();
 
   return (
     <>
@@ -33,7 +33,7 @@ const StockList: React.FC = () => {
         </ProCard>
 
         <ProCard>
-          <OperationList showAll={showAll} showConv={showConv} data={stock} />
+          <OperationList showAll={showAll} showConv={showConv} data={stock} operations={operations} />
         </ProCard>
       </div>
     </>

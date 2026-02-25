@@ -49,9 +49,14 @@ export async function logout(options?: RequestOptions) {
   return postRequest<Record<string, unknown>>('/api/logout', undefined, options);
 }
 
-/** 获取股票数据 GET /api/ */
-export async function getStockList(options?: RequestOptions) {
-  return getRequest<API.StockResult>('/api/', options);
+/** 获取操作列表 GET /api/operations */
+export async function getOperations(options?: RequestOptions) {
+  return getRequest<API.OperationsResult>('/api/operations', options);
+}
+
+/** 获取股票计算结果 GET /api/stocks */
+export async function getStocks(options?: RequestOptions) {
+  return getRequest<API.StockResult>('/api/stocks', options);
 }
 
 /** 更新收益资金 POST /api/updateIncomeCash */
@@ -63,4 +68,3 @@ export async function updateIncomeCash(incomeCash: number, options?: RequestOpti
 export async function updateDividend(options?: RequestOptions) {
   return postRequest<API.DividendResult>('/api/dividend', undefined, options);
 }
-

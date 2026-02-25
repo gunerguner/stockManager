@@ -12,7 +12,7 @@ from .calculator import Calculator
 from .dividend import Dividend
 from ..models import Operation, Info, CashFlow
 from ..common import logger
-from ..common.utils import remove_operation_list_from_result, merge_operation_list_to_result
+from ..common.types import CalculatedResult, OperationListResult
 
 
 class Integrate:
@@ -24,30 +24,29 @@ class Integrate:
     """
     
     @classmethod
-    def calculate_target(cls, user: User) -> Dict[str, Any]:
-        """
-        计算股票指标（支持结果缓存）
-        
-        协调用户数据获取和股票计算服务，提供缓存优化。
-        """
-        # 获取 operation_list (用于后续添加到结果中)
+    def get_operations(cls, user: User) -> OperationListResult:
+        """获取用户的操作列表（序列化为字典格式）"""
         operation_list = CacheRepository.get_user_operations(user)
-        
-        # 尝试从缓存获取计算结果
+        return {
+            code: [op.to_dict() for op in reversed(ops)]
+            for code, ops in operation_list.items()
+        }
+    
+    @classmethod
+    def get_calculated_result(cls, user: User) -> CalculatedResult:
+        """获取计算结果（不含 operationList）"""
         cached_result = CacheRepository.get_calculated_target(user)
         if cached_result is not None:
-            # 缓存命中，添加 operationList 后返回
-            return merge_operation_list_to_result(cached_result, operation_list)
+            return cached_result
         
-        # 缓存未命中，获取数据并计算
+        operation_list = CacheRepository.get_user_operations(user)
+        stock_list = Calculator.calculate_stock_list(operation_list)
+        
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
+        overall = Calculator.calculate_overall(stock_list, income_cash, cash_flow_list)
         
-        # 直接调用计算器服务
-        result = Calculator.calculate_target(operation_list, income_cash, cash_flow_list)
-        
-        # 写入缓存前，移除 operationList (避免重复缓存)
-        result_to_cache = remove_operation_list_from_result(result)
-        CacheRepository.set_calculated_target(user.id, result_to_cache)
+        result: CalculatedResult = {"stocks": stock_list, "overall": overall}
+        CacheRepository.set_calculated_target(user.id, result)
         
         return result
     

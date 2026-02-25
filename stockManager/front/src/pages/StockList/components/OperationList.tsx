@@ -10,20 +10,21 @@ import './index.less';
 
 type OperationListProps = {
   data: API.StockData;
+  operations: Record<string, API.Operation[]>;
   showAll: boolean;
   showConv: boolean;
 };
 
 // ==================== 组件 ====================
 
-export const OperationList: React.FC<OperationListProps> = ({ data, showAll, showConv }) => {
+export const OperationList: React.FC<OperationListProps> = ({ data, operations, showAll, showConv }) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
   /** 处理行点击 */
   const handleRowClick = (record: API.Stock) => {
     showTradeDetail({
-      data: [{ stock: record, operations: record.operationList }],
+      data: [{ stock: record, operations: operations[record.code] || [] }],
       displayType: 'stockInfo',
     });
   };

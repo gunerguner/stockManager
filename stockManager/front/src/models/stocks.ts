@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getStockList } from '@/services/api';
+import { getStocks, getOperations } from '@/services/api';
 import { history } from '@umijs/max';
 import { RESPONSE_STATUS } from '@/utils/constants';
 
@@ -26,21 +26,32 @@ const DEFAULT_STOCK_DATA: API.StockData = {
 
 export default () => {
   const [stock, setStock] = useState<API.StockData>(DEFAULT_STOCK_DATA);
+  const [operations, setOperations] = useState<Record<string, API.Operation[]>>({});
   const [initialized, setInitialized] = useState(false);
 
   const fetchStockData = useCallback(async () => {
     try {
-      const response = await getStockList();
+      // 并行请求两个接口
+      const [stocksResponse, operationsResponse] = await Promise.all([
+        getStocks(),
+        getOperations(),
+      ]);
 
-      if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
-        setStock(response.data);
-        setInitialized(true);
-        return true;
+      if (stocksResponse.status === RESPONSE_STATUS.SUCCESS && stocksResponse.data) {
+        setStock(stocksResponse.data);
       }
-      if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
+
+      if (operationsResponse.status === RESPONSE_STATUS.SUCCESS && operationsResponse.data) {
+        setOperations(operationsResponse.data);
+      }
+
+      if (stocksResponse.status === RESPONSE_STATUS.UNAUTHORIZED) {
         history.push('/login');
+        return false;
       }
-      return false;
+
+      setInitialized(true);
+      return true;
     } catch (error) {
       return false;
     }
@@ -53,8 +64,9 @@ export default () => {
 
   const resetStockData = useCallback(() => {
     setStock(DEFAULT_STOCK_DATA);
+    setOperations({});
     setInitialized(false);
   }, []);
 
-  return { stock, initialized, setStockData, fetchStockData, resetStockData };
+  return { stock, operations, initialized, setStockData, fetchStockData, resetStockData };
 };

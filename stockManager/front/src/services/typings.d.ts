@@ -30,6 +30,10 @@ declare namespace API {
     autoLogin?: boolean;
   };
 
+  type OperationsResult = BaseResult & {
+    data?: Record<string, Operation[]>;
+  };
+
   type StockResult = BaseResult & {
     data?: StockData;
   };
@@ -72,11 +76,14 @@ declare namespace API {
     offsetCurrent: number;
     offsetCurrentRatio: string;
     offsetTotal: number;
-    operationList: Operation[];
     totalOffsetToday: number;
     isNew: boolean;
     stockType: string;
     holdingDuration: number;
+  };
+
+  type StockWithOperations = Stock & {
+    operationList: Operation[];
   };
 
   type Operation = {

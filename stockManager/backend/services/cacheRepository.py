@@ -12,6 +12,7 @@ from ..common import logger
 from ..common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
 from ..models import Operation, Info, CashFlow, StockMeta as StockMetaModel
 from ..common.utils import format_operations
+from ..common.types import CalculatedResult, OperationList, CashFlowList
 
 
 class CacheRepository:
@@ -46,7 +47,7 @@ class CacheRepository:
         return TradingCalendar.is_trading_time_passed(cached_time, current_time)
     
     @classmethod
-    def _serialize_operations(cls, operations: Dict[str, List[Operation]]) -> str:
+    def _serialize_operations(cls, operations: OperationList) -> str:
         data = {}
         for code, op_list in operations.items():
             data[code] = [
@@ -67,7 +68,7 @@ class CacheRepository:
         return json.dumps(data)
     
     @classmethod
-    def _deserialize_operations(cls, data: str, user: User) -> Dict[str, List[Operation]]:
+    def _deserialize_operations(cls, data: str, user: User) -> OperationList:
         operations_dict = json.loads(data)
         result = {}
         
@@ -102,13 +103,13 @@ class CacheRepository:
         return result
     
     @classmethod
-    def _get_user_operations_cache(cls, user: User) -> Optional[Dict[str, List[Operation]]]:
+    def _get_user_operations_cache(cls, user: User) -> Optional[OperationList]:
         key = cls.KEY_USER_OPERATIONS.format(user_id=user.id)
         data = cache.get(key)
         return cls._deserialize_operations(data, user) if data else None
     
     @classmethod
-    def _set_user_operations_cache(cls, user: User, operations: Dict[str, List[Operation]]) -> None:
+    def _set_user_operations_cache(cls, user: User, operations: OperationList) -> None:
         key = cls.KEY_USER_OPERATIONS.format(user_id=user.id)
         data = cls._serialize_operations(operations)
         cache.set(key, data, cls.TTL_USER_DATA)
@@ -124,7 +125,7 @@ class CacheRepository:
         return (data['income_cash'], data['cash_flow_list']) if data else None
     
     @classmethod
-    def _set_user_cash_info_cache(cls, user: User, income_cash: float, cash_flow_list: List[Dict]) -> None:
+    def _set_user_cash_info_cache(cls, user: User, income_cash: float, cash_flow_list: CashFlowList) -> None:
         cache.set(
             cls.KEY_USER_CASH_INFO.format(user_id=user.id),
             {'income_cash': income_cash, 'cash_flow_list': cash_flow_list},
@@ -135,14 +136,15 @@ class CacheRepository:
     def clear_user_cash_info(cls, user_id: int) -> None:
         cache.delete(cls.KEY_USER_CASH_INFO.format(user_id=user_id))
     
+
     @classmethod
-    def get_calculated_target(cls, user: User) -> Optional[Dict[str, Any]]:
+    def get_calculated_target(cls, user: User) -> Optional[CalculatedResult]:
         if cls._should_refresh_cache():
             return None
         return cache.get(cls.KEY_CALCULATED_TARGET.format(user_id=user.id))
     
     @classmethod
-    def set_calculated_target(cls, user_id: int, result: Dict[str, Any]) -> None:
+    def set_calculated_target(cls, user_id: int, result: CalculatedResult) -> None:
         if TradingCalendar.is_current_time_in_trading_hours():
             return
         cache.set(cls.KEY_CALCULATED_TARGET.format(user_id=user_id), result, cls.TTL_CALCULATED_TARGET)
@@ -247,7 +249,7 @@ class CacheRepository:
         )
     
     @classmethod
-    def get_user_operations(cls, user: User) -> Dict[str, List[Operation]]:
+    def get_user_operations(cls, user: User) -> OperationList:
         cached = cls._get_user_operations_cache(user)
         if cached is not None:
             return cached
@@ -256,7 +258,7 @@ class CacheRepository:
         return operations
     
     @classmethod
-    def get_user_cash_info(cls, user: User) -> tuple[float, List[Dict[str, Any]]]:
+    def get_user_cash_info(cls, user: User) -> tuple[float, CashFlowList]:
         cached = cls._get_user_cash_info_cache(user)
         if cached is not None:
             return cached

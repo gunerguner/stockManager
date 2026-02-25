@@ -15,14 +15,20 @@ from ..common import (
 
 @require_authentication
 @handle_exception
-def show_stocks(request: HttpRequest) -> JsonResponse:
-    """
-    获取股票数据接口
-    返回当前用户的所有股票的计算数据
-    """
-    logger.info(f"show_stocks - 用户: {request.user.username}, IP: {get_client_ip(request)}")
-    merged_data = Integrate.calculate_target(request.user)
-    return json_response(status=ResponseStatus.SUCCESS, data=merged_data)
+def operations(request: HttpRequest) -> JsonResponse:
+    """获取操作列表接口 - GET /api/operations"""
+    logger.info(f"operations - 用户: {request.user.username}, IP: {get_client_ip(request)}")
+    operations_data = Integrate.get_operations(request.user)
+    return json_response(status=ResponseStatus.SUCCESS, data=operations_data)
+
+
+@require_authentication
+@handle_exception
+def stocks(request: HttpRequest) -> JsonResponse:
+    """获取股票计算结果接口 - GET /api/stocks"""
+    logger.info(f"stocks - 用户: {request.user.username}, IP: {get_client_ip(request)}")
+    result = Integrate.get_calculated_result(request.user)
+    return json_response(status=ResponseStatus.SUCCESS, data=result)
 
 
 @require_authentication

@@ -9,6 +9,7 @@ from pyxirr import xirr
 
 from ..common import logger
 from ..common.constants import OperationType
+from ..common.types import StockData, OverallData, OperationList, CashFlowList
 from ..models import Operation
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice, RealtimePriceData
@@ -29,37 +30,39 @@ class Calculator:
     # ========== 公共接口 ==========
     
     @classmethod
-    def calculate_target(cls, operation_list: Dict[str, List[Operation]], income_cash: float = 0.0, cash_flow_list: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def calculate_stock_list(cls, operation_list: OperationList) -> List[StockData]:
+        """
+        从原始 operation_list 计算每只股票的指标，返回 stock_list。
+        stock_list 中不含 operationList 字段，便于缓存。
+        """
         code_list = list(operation_list.keys())
         realtime_price_list = RealtimePrice.query(code_list)
-        stock_list = [
+        return [
             cls._calculate_single_target(operation_list, key, realtime_price_list.get(key))
             for key in operation_list.keys()
         ]
-        return {
-            "stocks": stock_list,
-            "overall": cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
-        }
+    
+    @classmethod
+    def calculate_overall(cls, stock_list: List[StockData], income_cash: float = 0.0, cash_flow_list: Optional[CashFlowList] = None) -> OverallData:
+        """从 stock_list、income_cash、cash_flow_list 计算整体指标"""
+        return cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
     
     # ========== 单股计算 ==========
     
     @classmethod
-    def _calculate_single_target(cls, operation_list: Dict[str, List[Operation]], key: str, single_real_time: Optional[RealtimePriceData]) -> Dict[str, Any]:
+    def _calculate_single_target(cls, operation_list: OperationList, key: str, single_real_time: Optional[RealtimePriceData]) -> StockData:
         """计算单个股票的指标"""
         to_return = {}
-
         # 带上股票的标签
         stock_meta = StockMeta.get(key)
         if stock_meta:
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew
-
         single_operation_list = operation_list[key]
         if not single_real_time:
             logger.warning(f"无法获取股票 {key} 的实时价格")
             # 使用默认值
             single_real_time = RealtimePriceData("未知", 0.0, 0.0, "0%", 0.0)
-
         to_return["code"] = key
         to_return["name"] = single_real_time.name  # 名称
         to_return["priceNow"] = single_real_time.currentPrice  # 现价（已经是 float）
@@ -130,8 +133,6 @@ class Calculator:
         
         # 持股时长（已在 metrics 中计算）
         to_return["holdingDuration"] = holding_duration
-
-        to_return["operationList"] = [op.to_dict() for op in reversed(single_operation_list)]
 
         return to_return
     
@@ -252,7 +253,7 @@ class Calculator:
     # ========== 整体计算 ==========
     
     @classmethod
-    def _calculate_xirr(cls, cash_flow_list: List[Dict[str, Any]], total_asset: float) -> float:
+    def _calculate_xirr(cls, cash_flow_list: CashFlowList, total_asset: float) -> float:
         """计算 XIRR 年化收益率"""
         if not cash_flow_list:
             return 0.0
@@ -290,7 +291,7 @@ class Calculator:
             return 0.0
     
     @classmethod
-    def _calculate_overall_target(cls, single_target_list: List[Dict[str, Any]], income_cash: float, cash_flow_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_overall_target(cls, single_target_list: List[StockData], income_cash: float, cash_flow_list: CashFlowList) -> OverallData:
         """计算整体指标"""
         to_return = {}
 

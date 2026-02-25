@@ -3,7 +3,8 @@ from .views import stock, user
 
 urlpatterns = [
     # 股票相关接口
-    path('', stock.show_stocks, name='index'),
+    path('operations', stock.operations, name='operations'),
+    path('stocks', stock.stocks, name='stocks'),
     path('dividend', stock.refresh_dividend, name='dividend'),
     path('updateIncomeCash', stock.update_income_cash, name='updateIncomeCash'),
     
