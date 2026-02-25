@@ -21,6 +21,7 @@ interface CostListModel {
 
 export type CostListProps = {
   data: API.Stock[];
+  operations: Record<string, API.Operation[]>;
   totalCost: number;
 };
 
@@ -54,11 +55,12 @@ const createEmptyRecord = (id: string, type: CostPeriodType): CostListModel => (
 });
 
 /** 统计交易数据 */
-const buildCostList = (data: API.Stock[]): CostListModel[] => {
+const buildCostList = (data: API.Stock[], operations: Record<string, API.Operation[]>): CostListModel[] => {
   const yearMap = new Map<string, CostListModel>();
 
   for (const stock of data) {
-    for (const op of stock.operationList) {
+    const stockOperations = operations[stock.code] || [];
+    for (const op of stockOperations) {
       const [year, month] = [op.date.substring(0, 4), op.date.substring(5, 7)];
 
       // 获取或创建年份记录
@@ -98,12 +100,12 @@ const buildCostList = (data: API.Stock[]): CostListModel[] => {
 
 // ==================== 组件 ====================
 
-export const CostList: React.FC<CostListProps> = ({ data, totalCost }) => {
+export const CostList: React.FC<CostListProps> = ({ data, operations, totalCost }) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
   /** 统计数据 */
-  const costList = useMemo(() => buildCostList(data), [data]);
+  const costList = useMemo(() => buildCostList(data, operations), [data, operations]);
 
   /** 筛选交易记录并打开详情弹窗 */
   const handleCellClick = (record: CostListModel, dataIndex: keyof CostListModel, parentYear?: string) => {
@@ -119,7 +121,7 @@ export const CostList: React.FC<CostListProps> = ({ data, totalCost }) => {
     const filteredData = data
       .map((stock) => ({
         stock,
-        operations: stock.operationList.filter((op) => {
+        operations: (operations[stock.code] || []).filter((op) => {
           const [opYear, opMonth] = [op.date.substring(0, 4), op.date.substring(5, 7)];
           return opYear === year && (!month || opMonth === month) && filter(stock, op);
         }),
