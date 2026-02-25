@@ -157,7 +157,20 @@ def validate_required_fields(required_fields: List[str]):
     def decorator(view_func):
         @functools.wraps(view_func)
         def wrapper(request, data, *args, **kwargs):
-            missing_fields = [field for field in required_fields if not data.get(field)]
+            missing_fields = []
+            for field in required_fields:
+                if field not in data:
+                    missing_fields.append(field)
+                    continue
+
+                value = data.get(field)
+                if value is None:
+                    missing_fields.append(field)
+                    continue
+
+                if isinstance(value, str) and value.strip() == '':
+                    missing_fields.append(field)
+
             if missing_fields:
                 return json_response(
                     status=ResponseStatus.ERROR,
