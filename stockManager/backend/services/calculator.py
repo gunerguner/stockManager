@@ -10,7 +10,7 @@ from pyxirr import xirr
 from ..common import logger
 from ..common.constants import OperationType
 from ..common.types import StockData, OverallData, OperationList, CashFlowList
-from ..models import Operation
+from ..models import Operation, StockMeta as StockMetaModel
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice, RealtimePriceData
 
@@ -37,9 +37,13 @@ class Calculator:
         """
         code_list = list(operation_list.keys())
         realtime_price_list = RealtimePrice.query(code_list)
+        # 预取一次全量 meta dict，再按 code 取单条传入，避免每只股票都触发字典重建
+        stock_meta_dict = StockMeta.get_all()
         return [
-            cls._calculate_single_target(operation_list, key, realtime_price_list.get(key))
-            for key in operation_list.keys()
+            cls._calculate_single_target(
+                code, operation_list[code], realtime_price_list.get(code), stock_meta_dict.get(code)
+            )
+            for code in operation_list.keys()
         ]
     
     @classmethod
@@ -50,20 +54,23 @@ class Calculator:
     # ========== 单股计算 ==========
     
     @classmethod
-    def _calculate_single_target(cls, operation_list: OperationList, key: str, single_real_time: Optional[RealtimePriceData]) -> StockData:
+    def _calculate_single_target(
+        cls,
+        code: str,
+        operations: List[Operation],
+        single_real_time: Optional[RealtimePriceData],
+        stock_meta: Optional[StockMetaModel] = None,
+    ) -> StockData:
         """计算单个股票的指标"""
         to_return = {}
-        # 带上股票的标签
-        stock_meta = StockMeta.get(key)
         if stock_meta:
             to_return["stockType"] = stock_meta.stockType
             to_return["isNew"] = stock_meta.isNew
-        single_operation_list = operation_list[key]
         if not single_real_time:
-            logger.warning(f"无法获取股票 {key} 的实时价格")
+            logger.warning(f"无法获取股票 {code} 的实时价格")
             # 使用默认值
             single_real_time = RealtimePriceData("未知", 0.0, 0.0, "0%", 0.0)
-        to_return["code"] = key
+        to_return["code"] = code
         to_return["name"] = single_real_time.name  # 名称
         to_return["priceNow"] = single_real_time.currentPrice  # 现价（已经是 float）
         if to_return["priceNow"] < MIN_PRICE_THRESHOLD:
@@ -73,7 +80,7 @@ class Calculator:
             to_return["offsetToday"] = single_real_time.priceOffset  # 今日股价涨跌
             to_return["offsetTodayRatio"] = single_real_time.offsetRatio  # 今日涨跌率
 
-        metrics = cls._calculate_single_metrics_optimized(single_operation_list)
+        metrics = cls._calculate_single_metrics_optimized(operations)
         
         current_hold_count = metrics['current_hold_count']
         yesterday_hold_count = metrics['yesterday_hold_count']
