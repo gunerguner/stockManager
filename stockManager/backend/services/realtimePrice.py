@@ -1,25 +1,12 @@
 """股票实时价格查询服务模块"""
 import urllib.request
 import re
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
+from typing import List
 
 from ..common import logger
+from ..common.types import RealtimePriceData, RealtimePriceDict
 from ..common.utils import safe_float
 from .cacheRepository import CacheRepository
-
-
-@dataclass
-class RealtimePriceData:
-    """实时价格数据"""
-    name: str
-    currentPrice: float
-    priceOffset: float
-    offsetRatio: str
-    yesterdayClose: float
-    
-    def to_cache_dict(self) -> Dict:
-        return asdict(self)
 
 
 STOCK_PRICE_API_URL = 'http://qt.gtimg.cn/q='
@@ -37,26 +24,24 @@ class RealtimePrice:
         return f"{(offset / base_price) * 100:.2f}%"
     
     @classmethod
-    def query(cls, code_list: List[str]) -> Dict[str, RealtimePriceData]:
+    def query(cls, code_list: List[str]) -> RealtimePriceDict:
         """查询股票实时价格"""
         if not code_list:
             return {}
         
         cached_data, missing_codes = CacheRepository.get_stock_prices_with_cache(code_list)
-        result = {code: RealtimePriceData(**data) for code, data in cached_data.items()}
+        result = {code: RealtimePriceData(data) for code, data in cached_data.items()}
         
         if missing_codes:
             api_result = cls.fetch_from_api(missing_codes)
             if api_result:
-                CacheRepository.set_stock_prices_batch(
-                    {code: data.to_cache_dict() for code, data in api_result.items()}
-                )
+                CacheRepository.set_stock_prices_batch(api_result)
                 result.update(api_result)
         
         return result
     
     @classmethod
-    def fetch_from_api(cls, code_list: List[str]) -> Dict[str, RealtimePriceData]:
+    def fetch_from_api(cls, code_list: List[str]) -> RealtimePriceDict:
         """从 API 获取股票价格"""
         if not code_list:
             return {}
@@ -83,13 +68,13 @@ class RealtimePrice:
                 yesterday_close = safe_float(stock_info[4])
                 price_offset = current_price - yesterday_close
                 
-                result[code_list[index]] = RealtimePriceData(
-                    name=stock_info[1],
-                    currentPrice=current_price,
-                    priceOffset=price_offset,
-                    offsetRatio=cls._calculate_offset_ratio(price_offset, yesterday_close),
-                    yesterdayClose=yesterday_close
-                )
+                result[code_list[index]] = RealtimePriceData({
+                    "name": stock_info[1],
+                    "currentPrice": current_price,
+                    "priceOffset": price_offset,
+                    "offsetRatio": cls._calculate_offset_ratio(price_offset, yesterday_close),
+                    "yesterdayClose": yesterday_close
+                })
             
             return result
         except Exception as e:

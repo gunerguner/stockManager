@@ -2,18 +2,19 @@
 持仓计算模块
 提供股票持仓计算相关功能
 """
-from typing import Dict, List
+from typing import List
 import datetime
 
 from ..models import Operation
 from ..common.constants import OperationType
+from ..common.types import OperationDict
 
 
 class StockHold:
     """持仓计算服务类，负责处理股票持仓相关计算"""
     
     @classmethod
-    def get_holding_stocks(cls, operation_list: Dict[str, List[Operation]], target_date: datetime.date = None) -> List[str]:
+    def get_holding_stocks(cls, operation_list: OperationDict, target_date: datetime.date = None) -> List[str]:
         """获取指定日期持有的股票代码列表"""
         if target_date is None:
             target_date = datetime.date.today()

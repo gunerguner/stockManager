@@ -45,7 +45,7 @@ const Admin: React.FC = () => {
   }, [modal]);
 
   const handleOpenAdmin = useCallback(() => {
-    window.open('/sys/admin', '_blank');
+    window.open('/sys/admin/', '_blank');
   }, []);
 
   return (

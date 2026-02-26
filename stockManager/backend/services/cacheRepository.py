@@ -1,7 +1,7 @@
 """缓存仓库层"""
 import json
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 
 from django.core.cache import cache
 from django.contrib.auth.models import User
@@ -12,7 +12,7 @@ from ..common import logger
 from ..common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
 from ..models import Operation, Info, CashFlow, StockMeta as StockMetaModel
 from ..common.utils import format_operations
-from ..common.types import CalculatedResult, OperationList, CashFlowList
+from ..common.types import CalculatedResult, OperationDict, CashFlowList
 
 
 class CacheRepository:
@@ -47,7 +47,7 @@ class CacheRepository:
         return TradingCalendar.is_trading_time_passed(cached_time, current_time)
     
     @classmethod
-    def _serialize_operations(cls, operations: OperationList) -> str:
+    def _serialize_operations(cls, operations: OperationDict) -> str:
         data = {}
         for code, op_list in operations.items():
             data[code] = [
@@ -68,7 +68,7 @@ class CacheRepository:
         return json.dumps(data)
     
     @classmethod
-    def _deserialize_operations(cls, data: str, user: User) -> OperationList:
+    def _deserialize_operations(cls, data: str, user: User) -> OperationDict:
         operations_dict = json.loads(data)
         result = {}
         
@@ -103,13 +103,13 @@ class CacheRepository:
         return result
     
     @classmethod
-    def _get_user_operations_cache(cls, user: User) -> Optional[OperationList]:
+    def _get_user_operations_cache(cls, user: User) -> Optional[OperationDict]:
         key = cls.KEY_USER_OPERATIONS.format(user_id=user.id)
         data = cache.get(key)
         return cls._deserialize_operations(data, user) if data else None
     
     @classmethod
-    def _set_user_operations_cache(cls, user: User, operations: OperationList) -> None:
+    def _set_user_operations_cache(cls, user: User, operations: OperationDict) -> None:
         key = cls.KEY_USER_OPERATIONS.format(user_id=user.id)
         data = cls._serialize_operations(operations)
         cache.set(key, data, cls.TTL_USER_DATA)
@@ -249,7 +249,7 @@ class CacheRepository:
         )
     
     @classmethod
-    def get_user_operations(cls, user: User) -> OperationList:
+    def get_user_operations(cls, user: User) -> OperationDict:
         cached = cls._get_user_operations_cache(user)
         if cached is not None:
             return cached
@@ -282,10 +282,6 @@ class CacheRepository:
         meta_dict = {meta.code: meta for meta in StockMetaModel.objects.all()}
         cls._set_stock_meta_all_cache(meta_dict)
         return meta_dict
-    
-    @classmethod
-    def get_stock_meta(cls, code: str) -> Optional[StockMetaModel]:
-        return cls.get_stock_meta_dict().get(code)
     
     @classmethod
     def clear_user_cache(cls, user_id: int) -> None:

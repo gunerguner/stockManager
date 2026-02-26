@@ -9,10 +9,10 @@ from pyxirr import xirr
 
 from ..common import logger
 from ..common.constants import OperationType
-from ..common.types import StockData, OverallData, OperationList, CashFlowList
+from ..common.types import StockData, OverallData, OperationDict, CashFlowList, RealtimePriceData
 from ..models import Operation, StockMeta as StockMetaModel
 from .stockMeta import StockMeta
-from .realtimePrice import RealtimePrice, RealtimePriceData
+from .realtimePrice import RealtimePrice
 
 # ========== 常量定义 ==========
 MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无效
@@ -30,7 +30,7 @@ class Calculator:
     # ========== 公共接口 ==========
     
     @classmethod
-    def calculate_stock_list(cls, operation_list: OperationList) -> List[StockData]:
+    def calculate_stock_list(cls, operation_list: OperationDict) -> List[StockData]:
         """
         从原始 operation_list 计算每只股票的指标，返回 stock_list。
         stock_list 中不含 operationList 字段，便于缓存。
@@ -69,16 +69,16 @@ class Calculator:
         if not single_real_time:
             logger.warning(f"无法获取股票 {code} 的实时价格")
             # 使用默认值
-            single_real_time = RealtimePriceData("未知", 0.0, 0.0, "0%", 0.0)
+            single_real_time = RealtimePriceData({"name": "未知", "currentPrice": 0.0, "priceOffset": 0.0, "offsetRatio": "0%", "yesterdayClose": 0.0})
         to_return["code"] = code
-        to_return["name"] = single_real_time.name  # 名称
-        to_return["priceNow"] = single_real_time.currentPrice  # 现价（已经是 float）
+        to_return["name"] = single_real_time["name"]  # 名称
+        to_return["priceNow"] = single_real_time["currentPrice"]  # 现价（已经是 float）
         if to_return["priceNow"] < MIN_PRICE_THRESHOLD:
             to_return["offsetToday"] = 0  # 今日股价涨跌
             to_return["offsetTodayRatio"] = "0%"  # 今日涨跌率
         else:
-            to_return["offsetToday"] = single_real_time.priceOffset  # 今日股价涨跌
-            to_return["offsetTodayRatio"] = single_real_time.offsetRatio  # 今日涨跌率
+            to_return["offsetToday"] = single_real_time["priceOffset"]  # 今日股价涨跌
+            to_return["offsetTodayRatio"] = single_real_time["offsetRatio"]  # 今日涨跌率
 
         metrics = cls._calculate_single_metrics_optimized(operations)
         
@@ -99,19 +99,19 @@ class Calculator:
             else 0.0
         )
         to_return["totalValue"] = (
-            single_real_time.currentPrice * current_hold_count
+            single_real_time["currentPrice"] * current_hold_count
         )  # 今日市值
         to_return["totalValueYesterday"] = (
-            single_real_time.yesterdayClose * yesterday_hold_count
+            single_real_time["yesterdayClose"] * yesterday_hold_count
         )  # 昨日市值,不显示
 
         current_offset = (
-            single_real_time.currentPrice - current_hold_cost
+            single_real_time["currentPrice"] - current_hold_cost
         ) * current_hold_count
         to_return["offsetCurrent"] = current_offset  # 浮动盈亏额
         # 浮动盈亏率：使用更严格的浮点数比较，避免除零错误
         current_offset_ratio = (
-            (single_real_time.currentPrice - current_hold_cost) / current_hold_cost
+            (single_real_time["currentPrice"] - current_hold_cost) / current_hold_cost
             if abs(current_hold_cost) >= MIN_PRICE_THRESHOLD
             else 0.0
         )
@@ -120,7 +120,7 @@ class Calculator:
         )  # 浮动盈亏率
 
         to_return["offsetTotal"] = (
-            single_real_time.currentPrice * current_hold_count - current_overall
+            single_real_time["currentPrice"] * current_hold_count - current_overall
         )  # 累计盈亏额
 
         to_return["totalCost"] = total_fee  # 所有费用
@@ -131,8 +131,8 @@ class Calculator:
             total_offset_today = current_offset  # 今天新买的,今日盈亏等于浮动盈亏
         else:
             total_offset_today = (
-                single_real_time.currentPrice * current_hold_count
-                - single_real_time.yesterdayClose * yesterday_hold_count
+                single_real_time["currentPrice"] * current_hold_count
+                - single_real_time["yesterdayClose"] * yesterday_hold_count
                 - today_input
             )
 

@@ -2,13 +2,14 @@
 分红服务模块
 提供股票分红数据查询和处理功能
 """
-from typing import Dict, List
+from typing import List
 import datetime
 
 import baostock as bs
 
 from ..common import logger
 from ..common.constants import OperationType
+from ..common.types import OperationDict
 from ..common.utils import safe_float
 from ..models import Operation
 from django.contrib.auth.models import User
@@ -18,7 +19,7 @@ class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
     
     @classmethod
-    def generate_dividend(cls, user: User, operation_list: Dict[str, List[Operation]]) -> List[str]:
+    def generate_dividend(cls, user: User, operation_list: OperationDict) -> List[str]:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
         updated_codes = []

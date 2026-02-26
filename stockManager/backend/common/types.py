@@ -3,13 +3,22 @@ from typing import TypedDict, List, Dict
 from ..models import Operation
 
 
+class RealtimePriceData(TypedDict):
+    """实时价格数据"""
+    name: str
+    currentPrice: float
+    priceOffset: float
+    offsetRatio: str
+    yesterdayClose: float
+
+
 class CashFlowData(TypedDict):
     """现金流数据"""
     date: str
     amount: float
 
 
-class OperationDict(TypedDict):
+class OperationData(TypedDict):
     """单个操作记录的字典格式（API返回格式）"""
     date: str
     type: str
@@ -63,6 +72,7 @@ class CalculatedResult(TypedDict):
     overall: OverallData
 
 
-OperationList = Dict[str, List[Operation]]
+OperationDict = Dict[str, List[Operation]]
 CashFlowList = List[CashFlowData]
-OperationListResult = Dict[str, List[OperationDict]]
+OperationDataDict = Dict[str, List[OperationData]]
+RealtimePriceDict = Dict[str, RealtimePriceData]

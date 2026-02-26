@@ -11,8 +11,8 @@ export const RESPONSE_STATUS = {
   SUCCESS: 1,
   /** 操作失败 */
   ERROR: 0,
-  /** 未登录/未授权 */
-  UNAUTHORIZED: 302,
+  /** 未登录/未认证 */
+  UNAUTHORIZED: 401,
 } as const;
 
 /**
