@@ -12,8 +12,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
-import time
 from pathlib import Path
+from dotenv import load_dotenv
+
+# 加载环境变量文件（与 settings.py 同目录）
+DOTENV_PATH = Path(__file__).resolve().parent / '.env'
+if DOTENV_PATH.exists():
+    load_dotenv(DOTENV_PATH)
 
 from . import __version__
 
@@ -28,10 +33,11 @@ VERSION = __version__
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '=2tfcp7f#j^+(!5m(ennkrmntjb5p9oq3!6g7uu3dpe%_frs_n'
+# genAI_main_start
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DJANGO_DEBUG') == 'true'
 
 ALLOWED_HOSTS =  ['*']
 
@@ -155,7 +161,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  # 使用 DB 1
+        'LOCATION': os.environ.get('REDIS_URL'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             # 注意：redis-py 5.0+ 中 HiredisParser 已移除，使用默认解析器即可
@@ -175,11 +181,6 @@ CACHES = {
     }
 }
 
-# Redis 连接池配置
-REDIS_CONNECTION_POOL_KWARGS = {
-    'max_connections': 50,
-    'retry_on_timeout': True,
-}
 
 
 # Password validation
@@ -204,9 +205,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -226,10 +227,17 @@ STATICFILES_DIRS = [
     BASE_DIR / "front" / "dist",
 ]
 
-# WhiteNoise 配置：使用 WhiteNoise 中间件提供静态文件
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# Django 4.2+ 推荐使用 STORAGES 配置（替代废弃的 STATICFILES_STORAGE）
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
-# 使用 Path 替代 os.path.join 
+# 日志配置
 # 生产环境：使用 /var/log/stockmanager/django/
 # 开发环境：使用项目目录下的 log（如果目录不存在会自动创建）
 if os.path.exists('/var/log/stockmanager/django'):
@@ -239,17 +247,16 @@ else:
 
 if not BASE_LOG_DIR.exists():
     BASE_LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
-    'version': 1,  # 保留字
-    'disable_existing_loggers': False,  # 禁用已经存在的logger实例
-    # 日志文件的格式
+    'version': 1,
+    'disable_existing_loggers': False,
+    # 日志格式
     'formatters': {
-        # 详细的日志格式
         'standard': {
             'format': '[%(asctime)s][%(threadName)s:%(thread)d][task_id:%(name)s][%(filename)s:%(lineno)d]'
                       '[%(levelname)s][%(message)s]'
         },
-        # 简单的日志格式
         'simple': {
             'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
         } 
@@ -262,42 +269,41 @@ LOGGING = {
     },
     # 处理器
     'handlers': {
-        # 在终端打印
+        # 终端输出
         'console': {
             'level': 'DEBUG',
-            'filters': ['require_debug_true'],  # 只有在Django debug为True时才在屏幕打印日志
-            'class': 'logging.StreamHandler',  #
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        # 默认的
+        # 所有日志（按天自动轮转）
         'default': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
-            # 使用 Path 替代 os.path.join，Path 会自动转换为字符串 
-            'filename': str(BASE_LOG_DIR / f'all-{time.strftime("%Y-%m-%d")}.log'),  # 日志文件
-            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-            'backupCount': 3,  # 最多备份几个
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(BASE_LOG_DIR / 'all.log'),
+            'when': 'midnight',  # 每天午夜轮转
+            'interval': 1,  # 每1天
+            'backupCount': 30,  # 保留30天
             'formatter': 'standard',
             'encoding': 'utf-8',
         },
-        # 专门用来记错误日志
+        # 错误日志（按天自动轮转）
         'error': {
             'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
-            # 使用 Path 替代 os.path.join，Path 会自动转换为字符串 
-            'filename': str(BASE_LOG_DIR / f'error-{time.strftime("%Y-%m-%d")}.log'),  # 日志文件
-            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-            'backupCount': 5,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(BASE_LOG_DIR / 'error.log'),
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 90,  # 错误日志保留90天
             'formatter': 'standard',
             'encoding': 'utf-8',
         }
     },
     'loggers': {
-       # 默认的logger应用如下配置
         '': {
-            'handlers': ['default', 'console', 'error'],  # 上线之后可以把'console'移除
+            'handlers': ['default', 'console', 'error'],
             'level': 'DEBUG',
-            'propagate': True,  # 向不向更高级别的logger传递
+            'propagate': True,
         }
     }
 }

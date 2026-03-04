@@ -1,8 +1,10 @@
 # Environment and development tools
 .venv/
-.env
 .venv/
 .python-version
+
+# Environment files in any directory
+**/.env
 
 # OS generated files
 .DS_Store
@@ -64,6 +66,10 @@ yarn-error.log*
 staticfiles/
 media/
 db.sqlite3
+
+# Log directories
+**/log/
+log/
 
 # Frontend build
 stockManager/front/dist/

@@ -1,6 +1,9 @@
 # Django 核心框架
 Django
 
+# 环境变量管理
+python-dotenv>=1.0.0
+
 # 数据获取和处理
 baostock>=0.8.9
 numpy>=1.26.0
@@ -19,4 +22,5 @@ django-redis>=5.4.0
 
 # 静态文件服务
 whitenoise
+
 
