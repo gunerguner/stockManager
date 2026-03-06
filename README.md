@@ -108,19 +108,14 @@
 
 ### 搭建方式
 
-
+#### 手动搭建
 1.  安装Python(版本>=3.11),pip,git,redis。
 2.  使用pip安装依赖模块（已有 requirements.txt）。
 3.  依次安装node(版本>=20)，pnpm等前端依赖。
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `pnpm install` 前端部分的依赖。
 6.  在front目录，`pnpm run build` 生成目标文件。
-7.  在stockManager目录，创建.env文件，内容如下：
-```
-DJANGO_SECRET_KEY=your_secret_key
-DJANGO_DEBUG=true
-REDIS_URL=redis://127.0.0.1:6379/1
-```
+7.  在stockManager目录，创建.env文件，`cp .env.example .env`
 DJANGO_SECRET_KEY可以使用`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`生成。
 8.  在主目录下`python manage.py makemigrations`，`python manage.py migrate` 生成数据库（或者直接copy数据库文件）。
 9.  在主目录下`python manage.py createsuperuser`生成管理密码。
@@ -128,6 +123,8 @@ DJANGO_SECRET_KEY可以使用`python -c 'from django.core.management.utils impor
 11. 启动redis服务器。`redis-server`
 12. 在主目录下，`python manage.py runserver`。 
 
+#### 自动搭建
+执行`./install.sh`即可自动搭建。
 
 ### 部署方式
 1.  服务层我使用了Nginx+uwsgi，在云服务器部署。
