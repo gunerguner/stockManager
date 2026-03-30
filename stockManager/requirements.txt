@@ -11,6 +11,7 @@ pandas>=2.2.0
 exchange_calendars
 pytz
 pyxirr>=0.10.0
+easyquotation
 
 # Django 扩展插件
 django-cors-headers

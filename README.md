@@ -44,12 +44,9 @@
 
 #### 数据源
 
-实时的交易指标来自于腾讯的接口：http://qt.gtimg.cn/q=
+实时交易指标来自腾讯接口，通过 [easyquotation](https://github.com/shidenggui/easyquotation) 库获取。支持股票、场内基金、可转债等产品，接口地址 `http://qt.gtimg.cn/q=`。
 
-支持多代码查询，支持股票、场内基金等产品，获取数据后做个简单的处理即可。比较坑爹的地方是接口的返回数据竟然是gb18030的编码...
-
-
-离线交易指标来自baoStock：http://baostock.com/baostock/index.php
+离线交易指标来自 baoStock：http://baostock.com/baostock/index.php
 
 主要用来获取历史除权除息的数据。
 
@@ -115,8 +112,7 @@
 4.  git clone相关代码：https://github.com/gunerguner/stockManager
 5.  进入front目录， `pnpm install` 前端部分的依赖。
 6.  在front目录，`pnpm run build` 生成目标文件。
-7.  在stockManager目录，创建.env文件，`cp .env.example .env`
-DJANGO_SECRET_KEY可以使用`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`生成。
+7.  在stockManager目录，创建.env文件，`cp .env.example .env`,DJANGO_SECRET_KEY可以使用`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`生成。
 8.  在主目录下`python manage.py makemigrations`，`python manage.py migrate` 生成数据库（或者直接copy数据库文件）。
 9.  在主目录下`python manage.py createsuperuser`生成管理密码。
 10.  添加自己的股票操作记录，可以使用自己的脚本，或者在django admin界面添加（或者直接copy数据库文件）。
