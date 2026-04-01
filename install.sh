@@ -31,18 +31,39 @@ log_error() {
 
 # 项目路径（默认当前目录）
 PROJECT_DIR="${1:-$(pwd)}"
-FRONT_DIR="$PROJECT_DIR/stockManager/front"
-ENV_FILE="$PROJECT_DIR/stockManager/stockManager/.env"
-ENV_EXAMPLE_FILE="$PROJECT_DIR/stockManager/stockManager/.env.example"
-REQUIREMENTS_FILE="$PROJECT_DIR/stockManager/requirements.txt"
+APP_DIR=""
+FRONT_DIR=""
+ENV_FILE=""
+ENV_EXAMPLE_FILE=""
+REQUIREMENTS_FILE=""
+VENV_DIR=""
 
 echo "=========================================="
 echo "  StockManager 自动化安装脚本"
 echo "=========================================="
 echo ""
 log_info "项目目录：$PROJECT_DIR"
-log_info "前端目录：$FRONT_DIR"
+log_info "安装入口目录：$PROJECT_DIR"
 echo ""
+
+# 自动识别项目目录（兼容在仓库根目录或上级目录执行）
+if [ -f "$PROJECT_DIR/manage.py" ]; then
+    APP_DIR="$PROJECT_DIR"
+elif [ -f "$PROJECT_DIR/stockManager/manage.py" ]; then
+    APP_DIR="$PROJECT_DIR/stockManager"
+else
+    log_error "未找到 manage.py，请在项目根目录执行，或传入正确项目路径"
+    exit 1
+fi
+
+FRONT_DIR="$APP_DIR/front"
+ENV_FILE="$APP_DIR/stockManager/.env"
+ENV_EXAMPLE_FILE="$APP_DIR/stockManager/.env.example"
+REQUIREMENTS_FILE="$APP_DIR/requirements.txt"
+VENV_DIR="$APP_DIR/.venv"
+
+log_info "项目目录：$APP_DIR"
+log_info "前端目录：$FRONT_DIR"
 
 # ===========================================
 # 辅助函数
@@ -63,6 +84,24 @@ get_python_cmd() {
 get_pip_cmd() {
     # 使用 python -m pip 更可靠，避免 python 和 pip 版本不一致
     echo "$PYTHON_CMD -m pip"
+}
+
+# 创建并激活 venv
+setup_venv() {
+    if [ ! -d "$VENV_DIR" ]; then
+        log_info "正在创建 Python 虚拟环境：$VENV_DIR"
+        $PYTHON_CMD -m venv "$VENV_DIR"
+    else
+        log_success "Python 虚拟环境已存在：$VENV_DIR"
+    fi
+
+    # 激活虚拟环境（让后续 python/pip 命令走 venv）
+    # shellcheck disable=SC1090
+    source "$VENV_DIR/bin/activate"
+
+    PYTHON_CMD="python"
+    PIP_CMD=$(get_pip_cmd)
+    log_success "已激活虚拟环境：$VENV_DIR"
 }
 
 # 安装 Homebrew
@@ -151,15 +190,8 @@ if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" 
 fi
 log_success "Python 版本：$PYTHON_VERSION ($PYTHON_CMD)"
 
-# 检查 pip
-PIP_CMD=$(get_pip_cmd)
-log_success "pip 已安装：$PIP_CMD"
-
-# 设置 pip 国内镜像源
-log_info "正在设置 pip 镜像源..."
-$PYTHON_CMD -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-$PYTHON_CMD -m pip config set global.trusted-host mirrors.tuna.tsinghua.edu.cn
-log_success "pip 镜像源已配置 (清华源)"
+# 创建并切换到 venv
+setup_venv
 
 # 检查 git
 if ! command -v git &> /dev/null; then
@@ -212,21 +244,21 @@ pnpm config set registry https://registry.npmmirror.com
 log_success "npm/pnpm 镜像源已配置 (npmmirror)"
 
 # ===========================================
-# 第 3 步：Git Clone（如果需要）
+# 第 3 步：拉取最新代码
 # ===========================================
 echo ""
 echo "=========================================="
-echo "  步骤 3: 代码克隆"
+echo "  步骤 3: 更新代码"
 echo "=========================================="
 
-GIT_REPO_URL="https://github.com/gunerguner/stockManager"
-
-if [ -d "$PROJECT_DIR/.git" ]; then
-    log_success "代码库已存在，跳过克隆步骤"
+GIT_ROOT=$(git -C "$APP_DIR" rev-parse --show-toplevel 2>/dev/null || true)
+if [ -n "$GIT_ROOT" ] && [ -d "$GIT_ROOT/.git" ]; then
+    log_info "正在拉取最新代码..."
+    git -C "$GIT_ROOT" pull --ff-only
+    log_success "代码更新完成"
 else
-    log_info "正在克隆代码库..."
-    git clone "$GIT_REPO_URL" "$PROJECT_DIR"
-    log_success "代码克隆完成"
+    log_error "当前目录不是 Git 仓库，无法 pull 最新代码"
+    exit 1
 fi
 
 # ===========================================
@@ -239,6 +271,7 @@ echo "=========================================="
 
 if [ -f "$REQUIREMENTS_FILE" ]; then
     log_info "正在安装 Python 依赖..."
+    $PIP_CMD install --upgrade pip
     $PIP_CMD install -r "$REQUIREMENTS_FILE"
     log_success "Python 依赖安装完成"
 else
@@ -261,7 +294,7 @@ if [ -d "$FRONT_DIR" ]; then
 
     log_info "正在构建前端 (pnpm run build)..."
     pnpm run build
-    cd "$PROJECT_DIR"
+    cd "$APP_DIR"
     log_success "前端构建完成"
 else
     log_error "前端目录不存在：$FRONT_DIR"
@@ -317,7 +350,7 @@ echo "=========================================="
 echo "  步骤 7: 数据库迁移"
 echo "=========================================="
 
-cd "$PROJECT_DIR"
+cd "$APP_DIR"
 
 log_info "正在执行 makemigrations..."
 $PYTHON_CMD manage.py makemigrations
@@ -335,22 +368,14 @@ echo "=========================================="
 echo "  步骤 8: 创建超级用户"
 echo "=========================================="
 
-log_info "正在创建超级用户..."
-echo "
-import os
-import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stockManager.settings')
-django.setup()
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
-    print('超级用户创建成功：admin/admin123')
-else:
-    print('超级用户已存在：admin')
-" | $PYTHON_CMD manage.py shell
-
-log_success "超级用户创建完成 (默认账号：admin/admin123)"
+SUPERUSER_COUNT=$($PYTHON_CMD manage.py shell -c "from django.contrib.auth import get_user_model; print(get_user_model().objects.filter(is_superuser=True).count())")
+if [ "$SUPERUSER_COUNT" -gt 0 ]; then
+    log_warn "检测到已存在超级用户，跳过创建步骤"
+else
+    log_info "将进入交互式创建超级用户流程，请按提示输入用户名、邮箱和密码"
+    $PYTHON_CMD manage.py createsuperuser
+    log_success "超级用户创建完成"
+fi
 
 # ===========================================
 # 第 9 步：启动 Redis
@@ -363,13 +388,25 @@ echo "=========================================="
 if pgrep -x "redis-server" > /dev/null; then
     log_success "Redis 服务器已运行"
 else
-    log_info "正在启动 Redis 服务器..."
-    redis-server --daemonize yes
+    OS_NAME="$(uname -s)"
+    log_info "正在启动 Redis 服务器 (系统: $OS_NAME)..."
+
+    if [ "$OS_NAME" = "Darwin" ] && command -v brew &> /dev/null; then
+        brew services start redis || true
+    elif [ "$OS_NAME" = "Linux" ]; then
+        redis-server --daemonize yes || true
+    fi
+
+    # 兜底启动方式（兼容不支持 --daemonize 的环境）
+    if ! pgrep -x "redis-server" > /dev/null; then
+        nohup redis-server > /tmp/redis-server.log 2>&1 &
+    fi
+
     sleep 2
     if pgrep -x "redis-server" > /dev/null; then
         log_success "Redis 服务器已启动"
     else
-        log_warn "Redis 启动可能失败，请手动检查"
+        log_warn "Redis 启动失败，请手动检查（日志: /tmp/redis-server.log）"
     fi
 fi
 
@@ -384,7 +421,7 @@ echo ""
 log_success "所有步骤已完成"
 echo ""
 echo "启动项目:"
-echo "  cd $PROJECT_DIR"
+echo "  cd $APP_DIR"
 echo "  $PYTHON_CMD manage.py runserver"
 echo ""
 echo "或使用后台启动:"
