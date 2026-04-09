@@ -1,8 +1,11 @@
 """股票实时价格查询服务模块"""
 from typing import List
 
+from easyquotation import use as eq_use
+
 from ..common import logger
 from ..common.types import RealtimePriceData, RealtimePriceDict
+from ..common.utils import format_percent
 from .cacheRepository import CacheRepository
 
 # 懒加载 easyquotation 实例
@@ -13,19 +16,12 @@ def _get_tencent_quotation():
     """获取腾讯行情实例（懒加载）"""
     global _tencent_quotation
     if _tencent_quotation is None:
-        from easyquotation import use as eq_use
         _tencent_quotation = eq_use('tencent')
     return _tencent_quotation
 
 
 class RealtimePrice:
     """股票实时价格查询服务"""
-
-    @classmethod
-    def _calculate_offset_ratio(cls, offset: float, base_price: float) -> str:
-        if base_price == 0.0:
-            return "0"
-        return f"{(offset / base_price) * 100:.2f}%"
 
     @classmethod
     def query(cls, code_list: List[str]) -> RealtimePriceDict:
@@ -65,7 +61,7 @@ class RealtimePrice:
                     "name": stock_data.get('name', ''),
                     "currentPrice": current_price,
                     "priceOffset": price_offset,
-                    "offsetRatio": cls._calculate_offset_ratio(price_offset, yesterday_close),
+                    "offsetRatio": format_percent(price_offset / yesterday_close) if yesterday_close != 0 else "0%",
                     "yesterdayClose": yesterday_close
                 })
 

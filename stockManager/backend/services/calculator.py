@@ -10,6 +10,7 @@ from pyxirr import xirr
 from ..common import logger
 from ..common.constants import OperationType
 from ..common.types import StockData, OverallData, OperationDict, CashFlowList, RealtimePriceData
+from ..common.utils import format_percent
 from ..models import Operation, StockMeta as StockMetaModel
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice
@@ -326,7 +327,7 @@ class Calculator:
         # 计算 XIRR 年化收益率
         total_asset = to_return["totalAsset"]
         xirr_rate = cls._calculate_xirr(cash_flow_list, total_asset)
-        to_return["xirrAnnualized"] = f"{(xirr_rate * 100):.2f}%"  # XIRR 年化收益率
+        to_return["xirrAnnualized"] = format_percent(xirr_rate)  # XIRR 年化收益率
         
         # 将 cash_flow_list 转换为前端需要的格式（date, amount）
         to_return["cashFlowList"] = [
