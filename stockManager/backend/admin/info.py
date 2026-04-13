@@ -24,6 +24,13 @@ class InfoAdmin(admin.ModelAdmin):
         """普通用户只能看到自己的数据，超级用户可以看到所有数据"""
         qs = super().get_queryset(request)
         return qs if request.user.is_superuser else qs.filter(user=request.user)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """超级用户创建时，user 字段默认选中自己的用户"""
+        form = super().get_form(request, obj, **kwargs)
+        if request.user.is_superuser and obj is None:
+            form.base_fields['user'].initial = request.user
+        return form
     
     def get_readonly_fields(self, request, obj=None):
         """普通用户编辑时 user 字段只读"""
