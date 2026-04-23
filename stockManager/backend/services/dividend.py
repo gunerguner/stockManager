@@ -23,7 +23,7 @@ class Dividend:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
         updated_codes = []
-        
+
         try:
             bs.login()
             for code in holding_stocks:
@@ -33,7 +33,7 @@ class Dividend:
                     updated_codes.append(updated_code)
         finally:
             bs.logout()
-        
+
         return updated_codes
     
     @classmethod
@@ -44,6 +44,7 @@ class Dividend:
 
         try:
             today = datetime.date.today()
+            three_days_later = today + datetime.timedelta(days=3)
             update_count = 0
 
             exist_dv_operations = [op for op in operations if op.operationType == OperationType.DIVIDEND]
@@ -71,6 +72,10 @@ class Dividend:
                             logger.warning(f"分红日期格式解析失败: {dividend_date_str}, 错误: {e}")
                             continue
                         
+                        # 分红日期比今天晚超过3天，跳过
+                        if dividend_date > three_days_later:
+                            continue
+
                         # 检查是否已有同一天的除权记录
                         if dividend_date_str in date_set:
                             continue

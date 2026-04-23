@@ -50,8 +50,8 @@
     "@ant-design/pro-form": "^2.32.0",
     "@ant-design/pro-layout": "^7.22.7",
     "@umijs/max": "4.6.24",
-    "antd": "^6.2.1",
-    "chinese-days": "^1.5.4",
+    "antd": "^6.3.6",
+    "chinese-days": "^1.5.7",
     "dayjs": "^1.11.19",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
