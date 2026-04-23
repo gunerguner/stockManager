@@ -2,7 +2,7 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { formatPrice, renderAmount } from '@/utils/renderTool';
+import { formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -69,6 +69,7 @@ const StockHeader: React.FC<{
           >
             {stock.name}
           </Link>
+          {renderHoldingStatus(stock.holdCount > 0, stock.offsetTotal)}
           <Text type="secondary">({stock.code})</Text>
           {!isMobile && stockInfo}
         </Space>

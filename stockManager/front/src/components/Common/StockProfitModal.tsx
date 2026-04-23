@@ -2,7 +2,7 @@ import { Space, Tooltip, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount } from '@/utils/renderTool';
+import { renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -14,6 +14,7 @@ export interface StockProfitData {
   code: string;
   name: string;
   netIncome: number;
+  holdCount?: number;
 }
 
 export type ShowStockProfitParams = {
@@ -94,7 +95,10 @@ export const useStockProfitModal = () => {
           width: isMobile ? 120 : 200,
           render: (name: string, record: StockProfitData) => (
             <Tooltip title={record.code}>
-              <span>{name}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span>{name}</span>
+                {renderHoldingStatus((record.holdCount ?? 0) > 0, record.netIncome)}
+              </span>
             </Tooltip>
           ),
         },

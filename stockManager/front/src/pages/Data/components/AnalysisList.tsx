@@ -14,6 +14,7 @@ interface StockDetail {
   profit: number;
   loss: number;
   netIncome: number;
+  holdCount?: number;
 }
 
 interface AnalysisModel {
@@ -88,6 +89,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
           profit,
           loss,
           netIncome: offsetTotal,
+          holdCount: stock.holdCount,
         });
       }
     }

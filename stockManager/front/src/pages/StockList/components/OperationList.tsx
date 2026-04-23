@@ -2,7 +2,7 @@ import { Table, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatPrice, renderAmount } from '@/utils/renderTool';
+import { colorFromValue, formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import './index.less';
 
@@ -45,7 +45,10 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
       fixed: isMobile ? false : 'left',
       render: (_, r) => (
         <Tooltip title={r.code}>
-          <span className="stock-name-link">{r.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span className="stock-name-link">{r.name}</span>
+            {renderHoldingStatus(r.holdCount > 0, r.offsetTotal)}
+          </span>
         </Tooltip>
       ),
     },
