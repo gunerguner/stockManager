@@ -1,0 +1,11 @@
+.git
+__pycache__
+*.pyc
+node_modules
+dist
+.umi*
+docker/.env
+.cursor
+*.sqlite3
+.env
+.env.*

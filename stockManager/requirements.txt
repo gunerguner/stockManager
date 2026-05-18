@@ -24,4 +24,7 @@ django-redis>=5.4.0
 # 静态文件服务
 whitenoise
 
+# 生产 WSGI（Docker / 部署）
+gunicorn>=23.0.0
+
 

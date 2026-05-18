@@ -123,7 +123,8 @@
 执行`./install.sh`即可自动搭建。
 
 ### 部署方式
-1.  服务层我使用了Nginx+uwsgi，在云服务器部署。
+1.  服务层可使用 Nginx + uWSGI 在云服务器部署（见上文「搭建方式」）。
+2.  **Docker**：从 Git 克隆/更新代码、`docker compose` 启动与端口说明见 [docker/README.md](docker/README.md)。
 
 
 ### 项目故事

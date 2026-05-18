@@ -41,13 +41,21 @@ DEBUG = os.environ.get('DJANGO_DEBUG') == 'true'
 
 ALLOWED_HOSTS =  ['*']
 
-# Django 4.0+ 必需的 CSRF_TRUSTED_ORIGINS 配置 
-CSRF_TRUSTED_ORIGINS = [
+# Django 4.0+ 必需的 CSRF_TRUSTED_ORIGINS 配置
+# 生产 / Docker：通过环境变量追加，逗号分隔，例如 https://app.example.com,https://www.example.com
+_CSRF_TRUSTED_ORIGINS_BASE = [
     'http://127.0.0.1:8000',
     'http://127.0.0.1:8001',
     'http://localhost:8000',
     'http://localhost:8001',
 ]
+_csrf_trusted_extra = os.environ.get('CSRF_TRUSTED_ORIGINS_EXTRA', '').strip()
+if _csrf_trusted_extra:
+    CSRF_TRUSTED_ORIGINS = _CSRF_TRUSTED_ORIGINS_BASE + [
+        x.strip() for x in _csrf_trusted_extra.split(',') if x.strip()
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = list(_CSRF_TRUSTED_ORIGINS_BASE)
 
 # Django 3.2+ 必需的 DEFAULT_AUTO_FIELD 配置 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -148,10 +156,13 @@ WSGI_APPLICATION = 'stockManager.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+_sqlite_path_env = os.environ.get('SQLITE_PATH', '').strip()
+_sqlite_db_path = Path(_sqlite_path_env) if _sqlite_path_env else (BASE_DIR / 'db.sqlite3')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': _sqlite_db_path,
     }
 }
 

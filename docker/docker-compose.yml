@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: stock-manager-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    image: stock-manager-backend:local
+    container_name: stock-manager-backend
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in docker/.env}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
+      SQLITE_PATH: ${SQLITE_PATH:-/app/data/db.sqlite3}
+      CSRF_TRUSTED_ORIGINS_EXTRA: ${CSRF_TRUSTED_ORIGINS_EXTRA:-}
+    volumes:
+      - sqlite_data:/app/data
+      - log_data:/var/log/stockmanager/django
+    ports:
+      - "${BACKEND_PUBLISH_PORT:-8000}:8000"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    image: stock-manager-frontend:local
+    container_name: stock-manager-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PUBLISH_PORT:-8080}:8080"
+
+volumes:
+  redis_data:
+  sqlite_data:
+  log_data:
