@@ -70,17 +70,34 @@ cd stockManager
    - **`DJANGO_DEBUG`**：生产建议 `false`。
    - **`CSRF_TRUSTED_ORIGINS_EXTRA`**：若通过域名或反向代理访问（HTTPS 或非常规端口），请填写 Django 要求的可信源，多个用英文逗号分隔，例如 `https://example.com,https://www.example.com:8443`。留空则仅依赖代码/默认配置中的设置。
 
-3. 可选：`REDIS_URL`、`SQLITE_PATH` 已与 Compose 中卷路径对齐；一般保持默认即可，除非你要换 DB 路径或 Redis DB 号。
+3. 可选：`REDIS_URL`、`SQLITE_PATH`、`SQLITE_HOST_DIR`、`SQLITE_MUST_EXIST`、`RUN_MIGRATIONS_ON_START` 可按需求调整。若你通过外部拷入 sqlite 文件，推荐保持：
+
+   - `SQLITE_PATH=/app/data/db.sqlite3`
+   - `SQLITE_HOST_DIR=./docker/sqlite-data`
+   - `SQLITE_MUST_EXIST=true`
+   - `RUN_MIGRATIONS_ON_START=false`
+
+4. 若你已有完整 sqlite 文件（例如 `db.sqlite3`），请在首次启动前放到：
+
+   - 宿主机路径：`<仓库根>/docker/sqlite-data/db.sqlite3`
+   - 容器内对应路径：`/app/data/db.sqlite3`（由 `SQLITE_PATH` 指定）
+
+   示例：
+
+   ```bash
+   mkdir -p docker/sqlite-data
+   cp /path/to/your/db.sqlite3 docker/sqlite-data/db.sqlite3
+   ```
 
 ## 数据卷
 
-| 卷名 | 用途 |
+| 挂载/卷 | 用途 |
 |------|------|
-| `sqlite_data` | 挂载到后端容器 `/app/data`，存放 **`db.sqlite3`**（路径由 `SQLITE_PATH` 控制，默认 `/app/data/db.sqlite3`） |
+| `SQLITE_HOST_DIR:/app/data`（默认 `./docker/sqlite-data:/app/data`） | 存放 **`db.sqlite3`**（路径由 `SQLITE_PATH` 控制，默认 `/app/data/db.sqlite3`） |
 | `redis_data` | Redis 持久化数据目录 |
 | `log_data` | Django 应用日志目录（后端容器内 `/var/log/stockmanager/django`） |
 
-删除卷会丢失对应数据；重建前请自行备份。
+删除卷会丢失对应数据（`redis_data`、`log_data`）；sqlite 使用的是宿主机目录挂载，建议定期备份 `docker/sqlite-data/db.sqlite3`。
 
 ## 启动与停止
 
@@ -133,7 +150,13 @@ docker compose -f docker/docker-compose.yml --env-file docker/.env down
    docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build
    ```
 
-4. **数据库迁移**：后端容器每次启动会在 `entrypoint-backend.sh` 里执行 `python manage.py migrate --noinput`，一般**无需**在宿主机再跑一遍 migrate。若你曾改过迁移策略或需要人工确认，可进容器执行：
+4. **数据库迁移策略（已改为可选）**：
+
+   - 默认 `RUN_MIGRATIONS_ON_START=false`：容器启动**不自动**执行 `migrate`（适合你外部拷入完整 sqlite 文件）。
+   - 默认 `SQLITE_MUST_EXIST=true`：若 `SQLITE_PATH` 指向的文件不存在，容器会直接报错退出，避免意外创建空库。
+   - 需要自动迁移时，可在 `docker/.env` 里设 `RUN_MIGRATIONS_ON_START=true` 后重启容器。
+
+   手工执行迁移命令（按需）：
 
    ```bash
    docker compose -f docker/docker-compose.yml --env-file docker/.env exec backend python manage.py migrate
@@ -226,6 +249,7 @@ curl -fsS -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:${BACKEND_PUBLISH_P
 | 现象 | 可能原因与处理 |
 |------|----------------|
 | `backend` 启动失败，日志提示缺少 `DJANGO_SECRET_KEY` | 在 `docker/.env` 中设置非空的 `DJANGO_SECRET_KEY` 后重新 `up`。 |
+| `backend` 启动失败，提示 `SQLITE_MUST_EXIST=true but sqlite file not found` | 先确认宿主机文件是否存在：`docker/sqlite-data/db.sqlite3`，并检查 `.env` 中 `SQLITE_HOST_DIR` 与 `SQLITE_PATH` 是否对应。 |
 | 浏览器登录或表单报 **403 CSRF** | 检查访问 URL 是否与 **`CSRF_TRUSTED_ORIGINS_EXTRA`**、反向代理的 `X-Forwarded-Proto` / `Host` 一致；HTTPS 站点需写 `https://` 源。 |
 | 前端空白或接口 502 | 看 `frontend`、`backend` 日志；确认 `proxy_pass http://backend:8000` 与后端实际监听一致；确认 `depends_on` 后后端已就绪。 |
 | `redis` 不健康导致 `backend` 不启动 | 检查 `redis` 日志与卷权限；确认 `REDIS_URL` 中主机名为 `redis`、端口 `6379`。 |

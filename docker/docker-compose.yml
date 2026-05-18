@@ -27,9 +27,11 @@ services:
       DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
       SQLITE_PATH: ${SQLITE_PATH:-/app/data/db.sqlite3}
+      SQLITE_MUST_EXIST: ${SQLITE_MUST_EXIST:-true}
+      RUN_MIGRATIONS_ON_START: ${RUN_MIGRATIONS_ON_START:-false}
       CSRF_TRUSTED_ORIGINS_EXTRA: ${CSRF_TRUSTED_ORIGINS_EXTRA:-}
     volumes:
-      - sqlite_data:/app/data
+      - ${SQLITE_HOST_DIR:-./docker/sqlite-data}:/app/data
       - log_data:/var/log/stockmanager/django
     ports:
       - "${BACKEND_PUBLISH_PORT:-8000}:8000"
@@ -48,5 +50,4 @@ services:
 
 volumes:
   redis_data:
-  sqlite_data:
   log_data:
