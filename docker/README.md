@@ -66,6 +66,7 @@ cd stockManager
 
 2. 编辑 `docker/.env`，**至少**设置：
 
+   - **`COMPOSE_PROJECT_NAME`**：默认 `stockmanager`（`.env.example` 已给出）。与 **carSales** 等同机部署时**勿删**；若从父目录执行 `docker compose -f 子路径/...`，更需固定项目名，否则后启动的栈会替换先启动栈的 `backend`/`frontend` 容器。
    - **`DJANGO_SECRET_KEY`**：生产环境务必使用足够长的随机字符串，勿使用示例值或空值。
    - **`DJANGO_DEBUG`**：生产建议 `false`。
    - **`CSRF_TRUSTED_ORIGINS_EXTRA`**：若通过域名或反向代理访问（HTTPS 或非常规端口），请填写 Django 要求的可信源，多个用英文逗号分隔，例如 `https://example.com,https://www.example.com:8443`。留空则仅依赖代码/默认配置中的设置。
@@ -252,6 +253,7 @@ curl -fsS -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:${BACKEND_PUBLISH_P
 | `backend` 启动失败，提示 `SQLITE_MUST_EXIST=true but sqlite file not found` | 先确认宿主机文件是否存在：`docker/sqlite-data/db.sqlite3`，并检查 `.env` 中 `SQLITE_HOST_DIR` 与 `SQLITE_PATH` 是否对应。 |
 | 浏览器登录或表单报 **403 CSRF** | 检查访问 URL 是否与 **`CSRF_TRUSTED_ORIGINS_EXTRA`**、反向代理的 `X-Forwarded-Proto` / `Host` 一致；HTTPS 站点需写 `https://` 源。 |
 | 前端空白或接口 502 | 看 `frontend`、`backend` 日志；确认 `proxy_pass http://backend:8000` 与后端实际监听一致；确认 `depends_on` 后后端已就绪。 |
+| **`/static/umi.*.css` 等 404** | 生产 `publicPath` 为 `/static/`，但 Umi 产物在 `dist` 根目录。前端 Nginx 须用 `alias` 将 `/static/` 映射到 html 根（见 `docker/nginx.conf`）；改配置后需 `build` 并重建 `frontend` 容器。 |
 | `redis` 不健康导致 `backend` 不启动 | 检查 `redis` 日志与卷权限；确认 `REDIS_URL` 中主机名为 `redis`、端口 `6379`。 |
 | 数据库或日志丢失 | 勿随意 `docker volume rm`；`sqlite_data`、`log_data` 删除后需从备份恢复。 |
 | 构建很慢或镜像很大 | 确认仓库根 **`.dockerignore`** 已排除 `node_modules`、`__pycache__` 等；不要向构建上下文提交大文件。 |
