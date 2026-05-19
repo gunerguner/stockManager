@@ -6,6 +6,8 @@ ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
 ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV TZ=Asia/Shanghai
+# pnpm / npm 使用国内镜像（与 install.sh 一致）
+ENV npm_config_registry=https://registry.npmmirror.com
 
 RUN corepack enable
 
