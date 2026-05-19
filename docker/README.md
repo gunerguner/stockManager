@@ -52,6 +52,18 @@ cd stockManager
 - **容器内**：前端 Nginx **8080**；后端 Gunicorn **8000**。
 - **宿主机**：由 `docker/.env` 中的 **`FRONTEND_PUBLISH_PORT`**（默认 `8080`）、**`BACKEND_PUBLISH_PORT`**（默认 `8000`）映射到上述容器端口。修改 `.env` 后需重新 `up` 才生效。
 
+## 与 carSales（Vben）部署差异
+
+stockManager 前端为 **Umi**，**不依赖** `VITE_*` / `_app.config.js`：接口在代码里写死为同源 `/api/...`，构建配置在 `stockManager/front/config/config.ts`（如 `publicPath: '/static/'`），**没有** carSales 那种「`.dockerignore` 排除 `.env` 导致 API 地址为空」的问题。
+
+同机部署时需注意：
+
+| 问题类型 | stockManager | 处理 |
+|----------|--------------|------|
+| 静态资源 `/static/umi.*` 404 | 有（publicPath 与产物路径不一致） | `docker/nginx.conf` 中 `/static/` 使用 `alias`（已修复） |
+| 接口 403 CSRF | 有（HTTPS 反代） | `docker/.env` 配置 `CSRF_TRUSTED_ORIGINS_EXTRA` |
+| VITE / 标题 / mock API | **无** | 无需 `VITE_GLOB_API_URL` 或重建 frontend 传标题 |
+
 ## 前置条件
 
 - 已安装 [Docker](https://docs.docker.com/get-docker/) 与 [Docker Compose V2](https://docs.docker.com/compose/)
