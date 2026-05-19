@@ -73,7 +73,7 @@ cd stockManager
 3. 可选：`REDIS_URL`、`SQLITE_PATH`、`SQLITE_HOST_DIR`、`SQLITE_MUST_EXIST`、`RUN_MIGRATIONS_ON_START` 可按需求调整。若你通过外部拷入 sqlite 文件，推荐保持：
 
    - `SQLITE_PATH=/app/data/db.sqlite3`
-   - `SQLITE_HOST_DIR=./docker/sqlite-data`
+   - `SQLITE_HOST_DIR=./sqlite-data`
    - `SQLITE_MUST_EXIST=true`
    - `RUN_MIGRATIONS_ON_START=false`
 
@@ -93,7 +93,7 @@ cd stockManager
 
 | 挂载/卷 | 用途 |
 |------|------|
-| `SQLITE_HOST_DIR:/app/data`（默认 `./docker/sqlite-data:/app/data`） | 存放 **`db.sqlite3`**（路径由 `SQLITE_PATH` 控制，默认 `/app/data/db.sqlite3`） |
+| `SQLITE_HOST_DIR:/app/data`（默认 `./sqlite-data:/app/data`，即宿主机 `docker/sqlite-data/`） | 存放 **`db.sqlite3`**（路径由 `SQLITE_PATH` 控制，默认 `/app/data/db.sqlite3`） |
 | `redis_data` | Redis 持久化数据目录 |
 | `log_data` | Django 应用日志目录（后端容器内 `/var/log/stockmanager/django`） |
 
