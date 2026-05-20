@@ -45,7 +45,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
       fixed: isMobile ? false : 'left',
       render: (_, r) => (
         <Tooltip title={r.code}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span className="stock-name-cell">
             <span className="stock-name-link">{r.name}</span>
             {renderHoldingStatus(r.holdCount > 0, r.offsetTotal)}
           </span>

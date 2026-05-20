@@ -1,6 +1,32 @@
 // ==================== 通用表格样式 ====================
 
-// 表格头部区域（语义化）
+.common-empty-data {
+  text-align: center;
+  padding: 20px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.modal-info-row-base() {
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+  .ant-space {
+    gap: 8px !important;
+  }
+
+  .ant-space-item {
+    line-height: 1.4;
+  }
+
+  [data-theme='dark'] & {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.modal-info-row {
+  .modal-info-row-base();
+}
+
 .common-table-header {
   padding: 8px 12px;
   background-color: rgba(0, 0, 0, 0.02);
@@ -12,54 +38,21 @@
   }
 }
 
-// 单表格容器
 .common-single-table-content {
-  .common-empty-data {
-    text-align: center;
-    padding: 20px;
-    color: rgba(0, 0, 0, 0.45);
-  }
-
-  // StockProfit 相关样式
   .category-name {
     margin-bottom: 8px;
   }
-
-  .summary-info-row {
-    padding-top: 8px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-
-    .ant-space {
-      gap: 8px !important;
-    }
-
-    .ant-space-item {
-      line-height: 1.4;
-    }
-
-    [data-theme='dark'] & {
-      border-top-color: rgba(255, 255, 255, 0.1);
-    }
-  }
 }
 
-// 多表格容器
 .common-multi-table-content {
   .common-table-group-item {
     margin-bottom: 0;
-  }
-
-  .common-empty-data {
-    text-align: center;
-    padding: 20px;
-    color: rgba(0, 0, 0, 0.45);
   }
 
   .table-group-divider {
     height: 24px;
   }
 
-  // TradeDetail 相关样式
   .stock-header-wrapper {
     display: flex;
     align-items: flex-start;
@@ -88,29 +81,9 @@
       opacity: 0.8;
     }
   }
-
-  .stock-info-row {
-    padding-top: 8px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-
-    .ant-space {
-      gap: 8px !important;
-    }
-
-    .ant-space-item {
-      line-height: 1.4;
-    }
-
-    [data-theme='dark'] & {
-      border-top-color: rgba(255, 255, 255, 0.1);
-    }
-  }
 }
 
-// ==================== 移动端适配 ====================
-
-@media (max-width: 768px) {
-  // 表格头部移动端样式
+@media (max-width: @screen-md) {
   .common-table-header {
     flex-direction: column;
     align-items: stretch;
@@ -118,7 +91,6 @@
     gap: 0;
   }
 
-  // StockProfit 移动端
   .common-single-table-content {
     .category-name {
       width: 100%;
@@ -126,7 +98,6 @@
     }
   }
 
-  // TradeDetail 移动端
   .common-multi-table-content {
     .stock-header-wrapper {
       flex-direction: column;
@@ -136,22 +107,9 @@
         width: 100%;
       }
 
-      .stock-info-row,
+      .modal-info-row,
       .trade-count {
-        padding-top: 8px;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-
-        .ant-space {
-          gap: 8px !important;
-        }
-
-        .ant-space-item {
-          line-height: 1.4;
-        }
-
-        [data-theme='dark'] & {
-          border-top-color: rgba(255, 255, 255, 0.1);
-        }
+        .modal-info-row-base();
       }
 
       .trade-count {
@@ -162,5 +120,4 @@
       }
     }
   }
-
-  }
+}

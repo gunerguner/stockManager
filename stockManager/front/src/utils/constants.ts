@@ -1,3 +1,6 @@
+/** 移动端断点（与 styles/variables.less @screen-md 一致） */
+export const SCREEN_MD_MAX = 768;
+
 /**
  * 状态码常量定义
  * 与后端 constants.py 保持一致

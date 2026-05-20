@@ -1,8 +1,11 @@
 // https://umijs.org/config/
+import path from 'path';
 import { defineConfig } from '@umijs/max';
 import webpack from 'webpack';
 
 import defaultSettings from './defaultSettings';
+
+const variablesPath = path.join(__dirname, '../src/styles/variables.less').replace(/\\/g, '/');
 import proxy from './proxy';
 import routes from './routes';
 
@@ -11,6 +14,10 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
   hash: true,
+
+  lessLoader: {
+    additionalData: `@import "${variablesPath}";`,
+  },
   
   /**
    * @name 开启 antd

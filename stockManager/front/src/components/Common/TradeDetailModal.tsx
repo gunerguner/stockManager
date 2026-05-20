@@ -31,7 +31,7 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 /** 股票信息（通用） */
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) =>
   isMobile ? (
-    <div className="stock-info-row">
+    <div className="modal-info-row">
       <Space size="small" wrap>
         <Text>现价：{formatPrice(stock.priceNow)} </Text>
         <Text>持股：{stock.holdCount} </Text>

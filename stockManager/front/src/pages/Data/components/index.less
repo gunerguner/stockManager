@@ -1,28 +1,21 @@
-// ==================== 通用样式 ====================
+// ==================== 列表页共用 ====================
 
-// 展开行表格样式
+.table-list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-list-header {
+  margin-bottom: 20px;
+}
+
 .expanded-row-table {
   margin: 10px 0;
 }
 
-// ==================== CostList 组件样式 ====================
+// ==================== CostList ====================
 
-// 成本列表包装器
 .cost-list-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  
-  // 头部样式
-  .cost-list-header {
-    margin-bottom: 20px;
-  }
-  
-  // 表格容器样式
-  .cost-list-table-container {
-    width: 100%;
-  }
-  
-  // 展开按钮列优化（所有设备）
   .ant-table {
     &-row-expand-icon-cell {
       width: 32px;
@@ -30,39 +23,35 @@
       padding: 8px 4px !important;
     }
   }
-  
-  // 移动端优化
-  @media (max-width: 768px) {
+
+  @media (max-width: @screen-md) {
     .ant-table {
       &-row-expand-icon-cell {
         width: 28px;
         min-width: 28px;
         padding: 8px 2px !important;
       }
-      
+
       &-thead > tr > th,
       &-tbody > tr > td {
-        // 年份列最小宽度（注意：展开按钮列是第一列，所以年份列是第二列）
         &:nth-child(2) {
           min-width: 60px;
         }
-        
-        // 数字列使用更小的最小宽度
+
         &:nth-child(3),
         &:nth-child(4) {
           min-width: 70px;
         }
-        
-        // 费用列最小宽度
+
         &:nth-child(5) {
           min-width: 80px;
         }
       }
     }
-    
+
     .expanded-row-table {
       margin: 8px 0;
-      
+
       .ant-table {
         &-thead > tr > th,
         &-tbody > tr > td {
@@ -73,29 +62,13 @@
   }
 }
 
-// ==================== AnalysisList 组件样式 ====================
+// ==================== AnalysisList ====================
 
-// 分析列表包装器
 .analysis-list-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  
-  // 头部样式
-  .analysis-list-header {
-    margin-bottom: 20px;
-  }
-  
-  // 表格容器样式
-  .analysis-list-table-container {
-    width: 100%;
-  }
-  
-  // 移动端优化
-  @media (max-width: 768px) {
+  @media (max-width: @screen-md) {
     .ant-table {
       &-thead > tr > th,
       &-tbody > tr > td {
-        // 数字列使用更小的宽度
         &:nth-child(2),
         &:nth-child(3),
         &:nth-child(4),
@@ -106,4 +79,3 @@
     }
   }
 }
-

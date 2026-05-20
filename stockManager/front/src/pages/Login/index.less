@@ -1,10 +1,6 @@
-// ==================== 变量 ====================
-// 注：CSS Modules 独立编译，需在此定义变量
-
 @heading-color: rgba(0, 0, 0, 0.85);
 @text-color-secondary: rgba(0, 0, 0, 0.45);
 @font-size-base: 14px;
-@primary-color: #1890ff;
 
 // ==================== 容器布局 ====================
 
@@ -16,7 +12,7 @@
   background: #f0f2f5 !important;
 
   // PC 端背景图
-  @media (min-width: 769px) {
+  @media (min-width: @screen-md-min) {
     background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
     background-repeat: no-repeat;
     background-position: center 110px;
@@ -28,7 +24,7 @@
   flex: 1;
   padding: 32px 0;
 
-  @media (min-width: 769px) {
+  @media (min-width: @screen-md-min) {
     padding: 32px 0 24px;
   }
 }
@@ -70,7 +66,7 @@
   width: 328px;
   margin: 0 auto;
 
-  @media (max-width: 768px) {
+  @media (max-width: @screen-md) {
     width: 95%;
     max-width: 328px;
   }

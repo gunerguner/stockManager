@@ -56,7 +56,7 @@ const SummaryHeader: React.FC<{
           <div className="category-name">
             <strong>{categoryName}</strong>
           </div>
-          <div className="summary-info-row">
+          <div className="modal-info-row">
             <Space size="small" wrap>
               <SummaryItems profit={profit} loss={loss} netIncome={netIncome} />
             </Space>

@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { colorFromValue, renderAmount as renderAmountTool } from '@/utils/renderTool';
+import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
 import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
 
@@ -174,27 +175,15 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
     [totalProfit, totalLoss],
   );
 
-  /** 头部 Statistic 样式（使用 css-in-js） */
-  const getHeaderStatisticStyles = (color?: string) => ({
-    title: {
-      fontSize: isMobile ? 12 : '',
-      marginBottom: 4,
-    },
-    content: {
-      fontSize: isMobile ? 18 : '',
-      ...(color ? { color } : {}),
-    },
-  });
-
   return (
-    <div className="analysis-list-wrapper">
-      <Row gutter={[16, 16]} className="analysis-list-header">
+    <div className="table-list-wrapper analysis-list-wrapper">
+      <Row gutter={[16, 16]} className="table-list-header">
         <Col span={isMobile ? 12 : 6}>
           <Statistic
             title="总获利"
             value={totalProfit}
             precision={2}
-            styles={getHeaderStatisticStyles('red')}
+            styles={getHeaderStatisticStyles(isMobile, 'red')}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -202,7 +191,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
             title="总亏损"
             value={totalLoss}
             precision={2}
-            styles={getHeaderStatisticStyles('green')}
+            styles={getHeaderStatisticStyles(isMobile, 'green')}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -210,26 +199,24 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
             title="净收益"
             value={totalProfit + totalLoss}
             precision={2}
-            styles={getHeaderStatisticStyles(colorFromValue(totalProfit + totalLoss))}
+            styles={getHeaderStatisticStyles(isMobile, colorFromValue(totalProfit + totalLoss))}
           />
         </Col>
       </Row>
-      <div className="analysis-list-table-container">
-        <Table
-          rowKey="type"
-          columns={columns}
-          dataSource={analysisList}
-          bordered
-          pagination={false}
-          scroll={isMobile ? { x: 'max-content' } : undefined}
-          size={isMobile ? 'small' : 'middle'}
-          tableLayout="auto"
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            style: record.stocks.length > 0 ? { cursor: 'pointer' } : undefined,
-          })}
-        />
-      </div>
+      <Table
+        rowKey="type"
+        columns={columns}
+        dataSource={analysisList}
+        bordered
+        pagination={false}
+        scroll={isMobile ? { x: 'max-content' } : undefined}
+        size={isMobile ? 'small' : 'middle'}
+        tableLayout="auto"
+        onRow={(record) => ({
+          onClick: () => handleRowClick(record),
+          style: record.stocks.length > 0 ? { cursor: 'pointer' } : undefined,
+        })}
+      />
     </div>
   );
 };

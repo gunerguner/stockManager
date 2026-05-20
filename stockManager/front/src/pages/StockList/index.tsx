@@ -5,7 +5,6 @@ import { OverallBoard } from './components/OverallBoard';
 import { OperationList } from './components/OperationList';
 import { FilterPanel } from './components/FilterPanel';
 import { useStocks } from '@/hooks/useStocks';
-import './index.less';
 
 // ==================== 组件 ====================
 
@@ -17,7 +16,7 @@ const StockList: React.FC = () => {
   return (
     <>
       <FloatButton.BackTop />
-      <div className="stock-list-container">
+      <div style={{ borderRadius: 8, padding: 16 }}>
         <ProCard>
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
         </ProCard>

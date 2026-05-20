@@ -3,11 +3,6 @@
  * 定义应用级别的基础样式
  */
 
-// ==================== 全局变量 ====================
-// 注：仅供 global.less 内部使用，CSS Modules 文件需自行定义
-
-@primary-color: #1890ff;
-
 // ==================== 基础布局样式 ====================
 
 html,
@@ -35,94 +30,45 @@ ol {
   list-style: none;
 }
 
-// ==================== 响应式表格样式 ====================
+// ==================== 移动端页面布局与表格 ====================
 
-@media (max-width: 768px) {
-  .ant-table {
-    width: 100%;
-    overflow-x: auto;
-    
-    &-thead > tr,
-    &-tbody > tr {
-      > th,
-      > td {
-        white-space: pre;
-        
-        > span {
-          display: block;
-        }
-      }
-    }
-  }
-}
-
-// ==================== 通用工具类 ====================
-// 注：以下类名可直接在 JSX 中使用，如 className="clickable-cell"
-
-// 隐藏元素（用于 Table rowClassName 等场景）
-.hide {
-  display: none;
-}
-
-// 可点击元素
-.clickable-cell {
-  cursor: pointer;
-  color: @primary-color;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: #40a9ff;
-    text-decoration: underline;
-  }
-}
-
-// 空数据提示
-.empty-data {
-  text-align: center;
-  padding: 40px 0;
-  color: #999;
-  font-size: 14px;
-}
-
-// ==================== 移动端页面布局优化 ====================
-
-// 减少移动端页面容器的边距
-@media (max-width: 768px) {
-  // Ant Design Pro 页面容器
+@media (max-width: @screen-md) {
   .ant-pro-layout .ant-pro-page-container,
   .ant-pro-layout .ant-pro-page-container-children-content {
     padding: 8px;
   }
-  
-  // Ant Design Layout 内容区域
+
   .ant-layout .ant-layout-content,
   .ant-layout-content {
     padding: 8px;
   }
-  
-  // ProCard 容器 - 移除移动端的左右边距
+
   .ant-pro-card {
     margin-left: 0;
     margin-right: 0;
   }
-  
-  // ProCard 在页面容器内的边距调整
+
   .ant-pro-page-container .ant-pro-card {
     margin-left: 0;
     margin-right: 0;
   }
 
-  // 表格通用样式
   .ant-table {
+    width: 100%;
+    overflow-x: auto;
+
     &-thead > tr > th,
     &-tbody > tr > td {
       padding: 8px 4px;
       white-space: nowrap;
       font-size: 12px;
+
+      > span {
+        display: block;
+      }
     }
   }
 
-  // checkbox 横向排列优化
   .ant-checkbox-wrapper {
     font-size: 13px;
     white-space: nowrap;

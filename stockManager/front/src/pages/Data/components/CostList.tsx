@@ -1,9 +1,12 @@
-import { Table, Statistic } from 'antd';
+import { Table, Statistic, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
+import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
 import './index.less';
+
+const { Link } = Typography;
 
 // ==================== 类型定义 ====================
 
@@ -152,9 +155,7 @@ export const CostList: React.FC<CostListProps> = ({ data, operations, totalCost 
         value === 0 ? (
           <span>0</span>
         ) : (
-          <span className="clickable-cell" onClick={() => handleCellClick(record, dataIndex, parentYear)}>
-            {value}
-          </span>
+          <Link onClick={() => handleCellClick(record, dataIndex, parentYear)}>{value}</Link>
         ),
     })),
     {
@@ -181,31 +182,21 @@ export const CostList: React.FC<CostListProps> = ({ data, operations, totalCost 
   );
 
   return (
-    <div className="cost-list-wrapper">
-      <div className="cost-list-header">
-        <Statistic
-          title="总费用"
-          value={totalCost}
-          precision={2}
-          styles={isMobile ? {
-            title: { fontSize: 12 },
-            content: { fontSize: 18 },
-          }:{}}
-        />
+    <div className="table-list-wrapper cost-list-wrapper">
+      <div className="table-list-header">
+        <Statistic title="总费用" value={totalCost} precision={2} styles={getHeaderStatisticStyles(isMobile)} />
       </div>
-      <div className="cost-list-table-container">
-        <Table
-          rowKey="id"
-          columns={getColumns()}
-          dataSource={costList}
-          bordered
-          pagination={false}
-          expandable={{ expandedRowRender }}
-          scroll={isMobile ? { x: 'max-content' } : undefined}
-          size={isMobile ? 'small' : 'middle'}
-          tableLayout="auto"
-        />
-      </div>
+      <Table
+        rowKey="id"
+        columns={getColumns()}
+        dataSource={costList}
+        bordered
+        pagination={false}
+        expandable={{ expandedRowRender }}
+        scroll={isMobile ? { x: 'max-content' } : undefined}
+        size={isMobile ? 'small' : 'middle'}
+        tableLayout="auto"
+      />
     </div>
   );
 };

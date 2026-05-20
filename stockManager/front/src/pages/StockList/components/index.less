@@ -4,6 +4,12 @@
   width: 100%;
   overflow-x: auto;
 
+  .stock-name-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
   .stock-name-link {
     display: block;
     overflow: hidden;
@@ -15,10 +21,6 @@
 }
 
 // ==================== OverallBoard 组件样式 ====================
-
-.form-container {
-  margin-top: 30px;
-}
 
 .overall-board-wrapper {
   width: 100%;
@@ -36,8 +38,8 @@
       transition: all 0.3s ease;
 
       &:hover {
-        border-color: #1890ff;
-        .expand-icon { color: #1890ff; }
+        border-color: @primary-color;
+        .expand-icon { color: @primary-color; }
       }
 
       .expand-icon {
@@ -52,7 +54,7 @@
 
 // ==================== 响应式样式 ====================
 
-@media (max-width: 768px) {
+@media (max-width: @screen-md) {
   .operation-list-wrapper {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {

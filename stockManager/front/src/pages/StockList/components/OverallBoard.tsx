@@ -107,7 +107,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
         title: '编辑现金收入',
         icon: null,
         content: (
-          <Form className="form-container" form={form} layout="vertical" name="incomeCash">
+          <Form form={form} layout="vertical" name="incomeCash" style={{ marginTop: 30 }}>
             <Form.Item label="现金收入" name="incomeCash" rules={[{ required: true, message: '请输入现金收入' }]}>
               <InputNumber
                 style={{ width: '100%' }}

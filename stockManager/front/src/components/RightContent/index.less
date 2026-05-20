@@ -1,8 +1,4 @@
-// ==================== 变量 ====================
-// 注：CSS Modules 独立编译，需在此定义变量
-
 @pro-header-hover-bg: rgba(0, 0, 0, 0.06);
-@primary-color: #1890ff;
 
 // ==================== 下拉菜单 ====================
 
@@ -43,13 +39,6 @@
     }
   }
 
-  .search {
-    padding: 0 12px;
-    &:hover {
-      background: transparent;
-    }
-  }
-
   .account .avatar {
     margin-right: 8px;
     color: @primary-color;
@@ -69,7 +58,7 @@
 
 // ==================== 响应式 ====================
 
-@media (max-width: 768px) {
+@media (max-width: @screen-md) {
   .right {
     height: auto;
     min-height: 48px;
