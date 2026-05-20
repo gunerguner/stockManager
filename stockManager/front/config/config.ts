@@ -187,7 +187,7 @@ export default defineConfig({
   
   /**
    * @name favicon 路径
-   * @description 网站 favicon，使用 /static/ 路径与 publicPath 保持一致
+   * @description 与 publicPath 一致；文件位于 public/favicon.ico
    */
-  favicons: ['/static/favicon.ico'],
+  favicons: isProduction ? ['/static/favicon.ico'] : ['/favicon.ico'],
 });

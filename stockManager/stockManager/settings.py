@@ -137,7 +137,7 @@ ROOT_URLCONF = 'stockManager.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'front' / 'dist'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -233,10 +233,8 @@ STATIC_URL = '/static/'
 # 收集所有静态文件到这个目录（运行 collectstatic 后）
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# 开发环境：额外的静态文件目录（Django 会自动从这里查找）
-STATICFILES_DIRS = [
-    BASE_DIR / "front" / "dist",
-]
+# 业务前端静态由 Nginx / Umi dev 提供；collectstatic 仅收集 Django Admin 等 app static
+STATICFILES_DIRS = []
 
 # Django 4.2+ 推荐使用 STORAGES 配置（替代废弃的 STATICFILES_STORAGE）
 STORAGES = {

@@ -31,8 +31,10 @@ cd stockManager
 | 组件 | 说明 |
 |------|------|
 | Redis | `redis:7-alpine`，持久化卷 `redis_data` |
-| 后端 | 镜像由 `docker/Dockerfile.backend` 构建，容器内 Gunicorn 监听 **8000** |
-| 前端 | 镜像由 `docker/Dockerfile.frontend` 构建，容器内 Nginx 监听 **8080**（非 80） |
+| 后端 | 镜像由 `docker/Dockerfile.backend` 构建：**纯 Python**，仅 API + Django Admin 静态（`collectstatic`），**不含** Node / Umi 产物 |
+| 前端 | 镜像由 `docker/Dockerfile.frontend` 构建：**唯一**一次 `pnpm build`，Nginx 监听 **8080**（非 80） |
+
+**前后端分工（与 carSales 一致）**：业务 SPA 与 `/static/umi.*` 仅存在于 **frontend** 镜像；**backend** 镜像内无 `front/dist`，改前端后须 `build frontend`，仅重建 backend **不会**更新 Umi 静态。
 
 **构建上下文（`build.context`）为仓库根目录**（`docker-compose.yml` 中为 `..`），`dockerfile` 指向 `docker/Dockerfile.*`。仓库根 **`.dockerignore`** 在构建时生效，用于排除无关文件、加快构建。
 
@@ -41,8 +43,8 @@ cd stockManager
 | 文件 | 作用 |
 |------|------|
 | `docker-compose.yml` | 编排 `redis`、`backend`、`frontend`；端口映射使用 `FRONTEND_PUBLISH_PORT`、`BACKEND_PUBLISH_PORT` 等宿主端口变量（见下文） |
-| `Dockerfile.backend` | Python 依赖 + Gunicorn 启动 Django |
-| `Dockerfile.frontend` | 前端构建 + Nginx 托管静态与反代 |
+| `Dockerfile.backend` | Python 依赖 + `collectstatic`（Admin）+ Gunicorn，无前端构建 |
+| `Dockerfile.frontend` | Umi 构建 + Nginx 托管 SPA 静态并反代 `/api/` |
 | `gunicorn.docker.conf.py` | 容器内 Gunicorn 配置（`bind 0.0.0.0:8000` 等） |
 | `nginx.conf` | 前端容器内监听 **8080**；`/api/`、`/sys/admin/`、`/static/admin/` 反代至 `http://backend:8000` |
 | `.env.example` | 环境变量模板，复制为 `docker/.env` 后按需修改 |

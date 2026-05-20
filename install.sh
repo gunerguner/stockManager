@@ -280,22 +280,19 @@ else
 fi
 
 # ===========================================
-# 第 5 步：安装前端依赖并构建
+# 第 5 步：安装前端依赖（开发用 pnpm dev，无需 build）
 # ===========================================
 echo ""
 echo "=========================================="
-echo "  步骤 5: 安装前端依赖并构建"
+echo "  步骤 5: 安装前端依赖"
 echo "=========================================="
 
 if [ -d "$FRONT_DIR" ]; then
     log_info "正在安装前端依赖 (pnpm install)..."
     cd "$FRONT_DIR"
     pnpm install
-
-    log_info "正在构建前端 (pnpm run build)..."
-    pnpm run build
     cd "$APP_DIR"
-    log_success "前端构建完成"
+    log_success "前端依赖安装完成（开发请使用 pnpm dev，生产请用 Docker 构建 frontend 镜像）"
 else
     log_error "前端目录不存在：$FRONT_DIR"
     exit 1
@@ -420,13 +417,17 @@ echo "=========================================="
 echo ""
 log_success "所有步骤已完成"
 echo ""
-echo "启动项目:"
-echo "  cd $APP_DIR"
-echo "  $PYTHON_CMD manage.py runserver"
+echo "启动项目（前后端分离，需两个终端）:"
 echo ""
-echo "或使用后台启动:"
-echo "  nohup $PYTHON_CMD manage.py runserver > server.log 2>&1 &"
+echo "  终端 1 - 后端 API + Admin:"
+echo "    cd $APP_DIR"
+echo "    $PYTHON_CMD manage.py runserver"
 echo ""
-echo "访问地址：http://127.0.0.1:8000"
-echo "管理后台：http://127.0.0.1:8000/admin"
+echo "  终端 2 - 前端开发服务器:"
+echo "    cd $FRONT_DIR"
+echo "    pnpm dev"
+echo ""
+echo "访问地址："
+echo "  业务前台：http://127.0.0.1:8001"
+echo "  管理后台：http://127.0.0.1:8000/sys/admin/"
 echo ""

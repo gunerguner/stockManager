@@ -20,7 +20,7 @@
     "precommit": "lint-staged",
     "prettier": "prettier -c --write \"src/**/*\"",
     "start": "max dev",
-    "start:dev": "cross-env UMI_ENV=dev MOCK=none max dev",
+    "start:dev": "cross-env UMI_ENV=dev MOCK=none PORT=8001 max dev",
     "start:no-mock": "cross-env MOCK=none max dev",
     "start:pre": "cross-env UMI_ENV=pre max dev",
     "start:test": "cross-env UMI_ENV=test MOCK=none max dev",
