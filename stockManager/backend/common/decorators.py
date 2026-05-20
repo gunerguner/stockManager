@@ -31,6 +31,18 @@ def require_authentication(view_func):
     return wrapper
 
 
+def require_superuser(view_func):
+    """装饰器：要求用户为 superuser（admin）"""
+    @functools.wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
+        if not request.user.is_superuser:
+            return json_response(status=ResponseStatus.UNAUTHORIZED, message="无权限")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def require_methods(methods):
     """
     装饰器：限制HTTP请求方法

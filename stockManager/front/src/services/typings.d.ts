@@ -104,4 +104,8 @@ declare namespace API {
     code: string;
     name: string;
   };
+
+  type ClearCacheResult = BaseResult & {
+    data?: { deletedCount: number };
+  };
 }

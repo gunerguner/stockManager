@@ -5,6 +5,7 @@
 from .constants import ResponseStatus, OperationType
 from .decorators import (
     require_authentication,
+    require_superuser,
     require_methods,
     log_view_access,
     handle_exception,
@@ -23,6 +24,7 @@ __all__ = [
     'OperationType',
     'logger',
     'require_authentication',
+    'require_superuser',
     'require_methods',
     'log_view_access',
     'handle_exception',

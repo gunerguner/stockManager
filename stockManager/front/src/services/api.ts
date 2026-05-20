@@ -68,3 +68,8 @@ export async function updateIncomeCash(incomeCash: number, options?: RequestOpti
 export async function updateDividend(options?: RequestOptions) {
   return postRequest<API.DividendResult>('/api/dividend', undefined, options);
 }
+
+/** 清理 Redis 缓存 POST /api/clearCache */
+export async function clearCache(options?: RequestOptions) {
+  return postRequest<API.ClearCacheResult>('/api/clearCache', undefined, options);
+}

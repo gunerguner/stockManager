@@ -1,10 +1,12 @@
 from django.http import HttpRequest, JsonResponse
 
 from ..services.integrate import Integrate
+from ..services.cacheRepository import CacheRepository
 from ..common import (
     ResponseStatus,
     logger,
     require_authentication,
+    require_superuser,
     get_client_ip,
     json_response,
     require_methods,
@@ -59,3 +61,17 @@ def refresh_dividend(request: HttpRequest) -> JsonResponse:
 
     codes = Integrate.generate_dividend(request.user)
     return json_response(status=ResponseStatus.SUCCESS, data=codes, message="刷新除权除息信息成功")
+
+
+@require_superuser
+@require_methods(['POST'])
+@handle_exception
+def clear_cache(request: HttpRequest) -> JsonResponse:
+    """清理本应用全部 Redis 缓存 - POST /api/clearCache"""
+    logger.info(f"clear_cache - 用户: {request.user.username}, IP: {get_client_ip(request)}")
+    deleted_count = CacheRepository.clear_all()
+    return json_response(
+        status=ResponseStatus.SUCCESS,
+        message="缓存已清理",
+        data={"deletedCount": deleted_count},
+    )

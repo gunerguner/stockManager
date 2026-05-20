@@ -6,6 +6,7 @@ urlpatterns = [
     path('operations', stock.operations, name='operations'),
     path('stocks', stock.stocks, name='stocks'),
     path('dividend', stock.refresh_dividend, name='dividend'),
+    path('clearCache', stock.clear_cache, name='clearCache'),
     path('updateIncomeCash', stock.update_income_cash, name='updateIncomeCash'),
     
     # 用户相关接口

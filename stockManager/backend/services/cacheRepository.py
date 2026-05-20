@@ -306,3 +306,13 @@ class CacheRepository:
         cls.clear_user_operations(user_id)
         cls.clear_user_cash_info(user_id)
         cls.clear_calculated_target(user_id)
+
+    @classmethod
+    def clear_all(cls) -> int:
+        from django.conf import settings
+        prefix = settings.CACHES['default'].get('KEY_PREFIX', 'stockmanager')
+        version = settings.CACHES['default'].get('VERSION', 1)
+        pattern = f"{prefix}:{version}:*"
+        deleted_count = Cache.delete_pattern(pattern)
+        logger.info(f"[Redis] 管理员清理全部缓存，删除 {deleted_count} 个 key")
+        return deleted_count
