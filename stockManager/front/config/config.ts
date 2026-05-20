@@ -185,9 +185,4 @@ export default defineConfig({
    */
   title: 'Stock Manager',
   
-  /**
-   * @name favicon 路径
-   * @description 与 publicPath 一致；文件位于 public/favicon.ico
-   */
-  favicons: isProduction ? ['/static/favicon.ico'] : ['/favicon.ico'],
 });
