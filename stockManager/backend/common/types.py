@@ -72,6 +72,12 @@ class CalculatedResult(TypedDict):
     overall: OverallData
 
 
+class DividendUpdateData(TypedDict):
+    """除权更新项"""
+    code: str
+    name: str
+
+
 OperationDict = Dict[str, List[Operation]]
 CashFlowList = List[CashFlowData]
 OperationDataDict = Dict[str, List[OperationData]]

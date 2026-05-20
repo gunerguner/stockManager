@@ -130,6 +130,7 @@ class StockMeta(models.Model):
         OTHER = "OTHER", _("其它")
 
     code = models.CharField(max_length=200, verbose_name="股票代码")
+    name = models.CharField(max_length=64, blank=True, default="", verbose_name="股票名称")
     isNew = models.BooleanField(default=False, verbose_name="是否新股")
     stockType = models.CharField(
         max_length=6, 
@@ -143,4 +144,5 @@ class StockMeta(models.Model):
         verbose_name_plural = "股票元数据"
 
     def __str__(self) -> str:
-        return f"{self.code} - {self.get_stockType_display()}"
+        display_name = self.name or self.code
+        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"

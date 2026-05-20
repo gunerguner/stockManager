@@ -22,8 +22,10 @@ const Admin: React.FC = () => {
               title: response.data.length > 0 ? '有更新股票' : '无更新股票',
               content: (
                 <>
-                  {response.data.map((dividend: string) => (
-                    <Row key={dividend}>{dividend}</Row>
+                  {response.data.map((dividend) => (
+                    <Row key={dividend.code}>
+                      {dividend.code} - {dividend.name}
+                    </Row>
                   ))}
                 </>
               ),

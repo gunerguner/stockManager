@@ -97,6 +97,11 @@ declare namespace API {
   };
 
   type DividendResult = BaseResult & {
-    data?: string[];
+    data?: DividendUpdate[];
+  };
+
+  type DividendUpdate = {
+    code: string;
+    name: string;
   };
 }

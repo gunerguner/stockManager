@@ -1,6 +1,6 @@
 """缓存仓库层"""
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from django.core.cache import cache
@@ -24,6 +24,7 @@ class CacheRepository:
     KEY_STOCK_META_ALL = "stock:meta:all"
     KEY_STOCK_PRICE = "stock:price:{code}"
     KEY_STOCK_PRICE_TIMESTAMP = "stock:price:timestamp"
+    KEY_STOCK_NAME_DAILY_SYNC_MARK = "stock:name:sync:daily"
     
     TTL_USER_DATA = 36000
     TTL_CALCULATED_TARGET = 86400
@@ -167,7 +168,7 @@ class CacheRepository:
     def _set_stock_meta_all_cache(cls, meta_dict: Dict) -> None:
         cache.set(
             cls.KEY_STOCK_META_ALL,
-            {code: {'code': meta.code, 'isNew': meta.isNew, 'stockType': meta.stockType} 
+            {code: {'code': meta.code, 'name': meta.name, 'isNew': meta.isNew, 'stockType': meta.stockType}
              for code, meta in meta_dict.items()},
             cls.TTL_STOCK_META
         )
@@ -175,6 +176,18 @@ class CacheRepository:
     @classmethod
     def clear_stock_meta_all(cls) -> None:
         cache.delete(cls.KEY_STOCK_META_ALL)
+
+    @classmethod
+    def has_stock_name_synced_today(cls) -> bool:
+        today = datetime.now(TZ_SHANGHAI).date().isoformat()
+        return cache.get(cls.KEY_STOCK_NAME_DAILY_SYNC_MARK) == today
+
+    @classmethod
+    def mark_stock_name_synced_today(cls) -> None:
+        now = datetime.now(TZ_SHANGHAI)
+        tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        ttl_seconds = int((tomorrow - now).total_seconds()) + 60
+        cache.set(cls.KEY_STOCK_NAME_DAILY_SYNC_MARK, now.date().isoformat(), ttl_seconds)
     
     @classmethod
     def get_stock_price(cls, code: str) -> Optional[Dict]:
@@ -276,7 +289,12 @@ class CacheRepository:
         cached_data = cls._get_stock_meta_all_cache()
         if cached_data:
             return {
-                code: StockMetaModel(code=data['code'], isNew=data['isNew'], stockType=data['stockType'])
+                code: StockMetaModel(
+                    code=data['code'],
+                    name=data.get('name', ''),
+                    isNew=data['isNew'],
+                    stockType=data['stockType']
+                )
                 for code, data in cached_data.items()
             }
         meta_dict = {meta.code: meta for meta in StockMetaModel.objects.all()}

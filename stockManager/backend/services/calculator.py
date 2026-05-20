@@ -53,6 +53,20 @@ class Calculator:
         return cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
     
     # ========== 单股计算 ==========
+
+    @staticmethod
+    def _resolve_stock_name(
+        code: str,
+        single_real_time: RealtimePriceData,
+        stock_meta: Optional[StockMetaModel] = None,
+    ) -> str:
+        """优先展示实时接口名称，其次回退 StockMeta 名称。"""
+        realtime_name = (single_real_time.get("name") or "").strip()
+        if realtime_name:
+            return realtime_name
+        if stock_meta and stock_meta.name:
+            return stock_meta.name
+        return code
     
     @classmethod
     def _calculate_single_target(
@@ -70,9 +84,9 @@ class Calculator:
         if not single_real_time:
             logger.warning(f"无法获取股票 {code} 的实时价格")
             # 使用默认值
-            single_real_time = RealtimePriceData({"name": "未知", "currentPrice": 0.0, "priceOffset": 0.0, "offsetRatio": "0%", "yesterdayClose": 0.0})
+            single_real_time = RealtimePriceData({"name": "", "currentPrice": 0.0, "priceOffset": 0.0, "offsetRatio": "0%", "yesterdayClose": 0.0})
         to_return["code"] = code
-        to_return["name"] = single_real_time["name"]  # 名称
+        to_return["name"] = cls._resolve_stock_name(code, single_real_time, stock_meta)  # 名称
         to_return["priceNow"] = single_real_time["currentPrice"]  # 现价（已经是 float）
         if to_return["priceNow"] < MIN_PRICE_THRESHOLD:
             to_return["offsetToday"] = 0  # 今日股价涨跌

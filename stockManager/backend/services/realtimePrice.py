@@ -7,6 +7,7 @@ from ..common import logger
 from ..common.types import RealtimePriceData, RealtimePriceDict
 from ..common.utils import format_percent
 from .cacheRepository import CacheRepository
+from .stockNameSync import StockNameSync
 
 # 懒加载 easyquotation 实例
 _tencent_quotation = None
@@ -41,7 +42,7 @@ class RealtimePrice:
         return result
 
     @classmethod
-    def fetch_from_api(cls, code_list: List[str]) -> RealtimePriceDict:
+    def fetch_from_api(cls, code_list: List[str], sync_names: bool = True) -> RealtimePriceDict:
         """从 API 获取股票价格（使用 easyquotation）"""
         if not code_list:
             return {}
@@ -65,6 +66,8 @@ class RealtimePrice:
                     "yesterdayClose": yesterday_close
                 })
 
+            if sync_names:
+                StockNameSync.sync_from_realtime(result)
             return result
         except Exception as e:
             logger.error(f"获取股票价格失败: {e}")

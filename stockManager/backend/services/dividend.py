@@ -9,20 +9,22 @@ import baostock as bs
 
 from ..common import logger
 from ..common.constants import OperationType
-from ..common.types import OperationDict
+from ..common.types import OperationDict, DividendUpdateData
 from ..common.utils import safe_float
 from ..models import Operation
 from django.contrib.auth.models import User
 from .stockHold import StockHold
+from .stockMeta import StockMeta
 
 class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
     
     @classmethod
-    def generate_dividend(cls, user: User, operation_list: OperationDict) -> List[str]:
+    def generate_dividend(cls, user: User, operation_list: OperationDict) -> List[DividendUpdateData]:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
         updated_codes = []
+        stock_meta_dict = StockMeta.get_all()
 
         try:
             bs.login()
@@ -30,7 +32,11 @@ class Dividend:
                 operations = operation_list[code]
                 updated_code = cls._generate_dividend_single(user, code, operations)
                 if updated_code:
-                    updated_codes.append(updated_code)
+                    stock_meta = stock_meta_dict.get(updated_code)
+                    updated_codes.append({
+                        "code": updated_code,
+                        "name": stock_meta.name if stock_meta and stock_meta.name else updated_code,
+                    })
         finally:
             bs.logout()
 

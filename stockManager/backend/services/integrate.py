@@ -12,7 +12,7 @@ from .calculator import Calculator
 from .dividend import Dividend
 from ..models import Operation, Info, CashFlow
 from ..common import logger
-from ..common.types import CalculatedResult, OperationDataDict
+from ..common.types import CalculatedResult, OperationDataDict, DividendUpdateData
 
 
 class Integrate:
@@ -50,7 +50,7 @@ class Integrate:
         return result
     
     @classmethod
-    def generate_dividend(cls, user: User) -> List[str]:
+    def generate_dividend(cls, user: User) -> List[DividendUpdateData]:
         """生成股票分红数据"""
         operation_list = CacheRepository.get_user_operations(user)
         # 直接调用分红服务
