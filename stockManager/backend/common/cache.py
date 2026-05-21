@@ -1,5 +1,4 @@
 """底层缓存工具类"""
-import json
 from typing import Dict, List, Optional, Any
 
 from django.core.cache import cache
@@ -29,17 +28,12 @@ class Cache:
 
         try:
             redis_client = get_redis_connection("default")
+            client = cache.client
             values = redis_client.mget(full_keys)
 
             result = {}
-            for logical_key, value in zip(keys, values):
-                if value:
-                    try:
-                        result[logical_key] = json.loads(value) if isinstance(value, (str, bytes)) else value
-                    except (json.JSONDecodeError, TypeError):
-                        result[logical_key] = value
-                else:
-                    result[logical_key] = None
+            for logical_key, raw in zip(keys, values):
+                result[logical_key] = client.decode(raw) if raw is not None else None
 
             return result
         except Exception:
@@ -47,33 +41,22 @@ class Cache:
 
     @staticmethod
     def set_many(mapping: Dict[str, Any], timeout: int = None) -> None:
-        """批量设置缓存（使用 Redis Pipeline 优化）"""
+        """批量设置缓存；mapping 的 key 为逻辑 key，序列化/前缀与 cache.set 一致"""
         if not mapping:
             return
 
         try:
             redis_client = get_redis_connection("default")
+            client = cache.client
             pipe = redis_client.pipeline()
-
-            for key, value in mapping.items():
+            for logical_key, value in mapping.items():
                 if value is not None:
-                    # 如果是复杂对象，先序列化
-                    if isinstance(value, (dict, list)):
-                        value = json.dumps(value)
-                    pipe.set(key, value, ex=timeout)
-
+                    client.set(logical_key, value, timeout, client=pipe)
             pipe.execute()
-        except Exception as e:
-            # 如果批量设置失败，回退到单条设置
-            for key, value in mapping.items():
+        except Exception:
+            for logical_key, value in mapping.items():
                 if value is not None:
-                    try:
-                        if isinstance(value, (dict, list)):
-                            value = json.dumps(value)
-                        cache.set(key, value, timeout)
-                    except Exception:
-                        # 如果序列化失败，直接设置原始值
-                        cache.set(key, value, timeout)
+                    cache.set(logical_key, value, timeout)
 
     @staticmethod
     def delete_pattern(pattern: str, *, logical: bool = True) -> int:
