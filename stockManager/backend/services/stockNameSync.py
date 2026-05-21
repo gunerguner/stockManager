@@ -14,7 +14,7 @@ class StockNameSync:
         """比对实时名称和 DB 名称，批量更新变更项。"""
         if not prices:
             return 0
-        if CacheRepository.has_stock_name_synced_today():
+        if CacheRepository.has_stock_name_synced():
             return 0
 
         name_map: Dict[str, str] = {}
@@ -36,11 +36,11 @@ class StockNameSync:
                 changed_metas.append(meta)
 
         if not changed_metas:
-            CacheRepository.mark_stock_name_synced_today()
+            CacheRepository.mark_stock_name_synced()
             return 0
 
         StockMetaModel.objects.bulk_update(changed_metas, ["name"])
         CacheRepository.clear_stock_meta_all()
-        CacheRepository.mark_stock_name_synced_today()
+        CacheRepository.mark_stock_name_synced()
         logger.debug(f"股票名称同步完成，更新 {len(changed_metas)} 条记录")
         return len(changed_metas)

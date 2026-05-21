@@ -1,6 +1,6 @@
 """缓存仓库层"""
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from django.core.cache import cache
@@ -24,12 +24,13 @@ class CacheRepository:
     KEY_STOCK_META_ALL = "stock:meta:all"
     KEY_STOCK_PRICE = "stock:price:{code}"
     KEY_STOCK_PRICE_TIMESTAMP = "stock:price:timestamp"
-    KEY_STOCK_NAME_DAILY_SYNC_MARK = "stock:name:sync:daily"
+    KEY_STOCK_NAME_SYNC_MARK = "stock:name:sync:mark"
     
     TTL_USER_DATA = 36000
     TTL_CALCULATED_TARGET = 86400
     TTL_STOCK_META = 86400
     TTL_STOCK_PRICE = 86400
+    TTL_STOCK_NAME_SYNC = 86400
     
     @classmethod
     def _should_refresh_cache(cls) -> bool:
@@ -178,16 +179,12 @@ class CacheRepository:
         cache.delete(cls.KEY_STOCK_META_ALL)
 
     @classmethod
-    def has_stock_name_synced_today(cls) -> bool:
-        today = datetime.now(TZ_SHANGHAI).date().isoformat()
-        return cache.get(cls.KEY_STOCK_NAME_DAILY_SYNC_MARK) == today
+    def has_stock_name_synced(cls) -> bool:
+        return cache.get(cls.KEY_STOCK_NAME_SYNC_MARK) is not None
 
     @classmethod
-    def mark_stock_name_synced_today(cls) -> None:
-        now = datetime.now(TZ_SHANGHAI)
-        tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        ttl_seconds = int((tomorrow - now).total_seconds()) + 60
-        cache.set(cls.KEY_STOCK_NAME_DAILY_SYNC_MARK, now.date().isoformat(), ttl_seconds)
+    def mark_stock_name_synced(cls) -> None:
+        cache.set(cls.KEY_STOCK_NAME_SYNC_MARK, True, cls.TTL_STOCK_NAME_SYNC)
     
     @classmethod
     def get_stock_price(cls, code: str) -> Optional[Dict]:
