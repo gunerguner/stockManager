@@ -1,7 +1,6 @@
 """股票名称同步服务。"""
 from typing import Dict
 from ..common import logger
-from ..common.tradingCalendar import TZ_SHANGHAI
 from ..common.types import RealtimePriceDict
 from ..models import StockMeta as StockMetaModel
 from .cacheRepository import CacheRepository

@@ -10,24 +10,36 @@ class Cache:
     """底层缓存工具类，提供批量操作和模式删除"""
 
     @staticmethod
+    def make_key(key: str, version: int = None) -> str:
+        """逻辑 key -> Redis 完整 key（与 cache.get/set 一致的前缀与版本）"""
+        return cache.make_key(key, version=version)
+
+    @staticmethod
+    def make_pattern(pattern: str, version: int = None) -> str:
+        """逻辑通配 pattern -> Redis 完整 pattern"""
+        return cache.make_key('', version=version) + pattern
+
+    @staticmethod
     def get_many(keys: List[str]) -> Dict[str, Optional[Any]]:
-        """批量获取缓存（使用 Redis Pipeline 优化）"""
+        """批量获取缓存；keys 为逻辑 key（不含 KEY_PREFIX/VERSION）"""
         if not keys:
             return {}
 
+        full_keys = [cache.make_key(k) for k in keys]
+
         try:
             redis_client = get_redis_connection("default")
-            values = redis_client.mget(keys)
+            values = redis_client.mget(full_keys)
 
             result = {}
-            for key, value in zip(keys, values):
+            for logical_key, value in zip(keys, values):
                 if value:
                     try:
-                        result[key] = json.loads(value) if isinstance(value, (str, bytes)) else value
+                        result[logical_key] = json.loads(value) if isinstance(value, (str, bytes)) else value
                     except (json.JSONDecodeError, TypeError):
-                        result[key] = value
+                        result[logical_key] = value
                 else:
-                    result[key] = None
+                    result[logical_key] = None
 
             return result
         except Exception:
@@ -64,8 +76,10 @@ class Cache:
                         cache.set(key, value, timeout)
 
     @staticmethod
-    def delete_pattern(pattern: str) -> int:
-        """按模式删除缓存，返回删除的 key 数量"""
+    def delete_pattern(pattern: str, *, logical: bool = True) -> int:
+        """按模式删除缓存，返回删除的 key 数量；默认 pattern 为逻辑通配符"""
+        if logical:
+            pattern = Cache.make_pattern(pattern)
         try:
             redis_client = get_redis_connection("default")
             keys = redis_client.keys(pattern)

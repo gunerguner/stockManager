@@ -156,7 +156,7 @@ class CacheRepository:
     
     @classmethod
     def clear_all_calculated_targets(cls) -> None:
-        deleted_count = Cache.delete_pattern("stockmanager:1:user:*:calculated_target")
+        deleted_count = Cache.delete_pattern("user:*:calculated_target")
         if deleted_count > 0:
             logger.info(f"[Redis] 价格更新，清除 {deleted_count} 个用户的计算结果缓存")
     
@@ -198,7 +198,7 @@ class CacheRepository:
         if not code_list:
             return {}
         try:
-            keys = [f"stockmanager:1:stock:price:{code}" for code in code_list]
+            keys = [cls.KEY_STOCK_PRICE.format(code=code) for code in code_list]
             result = Cache.get_many(keys)
             return {code: result.get(keys[i]) for i, code in enumerate(code_list)}
         except Exception as e:
@@ -309,10 +309,6 @@ class CacheRepository:
 
     @classmethod
     def clear_all(cls) -> int:
-        from django.conf import settings
-        prefix = settings.CACHES['default'].get('KEY_PREFIX', 'stockmanager')
-        version = settings.CACHES['default'].get('VERSION', 1)
-        pattern = f"{prefix}:{version}:*"
-        deleted_count = Cache.delete_pattern(pattern)
+        deleted_count = Cache.delete_pattern("*")
         logger.info(f"[Redis] 管理员清理全部缓存，删除 {deleted_count} 个 key")
         return deleted_count
