@@ -88,6 +88,25 @@ SKILL.md 的扩展材料；改缓存、部署时按需阅读。
 3. 登录后 `/list`、`/data` 有数据
 4. 改前端后：`docker compose build frontend && docker compose up -d frontend`
 
+## 常用排障命令（按场景）
+
+- Django 配置体检：`cd stockManager && python manage.py check`
+- 查看 URL 映射：`cd stockManager && python manage.py show_urls`（若安装 django-extensions）
+- 前端类型检查：`cd stockManager/front && pnpm run type-check`
+- 前端代理确认：`cd stockManager/front && cat config/proxy.ts`
+- Redis key 抽查：`redis-cli --scan --pattern 'user:*:calculated_target' | head`
+- Docker 服务状态：`docker compose -f docker/docker-compose.yml --env-file docker/.env ps`
+
+## 变更影响面速查
+
+| 你改了什么 | 还要联动检查 |
+|-----------|----------------|
+| `models.py` | 迁移文件、Admin 展示、缓存失效触发 |
+| `calculator.py` | `common/types.py`、`/api/stocks` 输出、`/list`/`/data` 前端展示 |
+| `realtimePrice.py` | 缓存时间戳逻辑、交易时段判断、失败兜底 |
+| `front/config/routes.ts` | 权限 `access.ts`、菜单展示、默认重定向 |
+| `docker/nginx.conf` | `/api` 转发、静态资源路径、frontend 重建 |
+
 ## backend 依赖（requirements.txt 摘要）
 
 Django、python-dotenv、baostock、pandas、numpy、easyquotation、exchange_calendars、pyxirr、django-redis、whitenoise、gunicorn、django-cors-headers、django-extensions

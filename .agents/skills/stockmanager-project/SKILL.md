@@ -88,6 +88,22 @@ flowchart LR
 | 价格展示 | `front/src/utils/renderTool.tsx`（`formatPrice`） |
 | 部署/静态 404 | 改 Umi 后须 **重建 frontend 镜像**；见 `docker/nginx.conf` |
 
+## 快速决策树（先定位再改）
+
+- **症状：接口 401/403、登录态异常**
+  - 先看：`backend/views/auth.py`、`backend/common/decorators.py`
+  - 再看：`front/src/services/api.ts` 是否保留 `credentials: 'include'`
+- **症状：持仓页慢/数据不刷新**
+  - 先看：`backend/services/integrate.py`（是否命中缓存）
+  - 再看：`backend/services/cacheRepository.py`（TTL 与 key）
+  - 再看：`backend/services/realtimePrice.py`（行情源与交易时段）
+- **症状：改了前端但线上没变化**
+  - 先做：`docker compose build frontend && docker compose up -d frontend`
+  - 原因：仅 frontend 镜像包含 Umi 构建产物
+- **症状：新增字段前端拿不到**
+  - 先看：`backend/common/types.py` 与 `calculator.py` 是否同步
+  - 再看：`front/src/services/api.ts` 的类型定义与页面消费
+
 ## 本地开发
 
 | 终端 | 命令 | 端口 |
@@ -127,6 +143,12 @@ Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
 
 **无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/data` 分析 → 除权刷新 →（管理员）清缓存。前端可跑 `pnpm run lint`、`pnpm run type-check`。
 
+建议最小检查集（改动后至少执行其一）：
+
+1. 仅后端改动：`python manage.py check`
+2. 仅前端改动：`pnpm run type-check`
+3. API/计算改动：手动走通 `/list` + `/data` + `/api/clearCache`
+
 ## 编码约定
 
 - 后端服务类用 **classmethod**（`Integrate`、`Calculator`、`RealtimePrice`、`CacheRepository`），无重度 DI
@@ -134,6 +156,14 @@ Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
 - 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`）
 - 语言与时区：`zh-hans`、`Asia/Shanghai`
 - 用户角色：`admin` | `staff` | `user`；前端 `access.ts` 控制 `canAdmin`
+
+## 提交前自检清单（防回归）
+
+- 是否新增/修改 API：`backend/urls.py` 与 `front/src/services/api.ts` 是否同时更新
+- 是否修改模型：是否完成 `makemigrations` 与 `migrate`，并检查 admin 展示
+- 是否修改计算字段：`common/types.py`、`calculator.py`、前端页面字段是否三处一致
+- 是否修改缓存：是否覆盖写后失效路径（`Operation` / `Info` / `CashFlow`）
+- 是否修改前端路由或静态资源：是否验证 Docker frontend 重建流程
 
 ## 更多细节
 
