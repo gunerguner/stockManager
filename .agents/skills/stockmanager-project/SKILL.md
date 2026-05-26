@@ -31,7 +31,7 @@ stockManager/                 # Git 根
 | 层 | 技术 |
 |----|------|
 | 后端 | Python ≥3.11，Django **5.2**，Gunicorn（Docker） |
-| 前端 | Umi Max **4.6**，React **19**，antd **6**，pnpm，Node ≥20 |
+| 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，pnpm，Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
 | 行情 | `easyquotation` **tencent**（A 股实时）；`baostock`（除权除息） |

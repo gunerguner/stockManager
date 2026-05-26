@@ -32,7 +32,7 @@ cd stockManager
 |------|------|
 | Redis | `redis:7-alpine`，持久化卷 `redis_data` |
 | 后端 | 镜像由 `docker/Dockerfile.backend` 构建：**纯 Python**，仅 API + Django Admin 静态（`collectstatic`），**不含** Node / Umi 产物 |
-| 前端 | 镜像由 `docker/Dockerfile.frontend` 构建：**唯一**一次 `pnpm build`，Nginx 监听 **8080**（非 80） |
+| 前端 | 镜像由 `docker/Dockerfile.frontend` 构建：**唯一**一次 `pnpm build`（默认 **Utoopack** bundler），Nginx 监听 **8080**（非 80） |
 
 **前后端分工（与 carSales 一致）**：业务 SPA 与 `/static/umi.*` 仅存在于 **frontend** 镜像；**backend** 镜像内无 `front/dist`，改前端后须 `build frontend`，仅重建 backend **不会**更新 Umi 静态。
 
@@ -283,7 +283,7 @@ curl -fsS -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:${BACKEND_PUBLISH_P
 | **`/static/umi.*.css` 等 404** | 生产 `publicPath` 为 `/static/`，但 Umi 产物在 `dist` 根目录。前端 Nginx 须用 `alias` 将 `/static/` 映射到 html 根（见 `docker/nginx.conf`）；改配置后需 `build` 并重建 `frontend` 容器。 |
 | `redis` 不健康导致 `backend` 不启动 | 检查 `redis` 日志与卷权限；确认 `REDIS_URL` 中主机名为 `redis`、端口 `6379`。 |
 | 数据库或日志丢失 | 勿随意 `docker volume rm`；`sqlite_data`、`log_data` 删除后需从备份恢复。 |
-| 构建很慢或镜像很大 | 确认仓库根 **`.dockerignore`** 已排除 `node_modules`、`__pycache__` 等；不要向构建上下文提交大文件。 |
+| 构建很慢或镜像很大 | 确认仓库根 **`.dockerignore`** 已排除 `node_modules`、`__pycache__` 等。`Dockerfile.frontend` 已拆层（先 `pnpm install` 再 `COPY` 源码）并挂载 pnpm store 缓存：**仅改前端业务代码**时通常只重跑 `pnpm build`（Utoopack），**改 `pnpm-lock.yaml` 才会重装依赖**。查看各步耗时：`docker build --progress=plain -f docker/Dockerfile.frontend .`；勿滥用 `--no-cache`。 |
 
 ## 安全提示
 
