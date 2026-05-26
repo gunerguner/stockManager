@@ -82,7 +82,13 @@ export default defineConfig({
    * @name Fast Refresh 热更新
    */
   fastRefresh: true,
-  
+
+  /**
+   * @name 源码转译
+   * @description 使用 esbuild 替代默认 babel，加快 dev/build 转译
+   */
+  srcTranspiler: 'esbuild',
+
   /**
    * @name 启用 MFSU 加速构建
    * @description 使用 esbuild 模式可以进一步提升构建速度

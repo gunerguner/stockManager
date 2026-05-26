@@ -73,5 +73,6 @@ log/
 
 # Frontend build
 stockManager/front/dist/
+stockManager/front/docs/
 .umi
 .umi-production
