@@ -3,6 +3,7 @@
 """
 from django.contrib import admin
 from django.contrib import messages
+from django.db.models import Max
 
 from .base import Operation, StockMeta
 
@@ -11,15 +12,15 @@ from .base import Operation, StockMeta
 class OperationAdmin(admin.ModelAdmin):
     """股票操作记录管理"""
     
-    list_display = ['user', 'code', 'date', 'operationType', 'price', 'count', 'fee']
+    list_display = ['user', 'code', 'date', 'sortOrder', 'operationType', 'price', 'count', 'fee']
     list_filter = ['user', 'operationType', 'date']
     search_fields = ['code', 'user__username']
     date_hierarchy = 'date'
-    ordering = ['-date']
+    ordering = ['-date', 'sortOrder', 'id']
     
     fieldsets = (
         ('基本信息', {
-            'fields': ('user', 'code', 'date', 'operationType')
+            'fields': ('user', 'code', 'date', 'sortOrder', 'operationType')
         }),
         ('交易信息', {
             'fields': ('price', 'count', 'fee', 'comment')
@@ -68,6 +69,15 @@ class OperationAdmin(admin.ModelAdmin):
         """创建记录时自动关联当前用户，并检查StockMeta中是否存在该股票代码"""
         if not change:
             obj.user = request.user
+        
+        if not change and obj.sortOrder == 0:
+            max_sort = Operation.objects.filter(
+                user=obj.user,
+                code=obj.code,
+                date=obj.date,
+            ).aggregate(Max('sortOrder'))['sortOrder__max']
+            if max_sort is not None:
+                obj.sortOrder = max_sort + 1
         
         if obj.code and not StockMeta.objects.filter(code=obj.code).exists():
             messages.warning(

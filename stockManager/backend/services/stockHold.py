@@ -8,6 +8,7 @@ import datetime
 from ..models import Operation
 from ..common.constants import OperationType
 from ..common.types import OperationDict
+from ..common.utils import operation_sort_key
 
 
 class StockHold:
@@ -25,7 +26,7 @@ class StockHold:
             if not operations:
                 continue
             
-            sorted_operations = sorted(operations, key=lambda op: op.date)
+            sorted_operations = sorted(operations, key=operation_sort_key)
             current_hold = cls.calculate_hold_count_at_date(sorted_operations, target_date)
             
             if current_hold > 0:

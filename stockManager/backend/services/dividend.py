@@ -10,7 +10,7 @@ import baostock as bs
 from ..common import logger
 from ..common.constants import OperationType
 from ..common.types import OperationDict, DividendUpdateData
-from ..common.utils import safe_float
+from ..common.utils import safe_float, operation_sort_key
 from ..models import Operation
 from django.contrib.auth.models import User
 from .stockHold import StockHold
@@ -61,7 +61,7 @@ class Dividend:
             formatted_code = f"{code[:2]}.{code[2:]}"
 
             # 按日期排序操作列表，确保计算持仓数时顺序正确
-            sorted_operations = sorted(operations, key=lambda op: op.date)
+            sorted_operations = sorted(operations, key=operation_sort_key)
 
             for year in range(first_year, year_now + 1):
                 try:

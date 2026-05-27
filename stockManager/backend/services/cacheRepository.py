@@ -56,6 +56,7 @@ class CacheRepository:
                 {
                     'id': op.id,
                     'date': str(op.date),
+                    'sortOrder': op.sortOrder,
                     'operationType': op.operationType,
                     'price': op.price,
                     'count': op.count,
@@ -90,6 +91,7 @@ class CacheRepository:
                 op.user_id = user_id
                 op.code = code
                 op.date = datetime.strptime(op_data['date'], '%Y-%m-%d').date()
+                op.sortOrder = op_data.get('sortOrder', 0)
                 op.operationType = op_data['operationType']
                 op.price = op_data['price']
                 op.count = op_data['count']
@@ -256,7 +258,7 @@ class CacheRepository:
         cached = cls._get_user_operations_cache(user)
         if cached is not None:
             return cached
-        operations = format_operations(Operation.objects.filter(user=user).order_by("date"))
+        operations = format_operations(Operation.objects.filter(user=user).order_by('date', 'sortOrder', 'id'))
         cls._set_user_operations_cache(user, operations)
         return operations
     

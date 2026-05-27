@@ -15,6 +15,7 @@ class Operation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operations', verbose_name="用户")
     code = models.CharField(max_length=200, verbose_name="股票代码")
     date = models.DateField(verbose_name="交易日期")
+    sortOrder = models.PositiveIntegerField(default=0, verbose_name="同日顺序")
     operationType = models.CharField(
         max_length=4, 
         choices=operationType.choices, 
@@ -32,6 +33,7 @@ class Operation(models.Model):
     class Meta:
         verbose_name = "股票操作记录"
         verbose_name_plural = "股票操作记录"
+        ordering = ['date', 'sortOrder', 'id']
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"

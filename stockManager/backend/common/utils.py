@@ -1,6 +1,11 @@
 """公共工具函数模块"""
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from ..models import Operation
+
+
+def operation_sort_key(op: Operation) -> Tuple:
+    """Operation 统一排序键：(date, sortOrder, id)"""
+    return (op.date, op.sortOrder, op.id)
 
 
 def format_percent(value: float, precision: int = 2) -> str:
