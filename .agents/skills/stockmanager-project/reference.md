@@ -70,7 +70,7 @@ SKILL.md 的扩展材料；改缓存、部署时按需阅读。
 | Django DEBUG | 常为 true | false |
 | CORS | DEBUG 时允许全部 | 显式 origins + `CSRF_TRUSTED_ORIGINS_EXTRA` |
 | 静态资源 | Umi dev server | Nginx + backend `collectstatic`（仅 Admin） |
-| 构建 | 本地 `pnpm dev` | **仅** `Dockerfile.frontend` 内 `pnpm build` |
+| 构建 | 本地 `ut run dev` | **仅** `Dockerfile.frontend` 内 `ut run build` |
 
 ## 雪球指标（摘录）
 
@@ -92,7 +92,7 @@ SKILL.md 的扩展材料；改缓存、部署时按需阅读。
 
 - Django 配置体检：`cd stockManager && python manage.py check`
 - 查看 URL 映射：`cd stockManager && python manage.py show_urls`（若安装 django-extensions）
-- 前端类型检查：`cd stockManager/front && pnpm run type-check`
+- 前端类型检查：`cd stockManager/front && ut run type-check`
 - 前端代理确认：`cd stockManager/front && cat config/proxy.ts`
 - Redis key 抽查：`redis-cli --scan --pattern 'user:*:calculated_target' | head`
 - Docker 服务状态：`docker compose -f docker/docker-compose.yml --env-file docker/.env ps`

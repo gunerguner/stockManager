@@ -6,14 +6,14 @@
   "scripts": {
     "analyze": "ANALYZE=1 max build",
     "build": "max build",
-    "deploy": "pnpm run build && pnpm run gh-pages",
-    "dev": "pnpm run start:dev",
+    "deploy": "ut run build && ut run gh-pages",
+    "dev": "ut run start:dev",
     "gh-pages": "gh-pages -d dist",
     "setup": "max setup",
-    "lint": "pnpm run lint:js && pnpm run lint:style && pnpm run lint:prettier",
+    "lint": "ut run lint:js && ut run lint:style && ut run lint:prettier",
     "lint-staged": "lint-staged",
     "lint-staged:js": "eslint --ext .js,.jsx,.ts,.tsx ",
-    "lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src && pnpm run lint:style",
+    "lint:fix": "eslint --fix --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src && ut run lint:style",
     "lint:js": "eslint --cache --ext .js,.jsx,.ts,.tsx --format=pretty ./src",
     "lint:prettier": "prettier --check \"src/**/*\" --end-of-line auto",
     "lint:style": "stylelint --fix \"src/**/*.less\"",
@@ -26,14 +26,14 @@
     "start:test": "cross-env UMI_ENV=test MOCK=none max dev",
     "tsc": "tsc --noEmit",
     "clean": "rimraf dist node_modules/.cache",
-    "reinstall": "rimraf node_modules pnpm-lock.yaml && pnpm install",
+    "reinstall": "rimraf node_modules package-lock.json && ut install",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,less,md}\"",
-    "update-browserslist": "pnpm exec update-browserslist-db@latest"
+    "update-browserslist": "ut x update-browserslist-db@latest"
   },
   "lint-staged": {
     "**/*.less": "stylelint",
-    "**/*.{js,jsx,ts,tsx}": "pnpm run lint-staged:js",
+    "**/*.{js,jsx,ts,tsx}": "ut run lint-staged:js",
     "**/*.{js,jsx,tsx,ts,less,md,json}": [
       "prettier --write"
     ]
@@ -71,5 +71,6 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "utoo@1.0.32"
 }

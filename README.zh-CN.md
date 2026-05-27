@@ -95,9 +95,9 @@
 
 1. 安装 Python(版本>=3.11)、pip、git、redis。
 2. 使用 pip 安装依赖（`requirements.txt`）。
-3. 安装 Node(版本>=20)、pnpm。
+3. 安装 Node(版本>=20)、utoo（`npm install -g utoo`）。
 4. git clone：https://github.com/gunerguner/stockManager
-5. 进入 `stockManager/front`，执行 `pnpm install`（**无需** `pnpm run build`）。
+5. 进入 `stockManager/front`，执行 `ut install`（**无需** `ut run build`）。
 6. 在 `stockManager` 目录创建 `.env`：`cp stockManager/.env.example stockManager/.env`，`DJANGO_SECRET_KEY` 可用  
    `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'` 生成。
 7. `python manage.py makemigrations`、`python manage.py migrate`（或直接复制数据库文件）。
@@ -105,7 +105,7 @@
 9. 启动 Redis：`redis-server`。
 10. **两个终端启动：**
     - 终端 1（`stockManager` 目录）：`python manage.py runserver` → API 与 Admin 在 **8000**
-    - 终端 2（`front` 目录）：`pnpm dev` → 业务前台在 **8001**（`/api/` 代理到 8000）
+    - 终端 2（`front` 目录）：`ut run dev` → 业务前台在 **8001**（`/api/` 代理到 8000）
 
 - 业务前台：http://127.0.0.1:8001
 - 管理后台：http://127.0.0.1:8000/sys/admin/

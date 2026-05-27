@@ -208,11 +208,11 @@ fi
 log_success "redis 已安装：$(redis-server --version | head -1)"
 
 # ===========================================
-# 第 2 步：安装 Node.js 和 pnpm (使用 nvm)
+# 第 2 步：安装 Node.js 和 utoo (使用 nvm)
 # ===========================================
 echo ""
 echo "=========================================="
-echo "  步骤 2: 安装 Node.js 和 pnpm"
+echo "  步骤 2: 安装 Node.js 和 utoo"
 echo "=========================================="
 
 # 安装 nvm
@@ -230,18 +230,18 @@ if [ "$NODE_MAJOR" -lt 20 ]; then
 fi
 log_success "Node.js 版本：$NODE_VERSION"
 
-# 安装 pnpm
-if ! command -v pnpm &> /dev/null; then
-    log_info "正在安装 pnpm..."
-    npm install -g pnpm
+# 安装 utoo
+if ! command -v ut &> /dev/null; then
+    log_info "正在安装 utoo..."
+    npm install -g utoo@1.0.32
 fi
-log_success "pnpm 已安装：$(pnpm -v)"
+log_success "utoo 已安装：$(ut --version 2>/dev/null || echo unknown)"
 
-# 设置 npm/pnpm 国内镜像源
-log_info "正在设置 npm/pnpm 镜像源..."
+# 设置 npm/utoo 国内镜像源
+log_info "正在设置 npm/utoo 镜像源..."
 npm config set registry https://registry.npmmirror.com
-pnpm config set registry https://registry.npmmirror.com
-log_success "npm/pnpm 镜像源已配置 (npmmirror)"
+ut config set registry https://registry.npmmirror.com --global
+log_success "npm/utoo 镜像源已配置 (npmmirror)"
 
 # ===========================================
 # 第 3 步：拉取最新代码
@@ -280,7 +280,7 @@ else
 fi
 
 # ===========================================
-# 第 5 步：安装前端依赖（开发用 pnpm dev，无需 build）
+# 第 5 步：安装前端依赖（开发用 ut run dev，无需 build）
 # ===========================================
 echo ""
 echo "=========================================="
@@ -288,11 +288,11 @@ echo "  步骤 5: 安装前端依赖"
 echo "=========================================="
 
 if [ -d "$FRONT_DIR" ]; then
-    log_info "正在安装前端依赖 (pnpm install)..."
+    log_info "正在安装前端依赖 (ut install)..."
     cd "$FRONT_DIR"
-    pnpm install
+    ut install
     cd "$APP_DIR"
-    log_success "前端依赖安装完成（开发请使用 pnpm dev，生产请用 Docker 构建 frontend 镜像）"
+    log_success "前端依赖安装完成（开发请使用 ut run dev，生产请用 Docker 构建 frontend 镜像）"
 else
     log_error "前端目录不存在：$FRONT_DIR"
     exit 1
@@ -425,7 +425,7 @@ echo "    $PYTHON_CMD manage.py runserver"
 echo ""
 echo "  终端 2 - 前端开发服务器:"
 echo "    cd $FRONT_DIR"
-echo "    pnpm dev"
+echo "    ut run dev"
 echo ""
 echo "访问地址："
 echo "  业务前台：http://127.0.0.1:8001"

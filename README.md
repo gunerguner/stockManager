@@ -89,9 +89,9 @@ You can export trades from your broker or another platform. My broker had no Mac
 
 1. Install Python (≥3.11), pip, git, and Redis.
 2. Install Python deps from `requirements.txt`.
-3. Install Node (≥20) and pnpm.
+3. Install Node (≥20) and utoo (`npm install -g utoo`).
 4. Clone: `https://github.com/gunerguner/stockManager`
-5. In `stockManager/front`, run `pnpm install` (**no** `pnpm run build` needed for dev).
+5. In `stockManager/front`, run `ut install` (**no** `ut run build` needed for dev).
 6. Create `.env` under `stockManager`: `cp stockManager/.env.example stockManager/.env`. Generate `DJANGO_SECRET_KEY` with:
    `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 7. Run `python manage.py makemigrations` and `python manage.py migrate` (or copy an existing SQLite file).
@@ -99,7 +99,7 @@ You can export trades from your broker or another platform. My broker had no Mac
 9. Start Redis: `redis-server`.
 10. **Two terminals:**
     - Terminal 1 (`stockManager`): `python manage.py runserver` → API & Admin on **8000**
-    - Terminal 2 (`front`): `pnpm dev` → app on **8001** (`/api/` proxied to 8000)
+    - Terminal 2 (`front`): `ut run dev` → app on **8001** (`/api/` proxied to 8000)
 
 - App: http://127.0.0.1:8001
 - Admin: http://127.0.0.1:8000/sys/admin/

@@ -31,7 +31,7 @@ stockManager/                 # Git 根
 | 层 | 技术 |
 |----|------|
 | 后端 | Python ≥3.11，Django **5.2**，Gunicorn（Docker） |
-| 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，pnpm，Node ≥20 |
+| 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
 | 行情 | `easyquotation` **tencent**（A 股实时）；`baostock`（除权除息） |
@@ -109,9 +109,9 @@ flowchart LR
 | 终端 | 命令 | 端口 |
 |------|------|------|
 | 后端 | `cd stockManager && python manage.py runserver` | **8000** |
-| 前端 | `cd stockManager/front && pnpm dev` | **8001**（代理 `/api` → 8000） |
+| 前端 | `cd stockManager/front && ut run dev` | **8001**（代理 `/api` → 8000） |
 
-需 Redis。`install.sh` **不**执行 `pnpm build`。
+需 Redis。`install.sh` **不**执行 `ut run build`。
 
 **环境变量**（`stockManager/stockManager/.env`）：`DJANGO_SECRET_KEY`、`DJANGO_DEBUG`、`REDIS_URL`。Docker 另见 `SQLITE_PATH`、`CSRF_TRUSTED_ORIGINS_EXTRA` 等（`docker/.env.example`）。
 
@@ -119,7 +119,7 @@ flowchart LR
 
 ## Docker 部署要点
 
-- 三服务：**redis**、**backend**（仅 API）、**frontend**（`pnpm build` + Nginx **8080**）
+- 三服务：**redis**、**backend**（仅 API）、**frontend**（`ut run build` + Nginx **8080**）
 - **仅 frontend 镜像**含 Umi 构建产物；只重建 backend **不会**更新页面
 - Nginx 反代 `/api/`、`/sys/admin/` 到 backend:8000
 - 与 carSales 同机部署时设 `COMPOSE_PROJECT_NAME=stockmanager`
@@ -141,12 +141,12 @@ Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
 
 ## 测试
 
-**无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/data` 分析 → 除权刷新 →（管理员）清缓存。前端可跑 `pnpm run lint`、`pnpm run type-check`。
+**无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/data` 分析 → 除权刷新 →（管理员）清缓存。前端可跑 `ut run lint`、`ut run type-check`。
 
 建议最小检查集（改动后至少执行其一）：
 
 1. 仅后端改动：`python manage.py check`
-2. 仅前端改动：`pnpm run type-check`
+2. 仅前端改动：`ut run type-check`
 3. API/计算改动：手动走通 `/list` + `/data` + `/api/clearCache`
 
 ## 编码约定
