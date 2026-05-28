@@ -44,6 +44,7 @@ class StockData(TypedDict):
     offsetCurrent: float
     offsetCurrentRatio: str
     offsetTotal: float
+    moneyWeightedReturn: str
     totalCost: float
     totalOffsetToday: float
     holdingDuration: int

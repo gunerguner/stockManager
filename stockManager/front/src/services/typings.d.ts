@@ -76,6 +76,7 @@ declare namespace API {
     offsetCurrent: number;
     offsetCurrentRatio: string;
     offsetTotal: number;
+    moneyWeightedReturn: string;
     totalOffsetToday: number;
     isNew: boolean;
     stockType: string;

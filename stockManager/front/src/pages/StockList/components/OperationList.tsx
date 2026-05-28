@@ -113,7 +113,11 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
       title: '累计盈亏',
       dataIndex: 'offsetTotal',
       sorter: (a, b) => a.offsetTotal - b.offsetTotal,
-      render: (v) => <div>{renderAmount(v)}</div>,
+      render: (_, r) => (
+        <div style={{ color: colorFromValue(r.offsetTotal) }}>
+          {`${r.offsetTotal.toFixed(2)} (${r.moneyWeightedReturn})`}
+        </div>
+      ),
     },
   ], [isMobile, data.overall.totalValue]);
 

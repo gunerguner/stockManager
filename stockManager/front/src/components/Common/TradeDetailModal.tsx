@@ -2,7 +2,7 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { colorFromValue, formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -29,23 +29,38 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 // ==================== 组件 ====================
 
 /** 股票信息（通用） */
-const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) =>
-  isMobile ? (
+const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
+  const infoItems = (
+    <>
+      <Text>现价：{formatPrice(stock.priceNow)} </Text>
+      <Text>持股：{stock.holdCount} </Text>
+      <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
+      <Text>
+        资金加权收益率：
+        <span
+          style={{
+            color: colorFromValue(parseFloat(stock.moneyWeightedReturn.replace('%', '')) || 0),
+          }}
+        >
+          {stock.moneyWeightedReturn}
+        </span>
+      </Text>
+    </>
+  );
+
+  return isMobile ? (
     <div className="modal-info-row">
       <Space size="small" wrap>
-        <Text>现价：{formatPrice(stock.priceNow)} </Text>
-        <Text>持股：{stock.holdCount} </Text>
-        <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
+        {infoItems}
       </Space>
     </div>
   ) : (
     <>
       <Divider orientation="vertical" />
-      <Text>现价：{formatPrice(stock.priceNow)} </Text>
-      <Text>持股：{stock.holdCount} </Text>
-      <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
+      {infoItems}
     </>
   );
+};
 
 /** 股票头部组件 */
 const StockHeader: React.FC<{

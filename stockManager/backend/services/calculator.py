@@ -10,7 +10,7 @@ from pyxirr import xirr
 from ..common import logger
 from ..common.constants import OperationType
 from ..common.types import StockData, OverallData, OperationDict, CashFlowList, RealtimePriceData
-from ..common.utils import format_percent
+from ..common.utils import format_percent, operation_sort_key
 from ..models import Operation, StockMeta as StockMetaModel
 from .stockMeta import StockMeta
 from .realtimePrice import RealtimePrice
@@ -134,9 +134,13 @@ class Calculator:
             current_offset_ratio * 100
         )  # 浮动盈亏率
 
-        to_return["offsetTotal"] = (
+        offset_total = (
             single_real_time["currentPrice"] * current_hold_count - current_overall
-        )  # 累计盈亏额
+        )
+        to_return["offsetTotal"] = offset_total  # 累计盈亏额
+        to_return["moneyWeightedReturn"] = cls._calculate_money_weighted_return(
+            operations, offset_total
+        )
 
         to_return["totalCost"] = total_fee  # 所有费用
 
@@ -271,6 +275,84 @@ class Calculator:
             'total_fee': total_fee,
             'holding_duration': total_holding_days,
         }
+
+    @staticmethod
+    def _apply_net_invested(
+        net_invested: float,
+        current_hold: float,
+        operation: Operation,
+    ) -> tuple[float, float]:
+        """按 overall_sum 规则更新净占用资金与持股数"""
+        op_type = operation.operationType
+        if op_type == OperationType.BUY:
+            net_invested += operation.count * operation.price + operation.fee
+            current_hold += operation.count
+        elif op_type == OperationType.SELL:
+            net_invested -= operation.count * operation.price - operation.fee
+            current_hold -= operation.count
+        elif op_type == OperationType.DIVIDEND:
+            dividend_multiplier = operation.reserve + operation.stock
+            net_invested -= current_hold * operation.cash
+            current_hold += current_hold * dividend_multiplier
+        return net_invested, current_hold
+
+    @classmethod
+    def _calculate_money_weighted_return(
+        cls,
+        operations: List[Operation],
+        offset_total: float,
+    ) -> str:
+        """资金加权累计收益率：offsetTotal / 加权平均占用资金"""
+        sorted_ops = sorted(operations, key=operation_sort_key)
+        if not sorted_ops:
+            return format_percent(0.0)
+
+        start_date = sorted_ops[0].date
+        today = datetime.date.today()
+
+        net_invested = 0.0
+        current_hold = 0.0
+        dollar_days = 0.0
+        holding_days = 0.0
+        peak_net_invested = 0.0
+        total_buy_amount = 0.0
+        seg_start = start_date
+
+        for operation in sorted_ops:
+            seg_days = (operation.date - seg_start).days
+            if seg_days > 0 and current_hold >= MIN_HOLD_COUNT_THRESHOLD:
+                dollar_days += max(net_invested, 0.0) * seg_days
+                holding_days += seg_days
+
+            net_invested, current_hold = cls._apply_net_invested(
+                net_invested, current_hold, operation
+            )
+            peak_net_invested = max(peak_net_invested, max(net_invested, 0.0))
+            if operation.operationType == OperationType.BUY:
+                total_buy_amount += operation.count * operation.price + operation.fee
+            seg_start = operation.date
+
+        if current_hold >= MIN_HOLD_COUNT_THRESHOLD:
+            effective_end = today
+        else:
+            effective_end = sorted_ops[-1].date
+
+        tail_days = (effective_end - seg_start).days
+        if tail_days > 0 and current_hold >= MIN_HOLD_COUNT_THRESHOLD:
+            dollar_days += max(net_invested, 0.0) * tail_days
+            holding_days += tail_days
+
+        total_holding_days = max(holding_days, 0.0)
+        if total_holding_days >= MIN_VALUE_THRESHOLD:
+            adjusted_begin = dollar_days / total_holding_days
+        else:
+            # 同日买卖等无有效持股天数：按权重 1，以峰值占用或买入总额直接结算
+            adjusted_begin = peak_net_invested
+            if adjusted_begin < MIN_VALUE_THRESHOLD:
+                adjusted_begin = total_buy_amount
+        if adjusted_begin < MIN_VALUE_THRESHOLD:
+            return format_percent(0.0)
+        return format_percent(offset_total / adjusted_begin)
     
     # ========== 整体计算 ==========
     
