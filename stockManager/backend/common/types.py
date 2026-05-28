@@ -1,5 +1,6 @@
 """类型定义模块"""
-from typing import TypedDict, List, Dict
+from typing import TypedDict
+
 from ..models import Operation
 
 
@@ -64,12 +65,12 @@ class OverallData(TypedDict):
     incomeCash: float
     originCash: float
     xirrAnnualized: str
-    cashFlowList: List[CashFlowData]
+    cashFlowList: list[CashFlowData]
 
 
 class CalculatedResult(TypedDict):
     """计算结果（不含 operationList，用于缓存）"""
-    stocks: List[StockData]
+    stocks: list[StockData]
     overall: OverallData
 
 
@@ -79,7 +80,7 @@ class DividendUpdateData(TypedDict):
     name: str
 
 
-OperationDict = Dict[str, List[Operation]]
-CashFlowList = List[CashFlowData]
-OperationDataDict = Dict[str, List[OperationData]]
-RealtimePriceDict = Dict[str, RealtimePriceData]
+OperationDict = dict[str, list[Operation]]
+CashFlowList = list[CashFlowData]
+OperationDataDict = dict[str, list[OperationData]]
+RealtimePriceDict = dict[str, RealtimePriceData]

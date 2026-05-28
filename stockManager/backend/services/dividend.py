@@ -2,7 +2,6 @@
 分红服务模块
 提供股票分红数据查询和处理功能
 """
-from typing import List
 import datetime
 
 import baostock as bs
@@ -20,7 +19,7 @@ class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
     
     @classmethod
-    def generate_dividend(cls, user: User, operation_list: OperationDict) -> List[DividendUpdateData]:
+    def generate_dividend(cls, user: User, operation_list: OperationDict) -> list[DividendUpdateData]:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
         updated_codes = []
@@ -43,7 +42,7 @@ class Dividend:
         return updated_codes
     
     @classmethod
-    def _generate_dividend_single(cls, user: User, code: str, operations: List[Operation]) -> str:
+    def _generate_dividend_single(cls, user: User, code: str, operations: list[Operation]) -> str:
         """生成个股除权除息信息"""
         if not operations:
             return ""

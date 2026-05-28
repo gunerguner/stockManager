@@ -1,5 +1,5 @@
 """交易日历工具模块"""
-from typing import ClassVar, Optional
+from typing import ClassVar
 from datetime import datetime, timedelta
 import pytz
 from exchange_calendars import get_calendar, ExchangeCalendar
@@ -9,7 +9,7 @@ TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
 
 class TradingCalendar:
     """交易日历工具类"""
-    _calendar: ClassVar[Optional[ExchangeCalendar]] = None
+    _calendar: ClassVar[ExchangeCalendar | None] = None
     
     @classmethod
     def get_calendar(cls) -> ExchangeCalendar:

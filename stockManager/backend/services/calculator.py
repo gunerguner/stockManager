@@ -3,7 +3,7 @@
 提供股票指标计算功能，包括单股指标和整体指标计算
 """
 import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pyxirr import xirr
 
@@ -31,24 +31,25 @@ class Calculator:
     # ========== 公共接口 ==========
     
     @classmethod
-    def calculate_stock_list(cls, operation_list: OperationDict) -> List[StockData]:
+    def calculate_stock_list(cls, operation_list: OperationDict) -> list[StockData]:
         """
         从原始 operation_list 计算每只股票的指标，返回 stock_list。
         stock_list 中不含 operationList 字段，便于缓存。
         """
-        code_list = list(operation_list.keys())
-        realtime_price_list = RealtimePrice.query(code_list)
-        # 预取一次全量 meta dict，再按 code 取单条传入，避免每只股票都触发字典重建
+        realtime_price_list = RealtimePrice.query(list(operation_list))
         stock_meta_dict = StockMeta.get_all()
         return [
             cls._calculate_single_target(
-                code, operation_list[code], realtime_price_list.get(code), stock_meta_dict.get(code)
+                code,
+                operations,
+                realtime_price_list.get(code),
+                stock_meta_dict.get(code),
             )
-            for code in operation_list.keys()
+            for code, operations in operation_list.items()
         ]
     
     @classmethod
-    def calculate_overall(cls, stock_list: List[StockData], income_cash: float = 0.0, cash_flow_list: Optional[CashFlowList] = None) -> OverallData:
+    def calculate_overall(cls, stock_list: list[StockData], income_cash: float = 0.0, cash_flow_list: CashFlowList | None = None) -> OverallData:
         """从 stock_list、income_cash、cash_flow_list 计算整体指标"""
         return cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
     
@@ -58,7 +59,7 @@ class Calculator:
     def _resolve_stock_name(
         code: str,
         single_real_time: RealtimePriceData,
-        stock_meta: Optional[StockMetaModel] = None,
+        stock_meta: StockMetaModel | None = None,
     ) -> str:
         """优先展示实时接口名称，其次回退 StockMeta 名称。"""
         realtime_name = (single_real_time.get("name") or "").strip()
@@ -72,9 +73,9 @@ class Calculator:
     def _calculate_single_target(
         cls,
         code: str,
-        operations: List[Operation],
-        single_real_time: Optional[RealtimePriceData],
-        stock_meta: Optional[StockMetaModel] = None,
+        operations: list[Operation],
+        single_real_time: RealtimePriceData | None,
+        stock_meta: StockMetaModel | None = None,
     ) -> StockData:
         """计算单个股票的指标"""
         to_return = {}
@@ -163,7 +164,7 @@ class Calculator:
         return to_return
     
     @classmethod
-    def _calculate_single_metrics_optimized(cls, single_operation_list: List[Operation]) -> Dict[str, Any]:
+    def _calculate_single_metrics_optimized(cls, single_operation_list: list[Operation]) -> dict[str, Any]:
         """一次遍历计算所有指标"""
         today = datetime.date.today()
         
@@ -283,23 +284,23 @@ class Calculator:
         operation: Operation,
     ) -> tuple[float, float]:
         """按 overall_sum 规则更新净占用资金与持股数"""
-        op_type = operation.operationType
-        if op_type == OperationType.BUY:
-            net_invested += operation.count * operation.price + operation.fee
-            current_hold += operation.count
-        elif op_type == OperationType.SELL:
-            net_invested -= operation.count * operation.price - operation.fee
-            current_hold -= operation.count
-        elif op_type == OperationType.DIVIDEND:
-            dividend_multiplier = operation.reserve + operation.stock
-            net_invested -= current_hold * operation.cash
-            current_hold += current_hold * dividend_multiplier
+        match operation.operationType:
+            case OperationType.BUY:
+                net_invested += operation.count * operation.price + operation.fee
+                current_hold += operation.count
+            case OperationType.SELL:
+                net_invested -= operation.count * operation.price - operation.fee
+                current_hold -= operation.count
+            case OperationType.DIVIDEND:
+                dividend_multiplier = operation.reserve + operation.stock
+                net_invested -= current_hold * operation.cash
+                current_hold += current_hold * dividend_multiplier
         return net_invested, current_hold
 
     @classmethod
     def _calculate_money_weighted_return(
         cls,
-        operations: List[Operation],
+        operations: list[Operation],
         offset_total: float,
     ) -> str:
         """资金加权累计收益率：offsetTotal / 加权平均占用资金"""
@@ -363,24 +364,22 @@ class Calculator:
             return 0.0
         
         try:
-            dates = []
-            amounts = []
-            # 将所有现金流记录添加到列表中
-            # 入金为负（投出去），出金为正（收回来）
-            for flow in cash_flow_list:
-                amount = flow.get('amount', 0)
-                if amount == 0:
-                    continue
-                
-                date_str = flow.get('date')
-                date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date() if isinstance(date_str, str) else date_str
-                
-                dates.append(date_obj)
-                amounts.append(float(-amount))
-            
-            if not dates:
+            pairs = [
+                (
+                    datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                    if isinstance(date_str, str)
+                    else date_str,
+                    float(-amount),
+                )
+                for flow in cash_flow_list
+                if (amount := flow.get('amount', 0))
+                and (date_str := flow.get('date'))
+            ]
+
+            if not pairs:
                 return 0.0
-            
+
+            dates, amounts = map(list, zip(*pairs))
             dates.append(datetime.date.today())
             amounts.append(float(total_asset))
             
@@ -395,7 +394,7 @@ class Calculator:
             return 0.0
     
     @classmethod
-    def _calculate_overall_target(cls, single_target_list: List[StockData], income_cash: float, cash_flow_list: CashFlowList) -> OverallData:
+    def _calculate_overall_target(cls, single_target_list: list[StockData], income_cash: float, cash_flow_list: CashFlowList) -> OverallData:
         """计算整体指标"""
         to_return = {}
 

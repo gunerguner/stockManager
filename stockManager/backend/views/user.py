@@ -53,12 +53,13 @@ def logout(request: HttpRequest) -> JsonResponse:
 def currentUser(request: HttpRequest) -> JsonResponse:
     """获取当前登录用户信息"""
     user = request.user
-    if user.is_superuser:
-        access = "admin"
-    elif user.is_staff:
-        access = "staff"
-    else:
-        access = ""
+    match (user.is_superuser, user.is_staff):
+        case (True, _):
+            access = "admin"
+        case (_, True):
+            access = "staff"
+        case _:
+            access = ""
     
     user_info = {
         "username": user.username,

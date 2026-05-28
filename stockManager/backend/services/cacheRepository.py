@@ -1,7 +1,6 @@
 """缓存仓库层"""
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from django.core.cache import cache
 from django.contrib.auth.models import User
@@ -50,9 +49,8 @@ class CacheRepository:
     
     @classmethod
     def _serialize_operations(cls, operations: OperationDict) -> str:
-        data = {}
-        for code, op_list in operations.items():
-            data[code] = [
+        return json.dumps({
+            code: [
                 {
                     'id': op.id,
                     'date': str(op.date),
@@ -68,46 +66,44 @@ class CacheRepository:
                 }
                 for op in op_list
             ]
-        return json.dumps(data)
+            for code, op_list in operations.items()
+        })
     
+    @classmethod
+    def _operation_from_cache(cls, code: str, op_data: dict, user_id: int) -> Operation:
+        op = Operation.__new__(Operation)
+
+        state = ModelState()
+        state.adding = False
+        state.db = 'default'
+
+        op._state = state
+        op.id = op_data['id']
+        op.user_id = user_id
+        op.code = code
+        op.date = datetime.strptime(op_data['date'], '%Y-%m-%d').date()
+        op.sortOrder = op_data.get('sortOrder', 0)
+        op.operationType = op_data['operationType']
+        op.price = op_data['price']
+        op.count = op_data['count']
+        op.fee = op_data['fee']
+        op.comment = op_data['comment']
+        op.cash = op_data['cash']
+        op.stock = op_data['stock']
+        op.reserve = op_data['reserve']
+        return op
+
     @classmethod
     def _deserialize_operations(cls, data: str, user: User) -> OperationDict:
         operations_dict = json.loads(data)
-        result = {}
-        
         user_id = user.id
-        
-        for code, op_list in operations_dict.items():
-            operations = []
-            for op_data in op_list:
-                op = Operation.__new__(Operation)
-
-                state = ModelState()
-                state.adding = False
-                state.db = 'default'
-                
-                op._state = state
-                op.id = op_data['id']
-                op.user_id = user_id
-                op.code = code
-                op.date = datetime.strptime(op_data['date'], '%Y-%m-%d').date()
-                op.sortOrder = op_data.get('sortOrder', 0)
-                op.operationType = op_data['operationType']
-                op.price = op_data['price']
-                op.count = op_data['count']
-                op.fee = op_data['fee']
-                op.comment = op_data['comment']
-                op.cash = op_data['cash']
-                op.stock = op_data['stock']
-                op.reserve = op_data['reserve']
-                
-                operations.append(op)
-            result[code] = operations
-        
-        return result
+        return {
+            code: [cls._operation_from_cache(code, op_data, user_id) for op_data in op_list]
+            for code, op_list in operations_dict.items()
+        }
     
     @classmethod
-    def _get_user_operations_cache(cls, user: User) -> Optional[OperationDict]:
+    def _get_user_operations_cache(cls, user: User) -> OperationDict | None:
         key = cls.KEY_USER_OPERATIONS.format(user_id=user.id)
         data = cache.get(key)
         return cls._deserialize_operations(data, user) if data else None
@@ -123,7 +119,7 @@ class CacheRepository:
         cache.delete(cls.KEY_USER_OPERATIONS.format(user_id=user_id))
     
     @classmethod
-    def _get_user_cash_info_cache(cls, user: User) -> Optional[tuple]:
+    def _get_user_cash_info_cache(cls, user: User) -> tuple | None:
         key = cls.KEY_USER_CASH_INFO.format(user_id=user.id)
         data = cache.get(key)
         return (data['income_cash'], data['cash_flow_list']) if data else None
@@ -142,7 +138,7 @@ class CacheRepository:
     
 
     @classmethod
-    def get_calculated_target(cls, user: User) -> Optional[CalculatedResult]:
+    def get_calculated_target(cls, user: User) -> CalculatedResult | None:
         if cls._should_refresh_cache():
             return None
         return cache.get(cls.KEY_CALCULATED_TARGET.format(user_id=user.id))
@@ -164,11 +160,11 @@ class CacheRepository:
             logger.info(f"[Redis] 价格更新，清除 {deleted_count} 个用户的计算结果缓存")
     
     @classmethod
-    def _get_stock_meta_all_cache(cls) -> Optional[Dict]:
+    def _get_stock_meta_all_cache(cls) -> dict | None:
         return cache.get(cls.KEY_STOCK_META_ALL)
     
     @classmethod
-    def _set_stock_meta_all_cache(cls, meta_dict: Dict) -> None:
+    def _set_stock_meta_all_cache(cls, meta_dict: dict) -> None:
         cache.set(
             cls.KEY_STOCK_META_ALL,
             {code: {'code': meta.code, 'name': meta.name, 'isNew': meta.isNew, 'stockType': meta.stockType}
@@ -189,11 +185,11 @@ class CacheRepository:
         cache.set(cls.KEY_STOCK_NAME_SYNC_MARK, True, cls.TTL_STOCK_NAME_SYNC)
     
     @classmethod
-    def get_stock_price(cls, code: str) -> Optional[Dict]:
+    def get_stock_price(cls, code: str) -> dict | None:
         return cache.get(cls.KEY_STOCK_PRICE.format(code=code))
     
     @classmethod
-    def get_stock_prices_batch(cls, code_list: List[str]) -> Dict[str, Optional[Dict]]:
+    def get_stock_prices_batch(cls, code_list: list[str]) -> dict[str, dict | None]:
         if not code_list:
             return {}
         try:
@@ -205,11 +201,11 @@ class CacheRepository:
             return {code: cls.get_stock_price(code) for code in code_list}
     
     @classmethod
-    def set_stock_price(cls, code: str, price_data: Dict) -> None:
+    def set_stock_price(cls, code: str, price_data: dict) -> None:
         cache.set(cls.KEY_STOCK_PRICE.format(code=code), price_data, cls.TTL_STOCK_PRICE)
     
     @classmethod
-    def get_stock_price_timestamp(cls) -> Optional[str]:
+    def get_stock_price_timestamp(cls) -> str | None:
         return cache.get(cls.KEY_STOCK_PRICE_TIMESTAMP)
     
     @classmethod
@@ -218,7 +214,7 @@ class CacheRepository:
         cls.clear_all_calculated_targets()
 
     @classmethod
-    def get_stock_prices_with_cache(cls, code_list: List[str]) -> tuple[Dict[str, Dict], List[str]]:
+    def get_stock_prices_with_cache(cls, code_list: list[str]) -> tuple[dict[str, dict], list[str]]:
         if not code_list:
             return {}, []
         
@@ -226,20 +222,16 @@ class CacheRepository:
             return {}, code_list.copy()
         
         batch_result = cls.get_stock_prices_batch(code_list)
-        cached_result = {}
-        missing_codes = []
-        
-        for code in code_list:
-            price_data = batch_result.get(code)
-            if price_data:
-                cached_result[code] = price_data
-            else:
-                missing_codes.append(code)
-        
+        cached_result = {
+            code: price_data
+            for code in code_list
+            if (price_data := batch_result.get(code))
+        }
+        missing_codes = [code for code in code_list if code not in cached_result]
         return cached_result, missing_codes
     
     @classmethod
-    def set_stock_prices_batch(cls, prices: Dict[str, Dict], timestamp: Optional[str] = None) -> None:
+    def set_stock_prices_batch(cls, prices: dict[str, dict], timestamp: str | None = None) -> None:
         if not prices:
             return
 
@@ -277,7 +269,7 @@ class CacheRepository:
         return income_cash, cash_flow_list
     
     @classmethod
-    def get_stock_meta_dict(cls) -> Dict[str, StockMetaModel]:
+    def get_stock_meta_dict(cls) -> dict[str, StockMetaModel]:
         cached_data = cls._get_stock_meta_all_cache()
         if cached_data:
             return {

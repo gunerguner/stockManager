@@ -1,5 +1,4 @@
 """股票实时价格查询服务模块"""
-from typing import List
 
 from easyquotation import use as eq_use
 
@@ -21,11 +20,24 @@ def _get_tencent_quotation():
     return _tencent_quotation
 
 
+def _build_realtime_price(stock_data: dict) -> RealtimePriceData:
+    current_price = stock_data.get('now', 0.0)
+    yesterday_close = stock_data.get('close', 0.0)
+    price_offset = current_price - yesterday_close
+    return RealtimePriceData({
+        "name": stock_data.get('name', ''),
+        "currentPrice": current_price,
+        "priceOffset": price_offset,
+        "offsetRatio": format_percent(price_offset / yesterday_close) if yesterday_close != 0 else "0%",
+        "yesterdayClose": yesterday_close,
+    })
+
+
 class RealtimePrice:
     """股票实时价格查询服务"""
 
     @classmethod
-    def query(cls, code_list: List[str]) -> RealtimePriceDict:
+    def query(cls, code_list: list[str]) -> RealtimePriceDict:
         """查询股票实时价格"""
         if not code_list:
             return {}
@@ -42,7 +54,7 @@ class RealtimePrice:
         return result
 
     @classmethod
-    def fetch_from_api(cls, code_list: List[str], sync_names: bool = True) -> RealtimePriceDict:
+    def fetch_from_api(cls, code_list: list[str], sync_names: bool = True) -> RealtimePriceDict:
         """从 API 获取股票价格（使用 easyquotation）"""
         if not code_list:
             return {}
@@ -51,20 +63,10 @@ class RealtimePrice:
             tencent = _get_tencent_quotation()
             # 使用 prefix=True 使返回的 key 也带前缀（如 sh600519）
             raw_data = tencent.real(code_list, prefix=True)
-
-            result = {}
-            for code, stock_data in raw_data.items():
-                current_price = stock_data.get('now', 0.0)
-                yesterday_close = stock_data.get('close', 0.0)
-                price_offset = current_price - yesterday_close
-
-                result[code] = RealtimePriceData({
-                    "name": stock_data.get('name', ''),
-                    "currentPrice": current_price,
-                    "priceOffset": price_offset,
-                    "offsetRatio": format_percent(price_offset / yesterday_close) if yesterday_close != 0 else "0%",
-                    "yesterdayClose": yesterday_close
-                })
+            result = {
+                code: _build_realtime_price(stock_data)
+                for code, stock_data in raw_data.items()
+            }
 
             if sync_names:
                 StockNameSync.sync_from_realtime(result)

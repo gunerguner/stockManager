@@ -3,7 +3,7 @@
 
 集成服务(外观模式)，提供统一的业务入口，协调各个领域服务完成业务逻辑。
 """
-from typing import List, Any
+from typing import Any
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
 
@@ -50,7 +50,7 @@ class Integrate:
         return result
     
     @classmethod
-    def generate_dividend(cls, user: User) -> List[DividendUpdateData]:
+    def generate_dividend(cls, user: User) -> list[DividendUpdateData]:
         """生成股票分红数据"""
         operation_list = CacheRepository.get_user_operations(user)
         # 直接调用分红服务

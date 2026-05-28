@@ -4,7 +4,6 @@
 """
 import functools
 import json
-from typing import List
 from .constants import ResponseStatus
 from .middleware import json_response, get_client_ip
 
@@ -153,7 +152,16 @@ def parse_json_body(view_func):
     return wrapper
 
 
-def validate_required_fields(required_fields: List[str]):
+def _is_missing_field(field: str, data: dict) -> bool:
+    if field not in data:
+        return True
+    value = data.get(field)
+    if value is None:
+        return True
+    return isinstance(value, str) and value.strip() == ''
+
+
+def validate_required_fields(required_fields: list[str]):
     """
     装饰器工厂：验证必填字段
     
@@ -169,19 +177,7 @@ def validate_required_fields(required_fields: List[str]):
     def decorator(view_func):
         @functools.wraps(view_func)
         def wrapper(request, data, *args, **kwargs):
-            missing_fields = []
-            for field in required_fields:
-                if field not in data:
-                    missing_fields.append(field)
-                    continue
-
-                value = data.get(field)
-                if value is None:
-                    missing_fields.append(field)
-                    continue
-
-                if isinstance(value, str) and value.strip() == '':
-                    missing_fields.append(field)
+            missing_fields = [field for field in required_fields if _is_missing_field(field, data)]
 
             if missing_fields:
                 return json_response(

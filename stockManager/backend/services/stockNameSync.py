@@ -1,5 +1,4 @@
 """股票名称同步服务。"""
-from typing import Dict
 from ..common import logger
 from ..common.types import RealtimePriceDict
 from ..models import StockMeta as StockMetaModel
@@ -17,11 +16,11 @@ class StockNameSync:
         if CacheRepository.has_stock_name_synced():
             return 0
 
-        name_map: Dict[str, str] = {}
-        for code, price_data in prices.items():
-            name = (price_data.get("name") or "").strip()
-            if name:
-                name_map[code] = name
+        name_map = {
+            code: name
+            for code, price_data in prices.items()
+            if (name := (price_data.get("name") or "").strip())
+        }
 
         if not name_map:
             return 0

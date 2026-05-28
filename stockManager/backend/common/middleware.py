@@ -1,10 +1,10 @@
 """中间件工具模块"""
-from typing import Optional, Any
+from typing import Any
 from django.http import JsonResponse, HttpRequest
 from .constants import ResponseStatus
 
 
-def json_response(status: ResponseStatus, message: Optional[str] = None, data: Optional[Any] = None, **kwargs) -> JsonResponse:
+def json_response(status: ResponseStatus, message: str | None = None, data: Any | None = None, **kwargs) -> JsonResponse:
     """统一的JSON响应格式"""
     response_data = {"status": status}
 

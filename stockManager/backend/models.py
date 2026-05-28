@@ -1,7 +1,8 @@
-from typing import Dict, Any
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from .common.constants import OperationType
 
 
 class Operation(models.Model):
@@ -38,33 +39,32 @@ class Operation(models.Model):
     def __str__(self) -> str:
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         def format_price(value: float) -> str:
             """格式化价格：如果第三位小数非 0 则保留 3 位，否则保留 2 位"""
             fixed3 = f"{value:.3f}"
             return fixed3[:-1] if fixed3.endswith('0') else fixed3
 
-        data = {}
-        data["date"] = str(self.date)
-        data["type"] = self.operationType
-        data["price"] = self.price
-        data["count"] = self.count
-        data["fee"] = self.fee
-        if self.operationType == "BUY" or self.operationType == "SELL":
-            data["sum"] = self.price * self.count
-        elif self.operationType == "DV":
-            data["sum"] = self.cash * self.count
-
-        if self.operationType == "DV":
-            comment = ""
-            if self.cash > 0.0:
-                comment += "每10股股息" + format_price(self.cash * 10)
-            if self.reserve > 0.0:
-                comment += ",每10股转增" + format_price(self.reserve * 10)
-            if self.stock > 0.0:
-                comment += ",每10股送股" + format_price(self.stock * 10)
-
-            data["comment"] = comment
+        data = {
+            "date": str(self.date),
+            "type": self.operationType,
+            "price": self.price,
+            "count": self.count,
+            "fee": self.fee,
+        }
+        match self.operationType:
+            case OperationType.BUY | OperationType.SELL:
+                data["sum"] = self.price * self.count
+            case OperationType.DIVIDEND:
+                data["sum"] = self.cash * self.count
+                parts = []
+                if self.cash > 0.0:
+                    parts.append("每10股股息" + format_price(self.cash * 10))
+                if self.reserve > 0.0:
+                    parts.append("每10股转增" + format_price(self.reserve * 10))
+                if self.stock > 0.0:
+                    parts.append("每10股送股" + format_price(self.stock * 10))
+                data["comment"] = ", ".join(parts)
         return data
 
 

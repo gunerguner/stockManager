@@ -1,5 +1,5 @@
 """底层缓存工具类"""
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from django.core.cache import cache
 from django_redis import get_redis_connection
@@ -19,7 +19,7 @@ class Cache:
         return cache.make_key('', version=version) + pattern
 
     @staticmethod
-    def get_many(keys: List[str]) -> Dict[str, Optional[Any]]:
+    def get_many(keys: list[str]) -> dict[str, Any | None]:
         """批量获取缓存；keys 为逻辑 key（不含 KEY_PREFIX/VERSION）"""
         if not keys:
             return {}
@@ -31,16 +31,15 @@ class Cache:
             client = cache.client
             values = redis_client.mget(full_keys)
 
-            result = {}
-            for logical_key, raw in zip(keys, values):
-                result[logical_key] = client.decode(raw) if raw is not None else None
-
-            return result
+            return {
+                logical_key: client.decode(raw) if raw is not None else None
+                for logical_key, raw in zip(keys, values)
+            }
         except Exception:
             return {key: cache.get(key) for key in keys}
 
     @staticmethod
-    def set_many(mapping: Dict[str, Any], timeout: int = None) -> None:
+    def set_many(mapping: dict[str, Any], timeout: int = None) -> None:
         """批量设置缓存；mapping 的 key 为逻辑 key，序列化/前缀与 cache.set 一致"""
         if not mapping:
             return
