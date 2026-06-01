@@ -3,6 +3,7 @@
 from easyquotation import use as eq_use
 
 from ...common import logger
+from ...common.market import hk_api_code, split_codes_by_market
 from ...common.types import RealtimePriceData, RealtimePriceDict
 from ...common.utils import format_percent
 from ..cache import CacheRepository
@@ -94,8 +95,7 @@ class RealtimePrice:
         if not code_list:
             return {}
 
-        cn_codes = [c for c in code_list if not c.lower().startswith('hk')]
-        hk_codes = [c for c in code_list if c.lower().startswith('hk')]
+        cn_codes, hk_codes = split_codes_by_market(code_list)
         result: RealtimePriceDict = {}
 
         if cn_codes:
@@ -124,12 +124,11 @@ class RealtimePrice:
     def _fetch_hk(cls, code_list: list[str]) -> RealtimePriceDict:
         try:
             hkquote = _get_hk_quotation()
-            # hk00700 -> 00700
-            api_codes = [c[2:] if c.lower().startswith('hk') else c for c in code_list]
+            api_codes = [hk_api_code(code) for code in code_list]
             raw_data = hkquote.real(api_codes)
             result: RealtimePriceDict = {}
             for code in code_list:
-                api_code = code[2:] if code.lower().startswith('hk') else code
+                api_code = hk_api_code(code)
                 stock_data = raw_data.get(api_code)
                 if stock_data:
                     result[code] = _build_hk_realtime_price(stock_data)
