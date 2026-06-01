@@ -20,6 +20,10 @@ type StatisticItemConfig = {
   title: string;
   showColor?: boolean;
   isMain?: boolean;
+  /** 自定义数值展示，默认两位小数 */
+  format?: (value: number) => string;
+  /** 返回 false 时不渲染该项 */
+  when?: (data: API.Overall) => boolean;
 };
 
 // ==================== 配置 ====================
@@ -39,6 +43,12 @@ const EXPANDED_STATISTICS: StatisticItemConfig[] = [
   { key: 'totalCash', title: '现金' },
   { key: 'incomeCash', title: '其它现金收入' },
   { key: 'originCash', title: '总入金' },
+  {
+    key: 'hkdCnyRate',
+    title: '港币汇率 (HKD/CNY)',
+    format: (v) => v.toFixed(4),
+    when: (d) => d.hkdCnyRate != null && d.hkdCnyRate > 0,
+  },
 ];
 
 // ==================== 子组件 ====================
@@ -137,37 +147,42 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
   };
 
   /** 格式化数值为字符串 */
-  const formatValue = (rawValue: string | number | API.CashFlowRecord[] | undefined): { value: string; numericValue: number } => {
+  const formatValue = (
+    rawValue: string | number | API.CashFlowRecord[] | undefined,
+    format?: (value: number) => string,
+  ): { value: string; numericValue: number } => {
     if (typeof rawValue === 'string') {
-      // 已经是字符串（如百分比），提取数值用于颜色判断
       const numericValue = parseFloat(rawValue.replace('%', '')) || 0;
       return { value: rawValue, numericValue };
     }
     if (typeof rawValue === 'number') {
-      // 数字类型，格式化为两位小数的字符串
-      return { value: rawValue.toFixed(2), numericValue: rawValue };
+      return {
+        value: format ? format(rawValue) : rawValue.toFixed(2),
+        numericValue: rawValue,
+      };
     }
-    // 其他类型（如数组）或 undefined，返回默认值
     return { value: '0.00', numericValue: 0 };
   };
 
   /** 渲染统计项列表 */
   const renderStatistics = (configs: StatisticItemConfig[]) =>
-    configs.map(({ key, showColor, isMain, title }) => {
-      const { value, numericValue } = formatValue(data[key]);
-      
-      return (
-        <StatisticItem
-          key={key}
-          title={title}
-          value={value}
-          numericValue={showColor ? numericValue : undefined}
-          showColor={showColor}
-          isMain={isMain}
-          onClick={clickHandlers[key]}
-        />
-      );
-    });
+    configs
+      .filter(({ when }) => !when || when(data))
+      .map(({ key, showColor, isMain, title, format }) => {
+        const { value, numericValue } = formatValue(data[key], format);
+
+        return (
+          <StatisticItem
+            key={key}
+            title={title}
+            value={value}
+            numericValue={showColor ? numericValue : undefined}
+            showColor={showColor}
+            isMain={isMain}
+            onClick={clickHandlers[key]}
+          />
+        );
+      });
 
   return (
     <div className="overall-board-wrapper">
@@ -179,7 +194,11 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
         </Divider>
       </div>
 
-      {isExpanded && <Row gutter={[16, 16]} style={{ marginTop: isMobile ? 16 : 24 }}>{renderStatistics(EXPANDED_STATISTICS)}</Row>}
+      {isExpanded && (
+        <Row gutter={[16, 16]} style={{ marginTop: isMobile ? 16 : 24 }}>
+          {renderStatistics(EXPANDED_STATISTICS)}
+        </Row>
+      )}
     </div>
   );
 };

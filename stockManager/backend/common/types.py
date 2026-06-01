@@ -53,7 +53,19 @@ class StockData(TypedDict):
     isNew: bool
 
 
-class OverallData(TypedDict):
+class MarketStatusData(TypedDict, total=False):
+    """单市场状态元数据"""
+    inTradingHours: bool
+    priceUpdatedAt: str | None
+
+
+class MarketsData(TypedDict, total=False):
+    """分市场元数据"""
+    cn: MarketStatusData
+    hk: MarketStatusData
+
+
+class OverallData(TypedDict, total=False):
     """整体指标"""
     offsetCurrent: float
     offsetTotal: float
@@ -66,12 +78,14 @@ class OverallData(TypedDict):
     originCash: float
     xirrAnnualized: str
     cashFlowList: list[CashFlowData]
+    hkdCnyRate: float
 
 
 class CalculatedResult(TypedDict):
     """计算结果（不含 operationList，用于缓存）"""
     stocks: list[StockData]
     overall: OverallData
+    markets: MarketsData
 
 
 class DividendUpdateData(TypedDict):

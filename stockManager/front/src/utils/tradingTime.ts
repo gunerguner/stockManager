@@ -1,10 +1,12 @@
 /**
- * 交易时间工具函数
+ * 交易时间工具函数（A 股 / 港股）
  */
 
 import { isHoliday } from 'chinese-days';
 
 // ==================== 类型定义 ====================
+
+export type MarketId = 'cn' | 'hk';
 
 export type TradingTimeStatus = {
   isTrading: boolean;
@@ -13,17 +15,25 @@ export type TradingTimeStatus = {
 
 // ==================== 配置 ====================
 
-/** 交易时间关键节点（分钟数） */
-const MORNING_OPEN = 9 * 60 + 30;   // 9:30 上午开盘
-const MORNING_CLOSE = 11 * 60 + 30; // 11:30 上午收盘
-const AFTERNOON_OPEN = 13 * 60;     // 13:00 下午开盘
-const AFTERNOON_CLOSE = 15 * 60;    // 15:00 下午收盘
+const MARKET_LABEL: Record<MarketId, string> = {
+  cn: 'A股',
+  hk: '港股',
+};
 
-/** 交易时间段 */
-const TRADING_PERIODS = [
-  { start: MORNING_OPEN, end: MORNING_CLOSE },
-  { start: AFTERNOON_OPEN, end: AFTERNOON_CLOSE },
+const CN_TRADING_PERIODS = [
+  { start: 9 * 60 + 30, end: 11 * 60 + 30 },
+  { start: 13 * 60, end: 15 * 60 },
 ] as const;
+
+const HK_TRADING_PERIODS = [
+  { start: 9 * 60 + 30, end: 12 * 60 },
+  { start: 13 * 60, end: 16 * 60 },
+] as const;
+
+const MARKET_PERIODS: Record<MarketId, readonly { start: number; end: number }[]> = {
+  cn: CN_TRADING_PERIODS,
+  hk: HK_TRADING_PERIODS,
+};
 
 // ==================== 内部工具函数 ====================
 
@@ -41,9 +51,9 @@ const isTradingDay = (date: Date) => {
   return day !== 0 && day !== 6 && !isHoliday(date);
 };
 
-const isTradingTime = (date: Date) => {
+const isTradingTime = (date: Date, market: MarketId) => {
   const minutes = toMinutes(date);
-  return TRADING_PERIODS.some(({ start, end }) => minutes >= start && minutes < end);
+  return MARKET_PERIODS[market].some(({ start, end }) => minutes >= start && minutes < end);
 };
 
 const diffMinutes = (date1: Date, date2: Date) =>
@@ -65,33 +75,41 @@ const formatMinutes = (minutes: number): string => {
   return parts.filter(Boolean).join(' ');
 };
 
-// ==================== 导出函数 ====================
+const getStatusForMarket = (market: MarketId, currentTime = new Date()): TradingTimeStatus => {
+  const periods = MARKET_PERIODS[market];
+  const morningOpen = periods[0].start;
+  const morningClose = periods[0].end;
+  const afternoonOpen = periods[1].start;
+  const afternoonClose = periods[1].end;
 
-export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatus => {
   const currentMinutes = toMinutes(currentTime);
   const isTodayTradingDay = isTradingDay(currentTime);
-  const isTrading = isTodayTradingDay && isTradingTime(currentTime);
+  const isTrading = isTodayTradingDay && isTradingTime(currentTime, market);
 
   if (isTrading) {
-    const closeMinutes = currentMinutes < MORNING_CLOSE ? MORNING_CLOSE : AFTERNOON_CLOSE;
+    const closeMinutes = currentMinutes < morningClose ? morningClose : afternoonClose;
     const minutesToClose = closeMinutes - currentMinutes;
     return {
       isTrading: true,
-      message: `距收盘 ${formatMinutes(minutesToClose)}`,
+      message: `${MARKET_LABEL[market]} 距收盘 ${formatMinutes(minutesToClose)}`,
     };
   }
 
   let openMinutes: number;
   let openDate: Date;
 
-  if (isTodayTradingDay && currentMinutes < MORNING_OPEN) {
-    openMinutes = MORNING_OPEN;
+  if (isTodayTradingDay && currentMinutes < morningOpen) {
+    openMinutes = morningOpen;
     openDate = currentTime;
-  } else if (isTodayTradingDay && currentMinutes >= MORNING_CLOSE && currentMinutes < AFTERNOON_OPEN) {
-    openMinutes = AFTERNOON_OPEN;
+  } else if (
+    isTodayTradingDay &&
+    currentMinutes >= morningClose &&
+    currentMinutes < afternoonOpen
+  ) {
+    openMinutes = afternoonOpen;
     openDate = currentTime;
   } else {
-    openMinutes = MORNING_OPEN;
+    openMinutes = morningOpen;
     openDate = createDateWithMinutes(currentTime, 0, 1);
     while (!isTradingDay(openDate)) {
       openDate.setDate(openDate.getDate() + 1);
@@ -101,6 +119,16 @@ export const getTradingTimeStatus = (currentTime = new Date()): TradingTimeStatu
   const minutesToOpen = diffMinutes(createDateWithMinutes(openDate, openMinutes), currentTime);
   return {
     isTrading: false,
-    message: `距开盘 ${formatMinutes(minutesToOpen)}`,
+    message: `${MARKET_LABEL[market]} 距开盘 ${formatMinutes(minutesToOpen)}`,
   };
 };
+
+// ==================== 导出函数 ====================
+
+export const getTradingTimeStatus = (
+  market: MarketId = 'cn',
+  currentTime = new Date(),
+): TradingTimeStatus => getStatusForMarket(market, currentTime);
+
+export const getAllTradingTimeStatuses = (currentTime = new Date()): TradingTimeStatus[] =>
+  (['cn', 'hk'] as MarketId[]).map((m) => getTradingTimeStatus(m, currentTime));

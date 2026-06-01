@@ -28,6 +28,8 @@ class Dividend:
         try:
             bs.login()
             for code in holding_stocks:
+                if code.lower().startswith('hk'):
+                    continue
                 operations = operation_list[code]
                 updated_code = cls._generate_dividend_single(user, code, operations)
                 if updated_code:

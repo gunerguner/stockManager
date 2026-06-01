@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import type { ProLayoutProps } from '@ant-design/pro-layout';
+import type { ProLayoutProps } from '@ant-design/pro-components';
 import { notification, ConfigProvider, theme, App } from 'antd';
 import type { RequestConfig, RuntimeConfig } from '@umijs/max';
 import { history, useModel } from '@umijs/max';

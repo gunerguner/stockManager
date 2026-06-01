@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'antd';
-import ProCard from '@ant-design/pro-card';
+import { ProCard } from '@ant-design/pro-components';
 import { useStocks } from '@/hooks/useStocks';
 
 import { AnalysisList } from './components/AnalysisList';

@@ -12,6 +12,8 @@ exchange_calendars
 pytz
 pyxirr>=0.10.0
 easyquotation
+akshare>=1.14.0
+requests>=2.31.0
 
 # Django 扩展插件
 django-cors-headers

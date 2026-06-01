@@ -1,7 +1,10 @@
 """缓存仓库门面，对外保持 CacheRepository API 不变"""
+from typing import Iterable
+
 from django.contrib.auth.models import User
 
 from ...common.cache import Cache
+from ...common.market import Market
 from ...common import logger
 from ...common.types import CalculatedResult, OperationDict, CashFlowList
 from ...models import StockMeta as StockMetaModel
@@ -20,6 +23,8 @@ class CacheRepository:
     KEY_STOCK_META_ALL = keys.KEY_STOCK_META_ALL
     KEY_STOCK_PRICE = keys.KEY_STOCK_PRICE
     KEY_STOCK_PRICE_TIMESTAMP = keys.KEY_STOCK_PRICE_TIMESTAMP
+    KEY_STOCK_PRICE_TIMESTAMP_LEGACY = keys.KEY_STOCK_PRICE_TIMESTAMP_LEGACY
+    KEY_FX_HKD_CNY = keys.KEY_FX_HKD_CNY
     KEY_STOCK_NAME_SYNC_MARK = keys.KEY_STOCK_NAME_SYNC_MARK
 
     TTL_USER_DATA = keys.TTL_USER_DATA
@@ -27,6 +32,7 @@ class CacheRepository:
     TTL_STOCK_META = keys.TTL_STOCK_META
     TTL_STOCK_PRICE = keys.TTL_STOCK_PRICE
     TTL_STOCK_NAME_SYNC = keys.TTL_STOCK_NAME_SYNC
+    TTL_FX = keys.TTL_FX
 
     @classmethod
     def _should_refresh_cache(cls) -> bool:
@@ -41,12 +47,21 @@ class CacheRepository:
         user_store.clear_user_cash_info(user_id)
 
     @classmethod
-    def get_calculated_target(cls, user: User) -> CalculatedResult | None:
-        return user_store.get_calculated_target(user)
+    def get_calculated_target(
+        cls,
+        user: User,
+        user_codes: Iterable[str] | None = None,
+    ) -> CalculatedResult | None:
+        return user_store.get_calculated_target(user, user_codes)
 
     @classmethod
-    def set_calculated_target(cls, user_id: int, result: CalculatedResult) -> None:
-        user_store.set_calculated_target(user_id, result)
+    def set_calculated_target(
+        cls,
+        user_id: int,
+        result: CalculatedResult,
+        user_codes: Iterable[str],
+    ) -> None:
+        user_store.set_calculated_target(user_id, result, user_codes)
 
     @classmethod
     def clear_calculated_target(cls, user_id: int) -> None:
@@ -81,12 +96,12 @@ class CacheRepository:
         price_store.set_stock_price(code, price_data)
 
     @classmethod
-    def get_stock_price_timestamp(cls) -> str | None:
-        return price_store.get_stock_price_timestamp()
+    def get_stock_price_timestamp(cls, market: Market = Market.CN) -> str | None:
+        return price_store.get_stock_price_timestamp(market)
 
     @classmethod
-    def set_stock_price_timestamp(cls, timestamp: str) -> None:
-        price_store.set_stock_price_timestamp(timestamp)
+    def set_stock_price_timestamp(cls, market: Market, timestamp: str) -> None:
+        price_store.set_stock_price_timestamp(market, timestamp)
 
     @classmethod
     def get_stock_prices_with_cache(cls, code_list: list[str]) -> tuple[dict[str, dict], list[str]]:

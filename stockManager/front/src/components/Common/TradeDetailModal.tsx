@@ -2,7 +2,7 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { colorFromValue, formatMarketPrice, isHkCode, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -32,7 +32,7 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
   const infoItems = (
     <>
-      <Text>现价：{formatPrice(stock.priceNow)} </Text>
+      <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
       <Text>持股：{stock.holdCount} </Text>
       <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
       <Text>
@@ -76,7 +76,7 @@ const StockHeader: React.FC<{
       <div className="stock-header-left">
         <Space wrap={isMobile} className={isMobile && showStockInfo ? 'stock-header-space' : ''}>
           <Link
-            href={`https://xueqiu.com/S/${stock.code}`}
+            href={`https://xueqiu.com/S/${isHkCode(stock.code) ? `HK${stock.code.slice(2)}` : stock.code}`}
             target="_blank"
             rel="noreferrer"
             strong
@@ -111,7 +111,7 @@ export const useTradeDetailModal = () => {
         return;
       }
 
-      const getColumnsOperation = (): ColumnsType<API.Operation> => [
+      const getColumnsOperation = (code: string): ColumnsType<API.Operation> => [
         { title: '交易日期', dataIndex: 'date', width: isMobile ? 90 : 110 },
         {
           title: '类型',
@@ -123,7 +123,7 @@ export const useTradeDetailModal = () => {
           title: '成交价',
           dataIndex: 'price',
           width: isMobile ? 70 : 90,
-          render: (v: number) => <div>{formatPrice(v)}</div>,
+          render: (v: number) => <div>{formatMarketPrice(v, code)}</div>,
         },
         { title: '数量', dataIndex: 'count', width: isMobile ? 60 : 80 },
         {
@@ -141,8 +141,6 @@ export const useTradeDetailModal = () => {
         { title: '说明', dataIndex: 'comment', width: isMobile ? 100 : 150 },
       ];
 
-      const columns = getColumnsOperation();
-
       const tables = data.map((group, index) => {
         const showStockInfo = displayType === 'stockInfo' && index === 0;
 
@@ -156,7 +154,7 @@ export const useTradeDetailModal = () => {
 
         return {
           headerView,
-          columns,
+          columns: getColumnsOperation(group.stock.code),
           dataSource: group.operations,
         };
       });

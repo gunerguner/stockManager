@@ -1,6 +1,6 @@
 import { FloatButton } from 'antd';
 import { useState } from 'react';
-import ProCard from '@ant-design/pro-card';
+import { ProCard } from '@ant-design/pro-components';
 import { OverallBoard } from './components/OverallBoard';
 import { OperationList } from './components/OperationList';
 import { FilterPanel } from './components/FilterPanel';

@@ -7,6 +7,9 @@ export const colorFromValue = (value: number): string => {
 };
 
 // ==================== 价格格式化 ====================
+export const isHkCode = (code?: string): boolean =>
+  !!code && code.toLowerCase().startsWith('hk');
+
 export const formatPrice = (value?: number | string | null): string => {
   if (value === undefined || value === null || value === '') return '-';
 
@@ -15,6 +18,15 @@ export const formatPrice = (value?: number | string | null): string => {
 
   const fixed3 = numValue.toFixed(3);
   return fixed3.endsWith('0') ? numValue.toFixed(2) : fixed3;
+};
+
+export const formatMarketPrice = (
+  value?: number | string | null,
+  code?: string,
+): string => {
+  const num = formatPrice(value);
+  if (num === '-') return num;
+  return isHkCode(code) ? `$${num}` : num;
 };
 
 // ==================== 金额渲染 ====================

@@ -2,7 +2,7 @@ import { Table, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { colorFromValue, formatMarketPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import './index.less';
 
@@ -55,14 +55,14 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
     {
       title: '现价',
       dataIndex: 'priceNow',
-      render: (v) => <div>{formatPrice(v)}</div>,
+      render: (v, r) => <div>{formatMarketPrice(v, r.code)}</div>,
     },
     {
       title: '涨跌',
       dataIndex: 'offsetTodayRatio',
       render: (_, r) => (
         <div style={{ color: colorFromValue(r.offsetToday) }}>
-          {`${formatPrice(r.offsetToday)} (${r.offsetTodayRatio})`}
+          {`${formatMarketPrice(r.offsetToday, r.code)} (${r.offsetTodayRatio})`}
         </div>
       ),
     },

@@ -127,6 +127,8 @@ stockManager 前端为 **Umi**，**不依赖** `VITE_*` / `_app.config.js`：接
 
 排查缓存：`redis-cli -n 1 KEYS 'stockmanager:1:*'`（勿对生产库执行 `FLUSHDB`）。
 
+**港股通汇率**：持仓含港股时，backend 需能访问 akshare / 新浪行情（拉 HKD/CNY 即期）。若外网不可用，可依赖 Redis 中已有的 `fx:hkd_cny`（上次成功拉取后的缓存），否则汇总折算可能失败。
+
 ## 启动与停止
 
 在**仓库根目录**执行：

@@ -22,6 +22,7 @@ After years of trading stocks, I never found a portfolio tracker I was fully hap
 - Full trade history per symbol.
 - Auto-generated dividend and rights-adjustment records.
 - Reliable stock sorting.
+- Hong Kong Stock Connect: per-stock HKD display (`$`), portfolio totals in CNY via HKD/CNY spot rate.
 - Minimal UI—no ads, no flashy distractions.
 
 # Technical overview

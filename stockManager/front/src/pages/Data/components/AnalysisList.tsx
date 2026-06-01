@@ -45,6 +45,7 @@ const STOCK_TYPE_CONFIGS: Array<[string, string, string?]> = [
   ['fundAB', '分级基金', 'FUNDAB'],
   ['fundIn', '场内基金', 'FUNDIN'],
   ['conv', '可转债', 'CONV'],
+  ['hk', '港股通', 'HK'],
 ];
 
 /** API 股票类型 -> 内部键 映射表 */

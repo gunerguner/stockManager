@@ -41,6 +41,17 @@ declare namespace API {
   type StockData = {
     stocks: Stock[];
     overall: Overall;
+    markets?: MarketsMetadata;
+  };
+
+  type MarketStatus = {
+    inTradingHours: boolean;
+    priceUpdatedAt?: string | null;
+  };
+
+  type MarketsMetadata = {
+    cn?: MarketStatus;
+    hk?: MarketStatus;
   };
 
   type Overall = {
@@ -55,6 +66,7 @@ declare namespace API {
     totalCost: number;
     cashFlowList: CashFlowRecord[];
     xirrAnnualized: string;
+    hkdCnyRate?: number;
   };
 
   type CashFlowRecord = {

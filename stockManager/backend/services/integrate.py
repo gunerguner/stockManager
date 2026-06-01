@@ -8,11 +8,15 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
 
 from .cache import CacheRepository
+from .cache import price_store
 from .calculation import Calculator
 from .dividend import Dividend
+from .exchangeRate import ExchangeRate
 from ..models import Operation, Info, CashFlow
 from ..common import logger
-from ..common.types import CalculatedResult, OperationDataDict, DividendUpdateData
+from ..common.market import Market, markets_in_codes
+from ..common.tradingCalendar import TradingCalendar
+from ..common.types import CalculatedResult, OperationDataDict, DividendUpdateData, MarketsData
 
 
 class Integrate:
@@ -30,22 +34,46 @@ class Integrate:
             code: [op.to_dict() for op in reversed(ops)]
             for code, ops in operation_list.items()
         }
+
+    @classmethod
+    def _build_markets_metadata(cls, user_codes: list[str]) -> MarketsData:
+        markets_data: MarketsData = {}
+        for market in Market:
+            markets_data[market.value] = {
+                "inTradingHours": TradingCalendar.is_current_time_in_trading_hours(market),
+                "priceUpdatedAt": price_store.get_stock_price_timestamp(market),
+            }
+        return markets_data
     
     @classmethod
     def get_calculated_result(cls, user: User) -> CalculatedResult:
         """获取计算结果（不含 operationList）"""
-        cached_result = CacheRepository.get_calculated_target(user)
+        operation_list = CacheRepository.get_user_operations(user)
+        user_codes = list(operation_list.keys())
+
+        cached_result = CacheRepository.get_calculated_target(user, user_codes)
         if cached_result is not None:
             return cached_result
         
-        operation_list = CacheRepository.get_user_operations(user)
         stock_list = Calculator.calculate_stock_list(operation_list)
         
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
-        overall = Calculator.calculate_overall(stock_list, income_cash, cash_flow_list)
-        
-        result: CalculatedResult = {"stocks": stock_list, "overall": overall}
-        CacheRepository.set_calculated_target(user.id, result)
+        hkd_cny_rate = 1.0
+        if Market.HK in markets_in_codes(user_codes):
+            hkd_cny_rate = ExchangeRate.get_hkd_cny_rate(user_codes)
+
+        overall = Calculator.calculate_overall(
+            stock_list, income_cash, cash_flow_list, hkd_cny_rate
+        )
+        if Market.HK in markets_in_codes(user_codes):
+            overall["hkdCnyRate"] = hkd_cny_rate
+
+        result: CalculatedResult = {
+            "stocks": stock_list,
+            "overall": overall,
+            "markets": cls._build_markets_metadata(user_codes),
+        }
+        CacheRepository.set_calculated_target(user.id, result, user_codes)
         
         return result
     

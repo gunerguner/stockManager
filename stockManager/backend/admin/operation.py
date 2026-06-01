@@ -42,6 +42,12 @@ class OperationAdmin(UserScopedModelAdmin):
             if max_sort is not None:
                 obj.sortOrder = max_sort + 1
 
+        if obj.code and obj.code.lower().startswith('hk'):
+            messages.info(
+                request,
+                '港股通：price、fee 请按港币填写；除权除息请在 Admin 手动录入 DV。',
+            )
+
         if obj.code and not StockMeta.objects.filter(code=obj.code).exists():
             messages.warning(
                 request,

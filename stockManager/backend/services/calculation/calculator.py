@@ -9,6 +9,7 @@ from pyxirr import xirr
 
 from ...common import logger
 from ...common.constants import OperationType
+from ...common.market import Market, code_to_market
 from ...common.types import StockData, OverallData, OperationDict, CashFlowList, RealtimePriceData
 from ...common.utils import format_percent, operation_sort_key
 from ...models import Operation, StockMeta as StockMetaModel
@@ -48,9 +49,23 @@ class Calculator:
         ]
     
     @classmethod
-    def calculate_overall(cls, stock_list: list[StockData], income_cash: float = 0.0, cash_flow_list: CashFlowList | None = None) -> OverallData:
-        """从 stock_list、income_cash、cash_flow_list 计算整体指标"""
-        return cls._calculate_overall_target(stock_list, income_cash, cash_flow_list or [])
+    def calculate_overall(
+        cls,
+        stock_list: list[StockData],
+        income_cash: float = 0.0,
+        cash_flow_list: CashFlowList | None = None,
+        hkd_cny_rate: float = 1.0,
+    ) -> OverallData:
+        """从 stock_list、income_cash、cash_flow_list 计算整体指标（港股金额按汇率折算为 CNY）"""
+        return cls._calculate_overall_target(
+            stock_list, income_cash, cash_flow_list or [], hkd_cny_rate
+        )
+
+    @staticmethod
+    def _to_cny_amount(code: str, amount: float, hkd_cny_rate: float) -> float:
+        if code_to_market(code) == Market.HK:
+            return amount * hkd_cny_rate
+        return amount
     
     # ========== 单股计算 ==========
 
@@ -393,16 +408,24 @@ class Calculator:
             return 0.0
     
     @classmethod
-    def _calculate_overall_target(cls, single_target_list: list[StockData], income_cash: float, cash_flow_list: CashFlowList) -> OverallData:
+    def _calculate_overall_target(
+        cls,
+        single_target_list: list[StockData],
+        income_cash: float,
+        cash_flow_list: CashFlowList,
+        hkd_cny_rate: float = 1.0,
+    ) -> OverallData:
         """计算整体指标"""
         to_return = {}
 
-        # 使用 sum() 简化累加
-        current_offset = sum(target["offsetCurrent"] for target in single_target_list)
-        total_offset = sum(target["offsetTotal"] for target in single_target_list)
-        total_value = sum(target["totalValue"] for target in single_target_list)
-        total_offset_today = sum(target["totalOffsetToday"] for target in single_target_list)
-        total_cost = sum(target["totalCost"] for target in single_target_list)
+        def cny(code: str, amount: float) -> float:
+            return cls._to_cny_amount(code, amount, hkd_cny_rate)
+
+        current_offset = sum(cny(t["code"], t["offsetCurrent"]) for t in single_target_list)
+        total_offset = sum(cny(t["code"], t["offsetTotal"]) for t in single_target_list)
+        total_value = sum(cny(t["code"], t["totalValue"]) for t in single_target_list)
+        total_offset_today = sum(cny(t["code"], t["totalOffsetToday"]) for t in single_target_list)
+        total_cost = sum(cny(t["code"], t["totalCost"]) for t in single_target_list)
 
         # 从 cash_flow_list 计算总入金（所有 amount 的总和）
         origin_cash = sum(flow['amount'] for flow in cash_flow_list)
