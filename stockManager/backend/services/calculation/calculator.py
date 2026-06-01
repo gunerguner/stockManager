@@ -13,7 +13,7 @@ from ...common.market import Market, code_to_market
 from ...common.types import StockData, OverallData, OperationDict, CashFlowList, RealtimePriceData
 from ...common.utils import format_percent, operation_sort_key
 from ...models import Operation, StockMeta as StockMetaModel
-from ..market import RealtimePrice, StockMeta
+from ..cache import CacheRepository
 
 # ========== 常量定义 ==========
 MIN_PRICE_THRESHOLD = 0.001  # 最小价格阈值，低于此值认为价格无效
@@ -36,8 +36,8 @@ class Calculator:
         从原始 operation_list 计算每只股票的指标，返回 stock_list。
         stock_list 中不含 operationList 字段，便于缓存。
         """
-        realtime_price_list = RealtimePrice.query(list(operation_list))
-        stock_meta_dict = StockMeta.get_all()
+        realtime_price_list = CacheRepository.query_stock_prices(list(operation_list))
+        stock_meta_dict = CacheRepository.get_stock_meta_dict()
         return [
             cls._calculate_single_target(
                 code,

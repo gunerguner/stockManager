@@ -8,12 +8,16 @@ from ...common.cache import Cache
 from ...common import logger
 from ...common.market import Market, code_to_market, split_codes_by_market
 from ...common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
-from ...common.types import MarketsData
+from ...common.types import MarketsData, RealtimePriceDict
+from ..market.realtimePrice import fetch_prices
 from . import keys
+from . import meta_store
+from . import user_store
+
+_PRICE_FIELDS = frozenset({"name", "currentPrice", "priceOffset", "offsetRatio", "yesterdayClose"})
 
 
 def is_in_trading_hours(market: Market) -> bool:
-    """交易时段判断仅在此模块对外暴露，供 cache 子包其它模块使用。"""
     return TradingCalendar.is_current_time_in_trading_hours(market)
 
 
@@ -22,75 +26,46 @@ def any_market_in_trading_hours(markets: Iterable[Market]) -> bool:
 
 
 def get_markets_metadata() -> MarketsData:
-    markets_data: MarketsData = {}
-    for market in Market:
-        markets_data[market.value] = {
+    return {
+        market.value: {
             "inTradingHours": is_in_trading_hours(market),
-            "priceUpdatedAt": get_stock_price_timestamp(market),
+            "priceUpdatedAt": _get_price_timestamp(market),
         }
-    return markets_data
+        for market in Market
+    }
 
 
-def _should_refresh_market(market: Market, *, relevant: bool) -> bool:
-    """relevant=False：本批 code_list 不含此市场 → 不参与刷新判断"""
-    if not relevant:
-        return False
+def _should_refresh_market(market: Market) -> bool:
     if is_in_trading_hours(market):
         return True
-    ts = get_stock_price_timestamp(market)
+    ts = _get_price_timestamp(market)
     if not ts:
         return True
-    cached_time = datetime.fromisoformat(ts)
     return TradingCalendar.is_trading_time_passed(
-        cached_time, datetime.now(TZ_SHANGHAI), market
+        datetime.fromisoformat(ts), datetime.now(TZ_SHANGHAI), market
     )
 
 
-def should_refresh_cache() -> bool:
-    """全局刷新判断（兼容旧调用；任一市场需刷新则返回 True）"""
-    for market in Market:
-        if _should_refresh_market(market, relevant=True):
-            return True
-    return False
+def _price_key(code: str) -> str:
+    return keys.KEY_STOCK_PRICE.format(code=code)
 
 
-def get_stock_price(code: str) -> dict | None:
-    return cache.get(keys.KEY_STOCK_PRICE.format(code=code))
-
-
-def get_stock_prices_batch(code_list: list[str]) -> dict[str, dict | None]:
-    if not code_list:
-        return {}
-    try:
-        cache_keys = [keys.KEY_STOCK_PRICE.format(code=code) for code in code_list]
-        result = Cache.get_many(cache_keys)
-        return {code: result.get(cache_keys[i]) for i, code in enumerate(code_list)}
-    except Exception as e:
-        logger.error(f"批量获取股价缓存失败: {e}")
-        return {code: get_stock_price(code) for code in code_list}
-
-
-def set_stock_price(code: str, price_data: dict) -> None:
-    cache.set(keys.KEY_STOCK_PRICE.format(code=code), price_data, keys.TTL_STOCK_PRICE)
-
-
-def get_stock_price_timestamp(market: Market) -> str | None:
+def _get_price_timestamp(market: Market) -> str | None:
     key = keys.KEY_STOCK_PRICE_TIMESTAMP.format(market=market.value)
     ts = cache.get(key)
     if ts:
         return ts
-    if market == Market.CN:
-        legacy = cache.get(keys.KEY_STOCK_PRICE_TIMESTAMP_LEGACY)
-        if legacy:
-            cache.set(key, legacy, keys.TTL_STOCK_PRICE)
-            cache.delete(keys.KEY_STOCK_PRICE_TIMESTAMP_LEGACY)
-            return legacy
-    return None
+    if market != Market.CN:
+        return None
+    legacy = cache.get(keys.KEY_STOCK_PRICE_TIMESTAMP_LEGACY)
+    if not legacy:
+        return None
+    cache.set(key, legacy, keys.TTL_STOCK_PRICE)
+    cache.delete(keys.KEY_STOCK_PRICE_TIMESTAMP_LEGACY)
+    return legacy
 
 
-def set_stock_price_timestamp(market: Market, timestamp: str) -> None:
-    from . import user_store
-
+def _set_price_timestamp(market: Market, timestamp: str) -> None:
     cache.set(
         keys.KEY_STOCK_PRICE_TIMESTAMP.format(market=market.value),
         timestamp,
@@ -99,44 +74,52 @@ def set_stock_price_timestamp(market: Market, timestamp: str) -> None:
     user_store.clear_all_calculated_targets()
 
 
-def get_stock_prices_with_cache(code_list: list[str]) -> tuple[dict[str, dict], list[str]]:
+def _get_cached_prices(code_list: list[str]) -> tuple[dict[str, dict], list[str]]:
     if not code_list:
         return {}, []
 
-    cn_codes, hk_codes = split_codes_by_market(code_list)
-    involved_markets = {code_to_market(c) for c in code_list}
-
-    cached_result: dict[str, dict] = {}
-    missing_codes: list[str] = []
-
-    for market, codes in ((Market.CN, cn_codes), (Market.HK, hk_codes)):
+    cached: dict[str, dict] = {}
+    missing: list[str] = []
+    for market, codes in zip((Market.CN, Market.HK), split_codes_by_market(code_list), strict=False):
         if not codes:
             continue
-        relevant = market in involved_markets
-        if _should_refresh_market(market, relevant=relevant):
-            missing_codes.extend(codes)
+        if _should_refresh_market(market):
+            missing.extend(codes)
             continue
-        batch_result = get_stock_prices_batch(codes)
-        for code in codes:
-            price_data = batch_result.get(code)
-            if price_data:
-                cached_result[code] = price_data
+        try:
+            cache_keys = [_price_key(code) for code in codes]
+            batch = Cache.get_many(cache_keys)
+        except Exception as e:
+            logger.error(f"批量获取股价缓存失败: {e}")
+            batch = {key: cache.get(key) for key in cache_keys}
+        for code, cache_key in zip(codes, cache_keys, strict=False):
+            data = batch.get(cache_key)
+            if data and _PRICE_FIELDS.issubset(data):
+                cached[code] = data
             else:
-                missing_codes.append(code)
+                missing.append(code)
+    return cached, missing
 
-    return cached_result, missing_codes
 
-
-def set_stock_prices_batch(prices: dict[str, dict], timestamp: str | None = None) -> None:
+def _set_prices_batch(prices: dict[str, dict]) -> None:
     if not prices:
         return
-
     Cache.set_many(
-        {keys.KEY_STOCK_PRICE.format(code=code): price_data for code, price_data in prices.items()},
+        {_price_key(code): data for code, data in prices.items()},
         keys.TTL_STOCK_PRICE,
     )
+    ts = datetime.now(TZ_SHANGHAI).isoformat()
+    for market in {code_to_market(code) for code in prices}:
+        _set_price_timestamp(market, ts)
 
-    ts = timestamp or datetime.now(TZ_SHANGHAI).isoformat()
-    markets_updated = {code_to_market(code) for code in prices}
-    for market in markets_updated:
-        set_stock_price_timestamp(market, ts)
+
+def query_prices(code_list: list[str]) -> RealtimePriceDict:
+    cached, missing = _get_cached_prices(code_list)
+    if not missing:
+        return cached
+
+    api_result = fetch_prices(missing)
+    if api_result:
+        _set_prices_batch(api_result)
+        meta_store.sync_names_from_realtime(api_result)
+    return {**cached, **api_result}

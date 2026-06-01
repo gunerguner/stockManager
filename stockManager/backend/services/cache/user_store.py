@@ -1,8 +1,10 @@
 """用户数据与计算结果缓存"""
 from typing import Iterable
 
-from django.core.cache import cache
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 from ...common.cache import Cache
 from ...common import logger
@@ -49,15 +51,11 @@ def clear_user_cash_info(user_id: int) -> None:
     cache.delete(keys.KEY_USER_CASH_INFO.format(user_id=user_id))
 
 
-def should_invalidate_calculated_cache(
-    user_codes: Iterable[str],
-    cached: CalculatedResult | None = None,
-) -> bool:
-    markets = markets_in_codes(user_codes)
-    for market in markets:
-        if price_store._should_refresh_market(market, relevant=True):
-            return True
-    return False
+def should_invalidate_calculated_cache(user_codes: Iterable[str]) -> bool:
+    return any(
+        price_store._should_refresh_market(market)
+        for market in markets_in_codes(user_codes)
+    )
 
 
 def get_calculated_target(
@@ -70,7 +68,7 @@ def get_calculated_target(
         return None
     if "markets" not in cached:
         return None
-    if should_invalidate_calculated_cache(codes, cached):
+    if should_invalidate_calculated_cache(codes):
         return None
     return cached
 
@@ -123,3 +121,15 @@ def clear_user_cache(user_id: int) -> None:
     clear_user_operations(user_id)
     clear_user_cash_info(user_id)
     clear_calculated_target(user_id)
+
+
+@receiver([post_save, post_delete], sender=Operation)
+@receiver([post_save, post_delete], sender=CashFlow)
+@receiver([post_save, post_delete], sender=Info)
+def clear_user_cache_on_model_change(sender, instance, **kwargs) -> None:
+    if sender == Info and instance.info_type != Info.InfoType.INCOME_CASH:
+        return
+    if not instance.user_id:
+        return
+    clear_user_cache(instance.user_id)
+    logger.info(f"[Redis] {sender.__name__} 变化，清除用户 {instance.user_id} 的缓存")

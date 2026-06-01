@@ -12,8 +12,8 @@ from ..common.types import OperationDict, DividendUpdateData
 from ..common.utils import safe_float, operation_sort_key
 from ..models import Operation
 from django.contrib.auth.models import User
+from .cache import CacheRepository
 from .calculation import StockHold
-from .market import StockMeta
 
 class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
@@ -23,7 +23,7 @@ class Dividend:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
         updated_codes = []
-        stock_meta_dict = StockMeta.get_all()
+        stock_meta_dict = CacheRepository.get_stock_meta_dict()
 
         try:
             bs.login()
