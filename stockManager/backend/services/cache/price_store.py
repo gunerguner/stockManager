@@ -1,6 +1,6 @@
 """股价缓存与刷新策略（分市场 CN / HK）"""
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 from django.core.cache import cache
 
@@ -8,14 +8,34 @@ from ...common.cache import Cache
 from ...common import logger
 from ...common.market import Market, code_to_market, split_codes_by_market
 from ...common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
+from ...common.types import MarketsData
 from . import keys
+
+
+def is_in_trading_hours(market: Market) -> bool:
+    """交易时段判断仅在此模块对外暴露，供 cache 子包其它模块使用。"""
+    return TradingCalendar.is_current_time_in_trading_hours(market)
+
+
+def any_market_in_trading_hours(markets: Iterable[Market]) -> bool:
+    return any(is_in_trading_hours(m) for m in markets)
+
+
+def get_markets_metadata() -> MarketsData:
+    markets_data: MarketsData = {}
+    for market in Market:
+        markets_data[market.value] = {
+            "inTradingHours": is_in_trading_hours(market),
+            "priceUpdatedAt": get_stock_price_timestamp(market),
+        }
+    return markets_data
 
 
 def _should_refresh_market(market: Market, *, relevant: bool) -> bool:
     """relevant=False：本批 code_list 不含此市场 → 不参与刷新判断"""
     if not relevant:
         return False
-    if TradingCalendar.is_current_time_in_trading_hours(market):
+    if is_in_trading_hours(market):
         return True
     ts = get_stock_price_timestamp(market)
     if not ts:

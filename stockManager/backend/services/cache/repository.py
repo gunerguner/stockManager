@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from ...common.cache import Cache
 from ...common.market import Market
 from ...common import logger
-from ...common.types import CalculatedResult, OperationDict, CashFlowList
+from ...common.types import CalculatedResult, MarketsData, OperationDict, CashFlowList
 from ...models import StockMeta as StockMetaModel
 from . import keys
 from . import user_store
@@ -94,6 +94,10 @@ class CacheRepository:
     @classmethod
     def set_stock_price(cls, code: str, price_data: dict) -> None:
         price_store.set_stock_price(code, price_data)
+
+    @classmethod
+    def get_markets_metadata(cls) -> MarketsData:
+        return price_store.get_markets_metadata()
 
     @classmethod
     def get_stock_price_timestamp(cls, market: Market = Market.CN) -> str | None:

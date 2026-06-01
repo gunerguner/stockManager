@@ -60,7 +60,8 @@ const DynamicLogo: React.FC = () => {
 // @ts-ignore
 export const layout: RuntimeConfig['layout'] = ({ initialState }) => ({
   ...initialState?.settings,
-  rightContentRender: () => <RightContent />,
+  actionsRender: () => <RightContent />,
+  rightContentRender: false,
   disableContentMargin: false,
   waterMarkProps: { content: initialState?.currentUser?.name },
   footerRender: () => <Footer />,

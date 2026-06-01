@@ -9,6 +9,7 @@ import { isHoliday } from 'chinese-days';
 export type MarketId = 'cn' | 'hk';
 
 export type TradingTimeStatus = {
+  market: MarketId;
   isTrading: boolean;
   message: string;
 };
@@ -90,6 +91,7 @@ const getStatusForMarket = (market: MarketId, currentTime = new Date()): Trading
     const closeMinutes = currentMinutes < morningClose ? morningClose : afternoonClose;
     const minutesToClose = closeMinutes - currentMinutes;
     return {
+      market,
       isTrading: true,
       message: `${MARKET_LABEL[market]} 距收盘 ${formatMinutes(minutesToClose)}`,
     };
@@ -118,6 +120,7 @@ const getStatusForMarket = (market: MarketId, currentTime = new Date()): Trading
 
   const minutesToOpen = diffMinutes(createDateWithMinutes(openDate, openMinutes), currentTime);
   return {
+    market,
     isTrading: false,
     message: `${MARKET_LABEL[market]} 距开盘 ${formatMinutes(minutesToOpen)}`,
   };

@@ -8,15 +8,13 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
 
 from .cache import CacheRepository
-from .cache import price_store
 from .calculation import Calculator
 from .dividend import Dividend
-from .exchangeRate import ExchangeRate
+from .market.exchangeRate import ExchangeRate
 from ..models import Operation, Info, CashFlow
 from ..common import logger
 from ..common.market import Market, markets_in_codes
-from ..common.tradingCalendar import TradingCalendar
-from ..common.types import CalculatedResult, OperationDataDict, DividendUpdateData, MarketsData
+from ..common.types import CalculatedResult, OperationDataDict, DividendUpdateData
 
 
 class Integrate:
@@ -36,16 +34,6 @@ class Integrate:
         }
 
     @classmethod
-    def _build_markets_metadata(cls, user_codes: list[str]) -> MarketsData:
-        markets_data: MarketsData = {}
-        for market in Market:
-            markets_data[market.value] = {
-                "inTradingHours": TradingCalendar.is_current_time_in_trading_hours(market),
-                "priceUpdatedAt": price_store.get_stock_price_timestamp(market),
-            }
-        return markets_data
-    
-    @classmethod
     def get_calculated_result(cls, user: User) -> CalculatedResult:
         """获取计算结果（不含 operationList）"""
         operation_list = CacheRepository.get_user_operations(user)
@@ -58,7 +46,7 @@ class Integrate:
         stock_list = Calculator.calculate_stock_list(operation_list)
         
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
-        hkd_cny_rate = 1.0
+        hkd_cny_rate = 9.0
         if Market.HK in markets_in_codes(user_codes):
             hkd_cny_rate = ExchangeRate.get_hkd_cny_rate(user_codes)
 
@@ -71,7 +59,7 @@ class Integrate:
         result: CalculatedResult = {
             "stocks": stock_list,
             "overall": overall,
-            "markets": cls._build_markets_metadata(user_codes),
+            "markets": CacheRepository.get_markets_metadata(),
         }
         CacheRepository.set_calculated_target(user.id, result, user_codes)
         

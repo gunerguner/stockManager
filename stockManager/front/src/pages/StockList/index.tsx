@@ -19,19 +19,15 @@ const StockList: React.FC = () => {
       <div style={{ borderRadius: 8, padding: 16 }}>
         <ProCard>
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
-        </ProCard>
-
-        <ProCard>
-          <FilterPanel
-            showAll={showAll}
-            showConv={showConv}
-            onRefresh={fetchStockData}
-            onShowAllChange={setShowAll}
-            onShowConvChange={setShowConv}
-          />
-        </ProCard>
-
-        <ProCard>
+          <div style={{ margin: '16px 0' }}>
+            <FilterPanel
+              showAll={showAll}
+              showConv={showConv}
+              onRefresh={fetchStockData}
+              onShowAllChange={setShowAll}
+              onShowConvChange={setShowConv}
+            />
+          </div>
           <OperationList showAll={showAll} showConv={showConv} data={stock} operations={operations} />
         </ProCard>
       </div>

@@ -2,12 +2,10 @@
 from typing import Iterable
 
 import requests
-from django.core.cache import cache
 
-from ..common import logger
-from ..common.market import Market, markets_in_codes
-from ..common.tradingCalendar import TradingCalendar
-from .cache import keys
+from ...common import logger
+from ...common.market import Market, markets_in_codes
+from ..cache import fx_store
 
 
 class ExchangeRate:
@@ -19,20 +17,17 @@ class ExchangeRate:
         if Market.HK not in markets:
             return 1.0
 
-        in_trading = any(
-            TradingCalendar.is_current_time_in_trading_hours(m) for m in markets
-        )
-        if in_trading:
+        if fx_store.should_refresh_fx(user_codes):
             rate = cls._fetch_from_api()
-            cache.set(keys.KEY_FX_HKD_CNY, rate, keys.TTL_FX)
+            fx_store.set_hkd_cny_cached(rate)
             return rate
 
-        cached = cache.get(keys.KEY_FX_HKD_CNY)
+        cached = fx_store.get_hkd_cny_cached()
         if cached is not None:
-            return float(cached)
+            return cached
 
         rate = cls._fetch_from_api()
-        cache.set(keys.KEY_FX_HKD_CNY, rate, keys.TTL_FX)
+        fx_store.set_hkd_cny_cached(rate)
         return rate
 
     @classmethod

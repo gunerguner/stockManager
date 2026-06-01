@@ -6,8 +6,7 @@ from django.contrib.auth.models import User
 
 from ...common.cache import Cache
 from ...common import logger
-from ...common.market import Market, markets_in_codes
-from ...common.tradingCalendar import TradingCalendar
+from ...common.market import markets_in_codes
 from ...common.utils import format_operations
 from ...common.types import CalculatedResult, OperationDict, CashFlowList
 from ...models import Operation, Info, CashFlow
@@ -82,7 +81,7 @@ def set_calculated_target(
     user_codes: Iterable[str],
 ) -> None:
     markets = markets_in_codes(user_codes)
-    if any(TradingCalendar.is_current_time_in_trading_hours(m) for m in markets):
+    if price_store.any_market_in_trading_hours(markets):
         return
     cache.set(keys.KEY_CALCULATED_TARGET.format(user_id=user_id), result, keys.TTL_CALCULATED_TARGET)
 

@@ -54,7 +54,7 @@ class Calculator:
         stock_list: list[StockData],
         income_cash: float = 0.0,
         cash_flow_list: CashFlowList | None = None,
-        hkd_cny_rate: float = 1.0,
+        hkd_cny_rate: float = 9.0,
     ) -> OverallData:
         """从 stock_list、income_cash、cash_flow_list 计算整体指标（港股金额按汇率折算为 CNY）"""
         return cls._calculate_overall_target(
