@@ -1,8 +1,8 @@
 """股票名称同步服务。"""
-from ..common import logger
-from ..common.types import RealtimePriceDict
-from ..models import StockMeta as StockMetaModel
-from .cacheRepository import CacheRepository
+from ...common import logger
+from ...common.types import RealtimePriceDict
+from ...models import StockMeta as StockMetaModel
+from ..cache import CacheRepository
 
 
 class StockNameSync:

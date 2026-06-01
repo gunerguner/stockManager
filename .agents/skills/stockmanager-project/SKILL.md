@@ -39,7 +39,16 @@ stockManager/                 # Git 根
 
 ## 架构要点
 
-**请求路径**：Umi SPA → `/api/*` → `backend.views` → `services/integrate.py`（门面）→ `calculator` / `realtimePrice` / `cacheRepository`。
+**请求路径**：Umi SPA → `/api/*` → `backend.views` → `services/integrate.py`（门面）→ `calculation/` / `market/` / `cache/`。
+
+**services 子包**：
+
+| 子包 | 模块 | 说明 |
+|------|------|------|
+| `cache/` | `CacheRepository` 门面 | 逻辑 key、TTL、失效 |
+| `market/` | `realtimePrice`、`stockMeta`、`stockNameSync` | 行情与元数据 |
+| `calculation/` | `calculator`、`stockHold` | 盈亏与持仓 |
+| 根目录 | `integrate`、`dividend` | 编排与除权 |
 
 **统一响应**：`json_response(status, data, message)`，`ResponseStatus`：SUCCESS=1、ERROR=0、UNAUTHORIZED=401。装饰器：`@require_authentication`、`@require_superuser`、`@handle_exception`、`@parse_json_body`。
 
@@ -65,13 +74,13 @@ flowchart LR
 | 域 | 关键文件 |
 |----|----------|
 | 交易记录 | `backend/models.py` → `Operation`（BUY/SELL/DV） |
-| 盈亏计算 | `backend/services/calculator.py`（雪球规则，含 XIRR） |
+| 盈亏计算 | `backend/services/calculation/calculator.py`（雪球规则，含 XIRR） |
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
 | 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN…） |
 | 除权除息 | `backend/services/dividend.py` + `POST /api/dividend` |
-| 实时价 | `backend/services/realtimePrice.py` |
-| 缓存 | `cacheRepository.py` + `common/cache.py`；详见 `backend/缓存机制分析.md` |
+| 实时价 | `backend/services/market/realtimePrice.py` |
+| 缓存 | `services/cache/` + `common/cache.py`；详见 `backend/docs/缓存机制分析.md` |
 
 **股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`。
 
@@ -80,9 +89,9 @@ flowchart LR
 | 目标 | 改动位置 |
 |------|----------|
 | 新 API | `backend/views/*.py` → `backend/urls.py` → `front/src/services/api.ts` |
-| 新计算字段 | `calculator.py` + `common/types.py` → `StockList` / `Data` 页面 |
-| 缓存逻辑 | `cacheRepository.py`；先读 `缓存机制分析.md`；失效在 `integrate.py` |
-| 行情 | `realtimePrice.py` |
+| 新计算字段 | `calculation/calculator.py` + `common/types.py` → `StockList` / `Data` 页面 |
+| 缓存逻辑 | `services/cache/`（`CacheRepository` 门面）；先读 `docs/缓存机制分析.md`；失效在 `integrate.py` |
+| 行情 | `market/realtimePrice.py` |
 | 数据库 | `models.py` → `makemigrations` → `migrate` → `backend/admin/` |
 | 新前端页 | `front/config/routes.ts` + `src/pages/`；权限 `access.ts` |
 | 价格展示 | `front/src/utils/renderTool.tsx`（`formatPrice`） |
@@ -95,13 +104,13 @@ flowchart LR
   - 再看：`front/src/services/api.ts` 是否保留 `credentials: 'include'`
 - **症状：持仓页慢/数据不刷新**
   - 先看：`backend/services/integrate.py`（是否命中缓存）
-  - 再看：`backend/services/cacheRepository.py`（TTL 与 key）
-  - 再看：`backend/services/realtimePrice.py`（行情源与交易时段）
+  - 再看：`backend/services/cache/`（TTL 与 key）
+  - 再看：`backend/services/market/realtimePrice.py`（行情源与交易时段）
 - **症状：改了前端但线上没变化**
   - 先做：`docker compose build frontend && docker compose up -d frontend`
   - 原因：仅 frontend 镜像包含 Umi 构建产物
 - **症状：新增字段前端拿不到**
-  - 先看：`backend/common/types.py` 与 `calculator.py` 是否同步
+  - 先看：`backend/common/types.py` 与 `calculation/calculator.py` 是否同步
   - 再看：`front/src/services/api.ts` 的类型定义与页面消费
 
 ## 本地开发

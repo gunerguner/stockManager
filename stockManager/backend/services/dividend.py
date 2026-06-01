@@ -12,8 +12,8 @@ from ..common.types import OperationDict, DividendUpdateData
 from ..common.utils import safe_float, operation_sort_key
 from ..models import Operation
 from django.contrib.auth.models import User
-from .stockHold import StockHold
-from .stockMeta import StockMeta
+from .calculation import StockHold
+from .market import StockMeta
 
 class Dividend:
     """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""

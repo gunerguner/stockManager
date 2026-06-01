@@ -2,9 +2,9 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from ..models import StockMeta as StockMetaModel
-from .cacheRepository import CacheRepository
-from ..common import logger
+from ...models import StockMeta as StockMetaModel
+from ..cache import CacheRepository
+from ...common import logger
 
 
 class StockMeta:

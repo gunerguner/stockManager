@@ -2,10 +2,10 @@
 
 from easyquotation import use as eq_use
 
-from ..common import logger
-from ..common.types import RealtimePriceData, RealtimePriceDict
-from ..common.utils import format_percent
-from .cacheRepository import CacheRepository
+from ...common import logger
+from ...common.types import RealtimePriceData, RealtimePriceDict
+from ...common.utils import format_percent
+from ..cache import CacheRepository
 from .stockNameSync import StockNameSync
 
 # 懒加载 easyquotation 实例

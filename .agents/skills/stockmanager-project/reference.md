@@ -10,13 +10,15 @@ SKILL.md 的扩展材料；改缓存、部署时按需阅读。
 | 根路由 | `stockManager/stockManager/urls.py`（`^api/` → backend） |
 | API 路由 | `stockManager/backend/urls.py` |
 | 模型 | `stockManager/backend/models.py` |
-| 盈亏引擎 | `stockManager/backend/services/calculator.py` |
+| 盈亏引擎 | `stockManager/backend/services/calculation/calculator.py` |
 | 业务门面 | `stockManager/backend/services/integrate.py` |
-| 缓存仓库 | `stockManager/backend/services/cacheRepository.py` |
+| 缓存仓库 | `stockManager/backend/services/cache/` |
 | 缓存工具 | `stockManager/backend/common/cache.py` |
-| 行情 | `stockManager/backend/services/realtimePrice.py` |
+| 行情 | `stockManager/backend/services/market/realtimePrice.py` |
+| 元数据 | `stockManager/backend/services/market/stockMeta.py` |
+| 持仓推算 | `stockManager/backend/services/calculation/stockHold.py` |
 | 除权 | `stockManager/backend/services/dividend.py` |
-| 缓存文档 | `stockManager/backend/缓存机制分析.md` |
+| 缓存文档 | `stockManager/backend/docs/缓存机制分析.md` |
 | Umi 配置 | `stockManager/front/config/config.ts`、`routes.ts`、`proxy.ts` |
 | API 客户端 | `stockManager/front/src/services/api.ts` |
 | 布局/鉴权 | `stockManager/front/src/app.tsx`、`access.ts` |
@@ -103,7 +105,7 @@ SKILL.md 的扩展材料；改缓存、部署时按需阅读。
 |-----------|----------------|
 | `models.py` | 迁移文件、Admin 展示、缓存失效触发 |
 | `calculator.py` | `common/types.py`、`/api/stocks` 输出、`/list`/`/data` 前端展示 |
-| `realtimePrice.py` | 缓存时间戳逻辑、交易时段判断、失败兜底 |
+| `market/realtimePrice.py` | 缓存时间戳逻辑、交易时段判断、失败兜底 |
 | `front/config/routes.ts` | 权限 `access.ts`、菜单展示、默认重定向 |
 | `docker/nginx.conf` | `/api` 转发、静态资源路径、frontend 重建 |
 

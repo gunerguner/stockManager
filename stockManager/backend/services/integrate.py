@@ -7,8 +7,8 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
 
-from .cacheRepository import CacheRepository
-from .calculator import Calculator
+from .cache import CacheRepository
+from .calculation import Calculator
 from .dividend import Dividend
 from ..models import Operation, Info, CashFlow
 from ..common import logger
