@@ -2,7 +2,8 @@ import { Table, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatMarketPrice, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { colorFromValue, formatMarketPrice } from '@/utils/format/stock';
+import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import './index.less';
 

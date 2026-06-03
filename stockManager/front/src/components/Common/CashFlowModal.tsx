@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount } from '@/utils/renderTool';
+import { renderAmount } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 
 const { Text } = Typography;

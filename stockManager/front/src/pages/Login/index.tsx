@@ -6,7 +6,7 @@ import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';
 import { login } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { RESPONSE_STATUS } from '@/utils/apiConstants';
 import styles from './index.less';
 
 // ==================== 工具函数 ====================

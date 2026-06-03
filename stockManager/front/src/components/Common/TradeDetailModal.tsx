@@ -2,7 +2,8 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatMarketPrice, isHkCode, renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { colorFromValue, formatMarketPrice, isHkCode } from '@/utils/format/stock';
+import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 

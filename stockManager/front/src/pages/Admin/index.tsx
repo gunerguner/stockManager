@@ -3,7 +3,7 @@ import { Button, Row, Space, App } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
 import { history, useModel } from '@umijs/max';
 import { updateDividend, clearCache } from '../../services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { RESPONSE_STATUS } from '@/utils/apiConstants';
 
 const Admin: React.FC = () => {
   const [dividendLoading, setDividendLoading] = useState(false);

@@ -2,7 +2,7 @@ import { Space, Tooltip, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount, renderHoldingStatus } from '@/utils/renderTool';
+import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 

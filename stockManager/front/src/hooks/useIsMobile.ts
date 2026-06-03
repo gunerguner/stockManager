@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SCREEN_MD_MAX } from '@/utils/constants';
+import { SCREEN_MD_MAX } from '@/utils/layoutConstants';
 
 /** 检测是否为移动端（屏幕宽度 ≤ SCREEN_MD_MAX） */
 export const useIsMobile = (): boolean => {

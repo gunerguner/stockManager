@@ -1,6 +1,3 @@
-import React from 'react';
-import { CheckCircleTwoTone } from '@ant-design/icons';
-
 // ==================== 颜色工具 ====================
 export const colorFromValue = (value: number): string => {
   return value > 0 ? 'red' : value < 0 ? 'green' : '';
@@ -29,24 +26,19 @@ export const formatMarketPrice = (
   return isHkCode(code) ? `$${num}` : num;
 };
 
-// ==================== 金额渲染 ====================
-export const renderAmount = (
+// ==================== 金额格式化 ====================
+export const formatAmount = (
   value: number,
-  color?: string,
   precision: number = 2,
-): React.ReactNode => {
-  const displayColor = color || colorFromValue(value);
-  return <span style={{ color: displayColor }}>{value.toFixed(precision)}</span>;
-};
+  grouped = false,
+): string =>
+  grouped
+    ? value.toLocaleString('en-US', {
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision,
+      })
+    : value.toFixed(precision);
 
-// ==================== 持有状态图标 ====================
-/**
- * 渲染持有状态 CheckCircleTwoTone 图标
- * @param holding 是否持有中
- * @param profit 盈亏值（正数红色，负数绿色）
- */
-export const renderHoldingStatus = (holding: boolean, profit: number): React.ReactNode => {
-  if (!holding) return null;
-  const iconColor = profit > 0 ? 'red' : '#33b317f1';
-  return <CheckCircleTwoTone twoToneColor={iconColor} style={{ fontSize: '0.8em' }} />;
-};
+/** 从 "12.34%" 等形式解析数值 */
+export const parsePercent = (text: string): number =>
+  parseFloat(text.replace('%', '')) || 0;
