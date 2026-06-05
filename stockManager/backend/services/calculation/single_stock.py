@@ -1,4 +1,7 @@
-"""单股指标拼装：行情 + 账本 metrics → StockData"""
+"""单股指标拼装：行情 + 账本 metrics → StockData
+
+港股通个股金额与价格为港币（HKD），不做汇率换算；组合汇总见 overall.py。
+"""
 from ...common import logger
 from ...common.types import RealtimePriceData, StockData
 from ...models import Operation, StockMeta as StockMetaModel

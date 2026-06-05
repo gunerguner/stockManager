@@ -2,12 +2,18 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, formatMarketPrice, isHkCode } from '@/utils/format/stock';
+import {
+  colorFromValue,
+  formatMarketAmount,
+  formatMarketPrice,
+  isHkCode,
+  toXueqiuStockUrl,
+} from '@/utils/format/stock';
 import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
-const { Text, Link } = Typography;
+const { Text } = Typography;
 
 // ==================== 类型定义 ====================
 
@@ -35,7 +41,7 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
     <>
       <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
       <Text>持股：{stock.holdCount} </Text>
-      <Text>累计盈亏：{renderAmount(stock.offsetTotal)} </Text>
+      <Text>累计盈亏：{renderAmount(stock.offsetTotal, undefined, 2, stock.code)} </Text>
       <Text>
         资金加权收益率：
         <span
@@ -76,16 +82,14 @@ const StockHeader: React.FC<{
     <div className="stock-header-wrapper">
       <div className="stock-header-left">
         <Space wrap={isMobile} className={isMobile && showStockInfo ? 'stock-header-space' : ''}>
-          <Link
-            href={`https://xueqiu.com/S/${isHkCode(stock.code) ? `HK${stock.code.slice(2)}` : stock.code}`}
-            target="_blank"
-            rel="noreferrer"
-            strong
-            className="stock-group-link"
-          >
-            {stock.name}
-          </Link>
-          {renderHoldingStatus(stock.holdCount > 0, stock.offsetTotal)}
+          {renderHoldingStatus({
+            name: stock.name,
+            code: stock.code,
+            link: toXueqiuStockUrl(stock.code),
+            isProfit: stock.offsetTotal > 0,
+            holding: stock.holdCount > 0,
+            isHk: isHkCode(stock.code),
+          })}
           <Text type="secondary">({stock.code})</Text>
           {!isMobile && stockInfo}
         </Space>
@@ -131,13 +135,13 @@ export const useTradeDetailModal = () => {
           title: '佣金',
           dataIndex: 'fee',
           width: isMobile ? 60 : 80,
-          render: (v: number) => <div>{v?.toFixed(2)}</div>,
+          render: (v: number) => <div>{formatMarketAmount(v, code)}</div>,
         },
         {
           title: '成交金额',
           dataIndex: 'sum',
           width: isMobile ? 80 : 100,
-          render: (v: number) => <div>{v?.toFixed(2)}</div>,
+          render: (v: number) => <div>{formatMarketAmount(v, code)}</div>,
         },
         { title: '说明', dataIndex: 'comment', width: isMobile ? 100 : 150 },
       ];

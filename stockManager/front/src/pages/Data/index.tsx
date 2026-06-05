@@ -17,12 +17,25 @@ const DataPage: React.FC = () => {
           {
             key: '1',
             label: '盈亏归因',
-            children: <AnalysisList data={stock.stocks} incomeCash={stock.overall.incomeCash} />,
+            children: (
+              <AnalysisList
+                data={stock.stocks}
+                incomeCash={stock.overall.incomeCash}
+                hkdCnyRate={stock.overall.hkdCnyRate}
+              />
+            ),
           },
           {
             key: '2',
             label: '费用明细',
-            children: <CostList data={stock.stocks} operations={operations} totalCost={stock.overall.totalCost} />,
+            children: (
+              <CostList
+                data={stock.stocks}
+                operations={operations}
+                totalCost={stock.overall.totalCost}
+                hkdCnyRate={stock.overall.hkdCnyRate}
+              />
+            ),
           },
         ]}
       />

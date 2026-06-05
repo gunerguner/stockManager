@@ -1,4 +1,7 @@
-"""组合整体指标与 XIRR 计算"""
+"""组合整体指标与 XIRR 计算
+
+个股指标为原币种（港股通为 HKD）；本模块汇总时通过 to_cny_amount 折算为人民币（CNY）。
+"""
 import datetime
 
 from pyxirr import xirr
