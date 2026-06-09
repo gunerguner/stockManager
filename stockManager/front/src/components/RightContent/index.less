@@ -16,9 +16,13 @@
 .right {
   display: flex;
   float: right;
-  height: 48px;
+  align-items: center;
+  min-height: 48px;
+  height: auto;
   margin-left: auto;
-  overflow: hidden;
+  overflow: visible;
+  flex-wrap: wrap;
+  gap: 4px;
 
   .action {
     display: flex;
@@ -54,6 +58,12 @@
   &:global(.opened) {
     background: rgba(255, 255, 255, 0.08);
   }
+}
+
+// 顶栏右侧区域不要被父级 overflow 裁切（A股 + 港股双 Tag 较宽）
+:global(.ant-pro-global-header .ant-pro-global-header-header-actions) {
+  overflow: visible;
+  max-width: none;
 }
 
 // ==================== 响应式 ====================

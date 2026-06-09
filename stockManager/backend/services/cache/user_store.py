@@ -1,15 +1,20 @@
 """用户数据与计算结果缓存"""
-from django.core.cache import cache
+from typing import Iterable
+
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 from ...common.cache import Cache
 from ...common import logger
-from ...common.tradingCalendar import TradingCalendar
+from ...common.market import markets_in_codes
 from ...common.utils import format_operations
 from ...common.types import CalculatedResult, OperationDict, CashFlowList
 from ...models import Operation, Info, CashFlow
 from . import keys
 from . import operation_codec
+from . import price_store
 
 
 def get_user_operations_cache(user: User) -> OperationDict | None:
@@ -46,16 +51,35 @@ def clear_user_cash_info(user_id: int) -> None:
     cache.delete(keys.KEY_USER_CASH_INFO.format(user_id=user_id))
 
 
-def get_calculated_target(user: User) -> CalculatedResult | None:
-    from . import price_store
+def should_invalidate_calculated_cache(user_codes: Iterable[str]) -> bool:
+    return any(
+        price_store._should_refresh_market(market)
+        for market in markets_in_codes(user_codes)
+    )
 
-    if price_store.should_refresh_cache():
+
+def get_calculated_target(
+    user: User,
+    user_codes: Iterable[str] | None = None,
+) -> CalculatedResult | None:
+    codes = list(user_codes) if user_codes is not None else list(get_user_operations(user).keys())
+    cached = cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.id))
+    if not cached:
         return None
-    return cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.id))
+    if "markets" not in cached:
+        return None
+    if should_invalidate_calculated_cache(codes):
+        return None
+    return cached
 
 
-def set_calculated_target(user_id: int, result: CalculatedResult) -> None:
-    if TradingCalendar.is_current_time_in_trading_hours():
+def set_calculated_target(
+    user_id: int,
+    result: CalculatedResult,
+    user_codes: Iterable[str],
+) -> None:
+    markets = markets_in_codes(user_codes)
+    if price_store.any_market_in_trading_hours(markets):
         return
     cache.set(keys.KEY_CALCULATED_TARGET.format(user_id=user_id), result, keys.TTL_CALCULATED_TARGET)
 
@@ -97,3 +121,15 @@ def clear_user_cache(user_id: int) -> None:
     clear_user_operations(user_id)
     clear_user_cash_info(user_id)
     clear_calculated_target(user_id)
+
+
+@receiver([post_save, post_delete], sender=Operation)
+@receiver([post_save, post_delete], sender=CashFlow)
+@receiver([post_save, post_delete], sender=Info)
+def clear_user_cache_on_model_change(sender, instance, **kwargs) -> None:
+    if sender == Info and instance.info_type != Info.InfoType.INCOME_CASH:
+        return
+    if not instance.user_id:
+        return
+    clear_user_cache(instance.user_id)
+    logger.info(f"[Redis] {sender.__name__} 变化，清除用户 {instance.user_id} 的缓存")

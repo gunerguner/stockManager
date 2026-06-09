@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getStocks, getOperations } from '@/services/api';
 import { history } from '@umijs/max';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { RESPONSE_STATUS } from '@/utils/apiConstants';
 
 // ==================== 配置 ====================
 

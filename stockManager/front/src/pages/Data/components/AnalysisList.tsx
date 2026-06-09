@@ -2,7 +2,8 @@ import { Col, Row, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, renderAmount as renderAmountTool } from '@/utils/renderTool';
+import { colorFromValue, toCnyAmount } from '@/utils/format/stock';
+import { renderAmount as renderAmountTool } from '@/utils/format/render';
 import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
 import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
@@ -30,7 +31,11 @@ interface AnalysisModel {
 export type AnalysisListProps = {
   data: API.Stock[];
   incomeCash?: number;
+  hkdCnyRate?: number;
 };
+
+const HK_CATEGORY = '港股通';
+const HK_AMOUNT_CODE = 'hk00000';
 
 // ==================== 配置 ====================
 
@@ -45,6 +50,7 @@ const STOCK_TYPE_CONFIGS: Array<[string, string, string?]> = [
   ['fundAB', '分级基金', 'FUNDAB'],
   ['fundIn', '场内基金', 'FUNDIN'],
   ['conv', '可转债', 'CONV'],
+  ['hk', HK_CATEGORY, 'HK'],
 ];
 
 /** API 股票类型 -> 内部键 映射表 */
@@ -56,13 +62,16 @@ const API_TYPE_MAP = new Map(
 
 // ==================== 组件 ====================
 
-export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0 }) => {
+export const AnalysisList: React.FC<AnalysisListProps> = ({
+  data,
+  incomeCash = 0,
+  hkdCnyRate = 0,
+}) => {
   const isMobile = useIsMobile();
   const { showStockProfit } = useStockProfitModal();
 
   /** 计算分析数据 */
   const { analysisList, totalProfit, totalLoss } = useMemo(() => {
-    // 初始化统计对象
     const stats = new Map<string, AnalysisModel>(
       STOCK_TYPE_CONFIGS.map(([key, label]) => [
         key,
@@ -70,16 +79,22 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
       ]),
     );
 
-    // 统计各类型股票数据
+    let totalProfitCny = 0;
+    let totalLossCny = 0;
+
     for (const stock of data) {
-      const { stockType, isNew, offsetTotal } = stock;
+      const { stockType, isNew, offsetTotal, code } = stock;
       const key = isNew ? 'isNew' : API_TYPE_MAP.get(stockType);
       const stat = key ? stats.get(key) : undefined;
-      
+
+      const cnyOffset = toCnyAmount(code, offsetTotal, hkdCnyRate);
+      if (cnyOffset > 0) totalProfitCny += cnyOffset;
+      else if (cnyOffset < 0) totalLossCny += cnyOffset;
+
       if (stat) {
         const profit = offsetTotal > 0 ? offsetTotal : 0;
         const loss = offsetTotal < 0 ? offsetTotal : 0;
-        
+
         stat.profit += profit;
         stat.loss += loss;
         stat.count++;
@@ -95,10 +110,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
       }
     }
 
-    // 构建分析数据
     const analysisList = [...stats.values()];
 
-    // 添加逆回购（如果有）
     if (incomeCash > 0) {
       analysisList.push({
         type: '逆回购',
@@ -108,32 +121,35 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         netIncome: incomeCash,
         stocks: [],
       });
+      totalProfitCny += incomeCash;
     }
 
-    // 计算总盈亏（包含逆回购）
-    const totalProfit = analysisList.reduce((sum, s) => sum + s.profit, 0);
-    const totalLoss = analysisList.reduce((sum, s) => sum + s.loss, 0);
+    return {
+      analysisList,
+      totalProfit: totalProfitCny,
+      totalLoss: totalLossCny,
+    };
+  }, [data, incomeCash, hkdCnyRate]);
 
-    return { analysisList, totalProfit, totalLoss };
-  }, [data, incomeCash]);
+  const toCnyForPct = (record: AnalysisModel, value: number): number =>
+    record.type === HK_CATEGORY ? value * (hkdCnyRate || 1) : value;
 
-  /** 渲染金额（复用通用渲染工具） */
-  const renderAmount = (value: number, color: string) => renderAmountTool(value, color);
+  const renderCategoryAmount = (value: number, color: string, record: AnalysisModel) =>
+    renderAmountTool(value, color, 2, record.type === HK_CATEGORY ? HK_AMOUNT_CODE : undefined);
 
-  /** 处理行点击事件 */
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
-    
+
     showStockProfit({
       data: record.stocks,
       categoryName: record.type,
       profit: record.profit,
       loss: record.loss,
       netIncome: record.netIncome,
+      isHkCategory: record.type === HK_CATEGORY,
     });
   };
 
-  /** 主表格列配置 */
   const columns: ColumnsType<AnalysisModel> = useMemo(
     () => [
       {
@@ -149,9 +165,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         title: '获利',
         dataIndex: 'profit',
         sorter: (a, b) => a.profit - b.profit,
-        render: (value: number) => (
-          <Tooltip title={`${((value / totalProfit) * 100).toFixed(2)}%`} color="red">
-            {renderAmount(value, 'red')}
+        render: (value: number, record: AnalysisModel) => (
+          <Tooltip
+            title={`${totalProfit ? ((toCnyForPct(record, value) / totalProfit) * 100).toFixed(2) : '0.00'}%`}
+            color="red"
+          >
+            {renderCategoryAmount(value, 'red', record)}
           </Tooltip>
         ),
       },
@@ -159,9 +178,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         title: '亏损',
         dataIndex: 'loss',
         sorter: (a, b) => a.loss - b.loss,
-        render: (value: number) => (
-          <Tooltip title={`${((value / totalLoss) * 100).toFixed(2)}%`} color="green">
-            {renderAmount(value, 'green')}
+        render: (value: number, record: AnalysisModel) => (
+          <Tooltip
+            title={`${totalLoss ? ((toCnyForPct(record, value) / totalLoss) * 100).toFixed(2) : '0.00'}%`}
+            color="green"
+          >
+            {renderCategoryAmount(value, 'green', record)}
           </Tooltip>
         ),
       },
@@ -169,10 +191,11 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({ data, incomeCash = 0
         title: '净收益',
         dataIndex: 'netIncome',
         sorter: (a, b) => a.netIncome - b.netIncome,
-        render: (value: number) => renderAmount(value, colorFromValue(value)),
+        render: (value: number, record: AnalysisModel) =>
+          renderCategoryAmount(value, colorFromValue(value), record),
       },
     ],
-    [totalProfit, totalLoss],
+    [totalProfit, totalLoss, hkdCnyRate],
   );
 
   return (

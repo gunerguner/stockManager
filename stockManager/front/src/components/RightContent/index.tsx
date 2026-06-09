@@ -5,7 +5,7 @@ import Avatar from './AvatarDropdown';
 import ThemeSwitch from './ThemeSwitch';
 import TradingTime from './TradingTime';
 import { getEnv } from '@/utils';
-import { ENV_TAG_COLORS } from '@/utils/constants';
+import { ENV_TAG_COLORS } from '@/utils/layoutConstants';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './index.less';
 

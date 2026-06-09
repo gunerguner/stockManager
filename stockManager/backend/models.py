@@ -129,6 +129,7 @@ class StockMeta(models.Model):
         CONV = "CONV", _("可转债")
         FUNDIN = "FUNDIN", _("场内基金")
         FUNDAB = "FUNDAB", _("分级基金")
+        HK = "HK", _("港股通")
         OTHER = "OTHER", _("其它")
 
     code = models.CharField(max_length=200, verbose_name="股票代码")

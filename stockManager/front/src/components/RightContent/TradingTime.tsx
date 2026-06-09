@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Tag } from 'antd';
-import { getTradingTimeStatus, TradingTimeStatus } from '@/utils/tradingTime';
+import { Tag, Space } from 'antd';
+import { getAllTradingTimeStatuses, TradingTimeStatus } from '@/utils/tradingTime';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 // ==================== 组件 ====================
 
 const TradingTime: React.FC = () => {
-  const [status, setStatus] = useState<TradingTimeStatus>(getTradingTimeStatus);
+  const [statuses, setStatuses] = useState<TradingTimeStatus[]>(() =>
+    getAllTradingTimeStatuses(),
+  );
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const updateStatus = () => setStatus(getTradingTimeStatus());
+    const updateStatus = () => setStatuses(getAllTradingTimeStatuses());
     updateStatus();
 
     const intervalId = setInterval(updateStatus, 60 * 1000);
@@ -18,12 +20,17 @@ const TradingTime: React.FC = () => {
   }, []);
 
   return (
-    <Tag
-      color={status.isTrading ? 'orange' : 'purple'}
-      style={{ margin: 0, fontSize: isMobile ? '11px' : undefined }}
-    >
-      {status.message}
-    </Tag>
+    <Space size={4} wrap>
+      {statuses.map((status) => (
+        <Tag
+          key={status.market}
+          color={status.isTrading ? 'orange' : 'purple'}
+          style={{ margin: 0, fontSize: isMobile ? 11 : undefined }}
+        >
+          {status.message}
+        </Tag>
+      ))}
+    </Space>
   );
 };
 

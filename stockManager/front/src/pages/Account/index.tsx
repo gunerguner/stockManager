@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from 'antd';
-import ProCard from '@ant-design/pro-card';
+import { ProCard } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 
 /**

@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
+import { formatAmount, toCnyAmount } from '@/utils/format/stock';
 import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
 import './index.less';
 
@@ -26,6 +27,7 @@ export type CostListProps = {
   data: API.Stock[];
   operations: Record<string, API.Operation[]>;
   totalCost: number;
+  hkdCnyRate?: number;
 };
 
 // ==================== 配置 ====================
@@ -57,8 +59,12 @@ const createEmptyRecord = (id: string, type: CostPeriodType): CostListModel => (
   subList: type === 'year' ? [] : undefined,
 });
 
-/** 统计交易数据 */
-const buildCostList = (data: API.Stock[], operations: Record<string, API.Operation[]>): CostListModel[] => {
+/** 统计交易数据（港股通 fee 按汇率折算为 CNY） */
+const buildCostList = (
+  data: API.Stock[],
+  operations: Record<string, API.Operation[]>,
+  hkdCnyRate: number,
+): CostListModel[] => {
   const yearMap = new Map<string, CostListModel>();
 
   for (const stock of data) {
@@ -81,16 +87,17 @@ const buildCostList = (data: API.Stock[], operations: Record<string, API.Operati
       if (op.type === 'DV') {
         yearRecord.dividendCount++;
         monthRecord.dividendCount++;
-      } else if (stock.stockType === 'CONV') {
-        yearRecord.convTradeCount++;
-        monthRecord.convTradeCount++;
-        yearRecord.fee += op.fee;
-        monthRecord.fee += op.fee;
       } else {
-        yearRecord.normalTradeCount++;
-        monthRecord.normalTradeCount++;
-        yearRecord.fee += op.fee;
-        monthRecord.fee += op.fee;
+        const feeCny = toCnyAmount(stock.code, op.fee, hkdCnyRate);
+        if (stock.stockType === 'CONV') {
+          yearRecord.convTradeCount++;
+          monthRecord.convTradeCount++;
+        } else {
+          yearRecord.normalTradeCount++;
+          monthRecord.normalTradeCount++;
+        }
+        yearRecord.fee += feeCny;
+        monthRecord.fee += feeCny;
       }
     }
   }
@@ -103,12 +110,20 @@ const buildCostList = (data: API.Stock[], operations: Record<string, API.Operati
 
 // ==================== 组件 ====================
 
-export const CostList: React.FC<CostListProps> = ({ data, operations, totalCost }) => {
+export const CostList: React.FC<CostListProps> = ({
+  data,
+  operations,
+  totalCost,
+  hkdCnyRate = 0,
+}) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
   /** 统计数据 */
-  const costList = useMemo(() => buildCostList(data, operations), [data, operations]);
+  const costList = useMemo(
+    () => buildCostList(data, operations, hkdCnyRate),
+    [data, operations, hkdCnyRate],
+  );
 
   /** 筛选交易记录并打开详情弹窗 */
   const handleCellClick = (record: CostListModel, dataIndex: keyof CostListModel, parentYear?: string) => {
@@ -161,7 +176,7 @@ export const CostList: React.FC<CostListProps> = ({ data, operations, totalCost 
     {
       title: '费用',
       dataIndex: 'fee',
-      render: (value: number) => <span>{value.toFixed(2)}</span>,
+      render: (value: number) => <span>{formatAmount(value)}</span>,
     },
   ];
 

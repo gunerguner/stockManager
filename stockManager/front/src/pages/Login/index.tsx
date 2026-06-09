@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, message, ConfigProvider, theme } from 'antd';
-import ProForm, { ProFormText } from '@ant-design/pro-form';
+import { ProForm, ProFormText } from '@ant-design/pro-components';
 import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';
 import { login } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { RESPONSE_STATUS } from '@/utils/apiConstants';
 import styles from './index.less';
 
 // ==================== 工具函数 ====================
