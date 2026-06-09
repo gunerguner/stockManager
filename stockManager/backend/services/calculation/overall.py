@@ -96,4 +96,6 @@ def compute_overall(
         for flow in cash_flow_list
     ]
 
+    to_return["hkdCnyRate"] = hkd_cny_rate
+
     return to_return

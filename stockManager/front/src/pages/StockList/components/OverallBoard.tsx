@@ -64,26 +64,25 @@ const renderStatistics = (
   configs: OverallStatConfig[],
   data: API.Overall,
   actions: OverallBoardActions,
+  isMain = false,
 ) =>
-  configs
-    .filter(({ when }) => !when || when(data))
-    .map(({ key, title, showColor, isMain }) => {
-      const { value, numeric } = resolveOverallStat(key, data);
-      const actionKey = STAT_ACTIONS[key];
-      const onClick = actionKey ? actions[actionKey] : undefined;
+  configs.map(({ key, title, showColor }) => {
+    const { value, numeric } = resolveOverallStat(key, data);
+    const actionKey = STAT_ACTIONS[key];
+    const onClick = actionKey ? actions[actionKey] : undefined;
 
-      return (
-        <StatisticItem
-          key={key}
-          title={title}
-          value={value}
-          numericValue={showColor ? numeric : undefined}
-          showColor={showColor}
-          isMain={isMain}
-          onClick={onClick}
-        />
-      );
-    });
+    return (
+      <StatisticItem
+        key={key}
+        title={title}
+        value={value}
+        numericValue={showColor ? numeric : undefined}
+        showColor={showColor}
+        isMain={isMain}
+        onClick={onClick}
+      />
+    );
+  });
 
 export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySuccess }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -92,7 +91,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
 
   return (
     <div className="overall-board-wrapper">
-      <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS, data, actions)}</Row>
+      <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS, data, actions, true)}</Row>
 
       <div
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}

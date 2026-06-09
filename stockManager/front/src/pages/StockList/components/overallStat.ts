@@ -6,8 +6,6 @@ export type OverallStatConfig = {
   key: OverallStatKey;
   title: string;
   showColor?: boolean;
-  isMain?: boolean;
-  when?: (data: API.Overall) => boolean;
 };
 
 export type ResolvedStat = {
@@ -47,9 +45,9 @@ export const resolveOverallStat = (
 };
 
 export const MAIN_STATISTICS: OverallStatConfig[] = [
-  { key: 'offsetToday', title: '当日盈亏', showColor: true, isMain: true },
-  { key: 'totalAsset', title: '总资产', isMain: true },
-  { key: 'xirrAnnualized', title: 'XIRR年化', showColor: true, isMain: true },
+  { key: 'offsetToday', title: '当日盈亏', showColor: true },
+  { key: 'totalAsset', title: '总资产' },
+  { key: 'xirrAnnualized', title: 'XIRR年化', showColor: true },
 ];
 
 export type OverallBoardActions = {
@@ -71,9 +69,5 @@ export const EXPANDED_STATISTICS: OverallStatConfig[] = [
   { key: 'totalCash', title: '现金' },
   { key: 'incomeCash', title: '其它现金收入' },
   { key: 'originCash', title: '总入金' },
-  {
-    key: 'hkdCnyRate',
-    title: '港币汇率 (HKD/CNY)',
-    when: (d) => d.hkdCnyRate != null && d.hkdCnyRate > 0,
-  },
+  { key: 'hkdCnyRate', title: '港币汇率 (HKD/CNY)' },
 ];

@@ -2,7 +2,6 @@
 from django.contrib.auth.models import User
 
 from ..common import logger
-from ..common.market import Market, markets_in_codes
 from ..common.types import CalculatedResult, DividendUpdateData, OperationDataDict
 from ..models import Info
 from .cache import CacheRepository
@@ -26,6 +25,7 @@ class Integrate:
 
         cached = CacheRepository.get_calculated_target(user, user_codes)
         if cached is not None:
+            cls._ensure_hkd_cny_rate(cached, user_codes)
             return cached
 
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
@@ -34,8 +34,6 @@ class Integrate:
         overall = Calculator.calculate_overall(
             stock_list, income_cash, cash_flow_list, hkd_cny_rate
         )
-        if Market.HK in markets_in_codes(user_codes):
-            overall["hkdCnyRate"] = hkd_cny_rate
 
         result: CalculatedResult = {
             "stocks": stock_list,
@@ -44,6 +42,13 @@ class Integrate:
         }
         CacheRepository.set_calculated_target(user.id, result, user_codes)
         return result
+
+    @staticmethod
+    def _ensure_hkd_cny_rate(result: CalculatedResult, user_codes: list[str]) -> None:
+        """旧版 calculated_target 缓存可能缺少 hkdCnyRate，命中缓存时补全供前端展示。"""
+        overall = result.setdefault("overall", {})
+        if overall.get("hkdCnyRate") is None:
+            overall["hkdCnyRate"] = CacheRepository.get_hkd_cny_rate(user_codes)
 
     @classmethod
     def generate_dividend(cls, user: User) -> list[DividendUpdateData]:
