@@ -1,16 +1,25 @@
-"""HKD/CNY 即期汇率外部数据源（akshare / 中国外汇交易中心）"""
-import akshare as ak
+"""HKD/CNY 即期汇率外部数据源（新浪外汇）"""
+import re
+
+from .http_client import get_text
+
+_SINA_FX_URL = "https://hq.sinajs.cn/list=fx_shkdcny"
+_SINA_REFERER = "https://finance.sina.com.cn/"
 
 
 def fetch_hkd_cny_rate() -> float:
-    """从 akshare 获取 HKD/CNY 即期汇率（1 HKD = X CNY）"""
-    df = ak.fx_spot_quote()
-    pair_col = "货币对" if "货币对" in df.columns else df.columns[0]
-    buy_col = "买报价" if "买报价" in df.columns else df.columns[1]
-    row = df[df[pair_col].astype(str).str.upper() == "HKD/CNY"]
-    if row.empty:
-        raise ValueError("akshare 未返回 HKD/CNY")
-    rate = float(row.iloc[0][buy_col])
+    """从新浪外汇获取 HKD/CNY 即期汇率（1 HKD = X CNY）"""
+    text = get_text(
+        _SINA_FX_URL,
+        headers={"Referer": _SINA_REFERER},
+    )
+    match = re.search(r'="([^"]+)"', text)
+    if not match:
+        raise ValueError("sina 外汇响应格式异常")
+    parts = match.group(1).split(",")
+    if len(parts) < 2:
+        raise ValueError(f"sina 外汇字段不足: {parts}")
+    rate = float(parts[1])
     if rate <= 0:
         raise ValueError(f"无效汇率: {rate}")
     return rate

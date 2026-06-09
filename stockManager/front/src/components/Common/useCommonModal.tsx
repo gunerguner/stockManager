@@ -120,7 +120,7 @@ export const useCommonModal = () => {
         icon: null,
         footer: null,
         closable: true,
-        maskClosable: true,
+        mask: { closable: true },
         styles,
       });
     },

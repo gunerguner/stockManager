@@ -18,6 +18,12 @@
     component: './Data',
   },
   {
+    path: '/watch',
+    name: '关注列表',
+    icon: 'star',
+    component: './Watch',
+  },
+  {
     path: '/admin',
     name: '后台管理',
     icon: 'crown',

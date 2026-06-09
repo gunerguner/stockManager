@@ -149,3 +149,30 @@ class StockMeta(models.Model):
     def __str__(self) -> str:
         display_name = self.name or self.code
         return f"{self.code} ({display_name}) - {self.get_stockType_display()}"
+
+
+class WatchItem(models.Model):
+    """用户关注列表"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='watch_items',
+        verbose_name="用户",
+    )
+    code = models.CharField(max_length=200, verbose_name="股票代码")
+    risk = models.TextField(blank=True, default="", verbose_name="风险")
+    opportunity = models.TextField(blank=True, default="", verbose_name="机会")
+    leftPoint = models.FloatField(null=True, blank=True, verbose_name="左侧点")
+    trendPoint = models.FloatField(null=True, blank=True, verbose_name="趋势点")
+    bloodPoint = models.FloatField(null=True, blank=True, verbose_name="血筹点")
+    comment = models.CharField(max_length=200, blank=True, default="", verbose_name="备注")
+
+    class Meta:
+        verbose_name = "关注股票列表"
+        verbose_name_plural = "关注股票列表"
+        ordering = ['id']
+        unique_together = [['user', 'code']]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} - {self.code}"

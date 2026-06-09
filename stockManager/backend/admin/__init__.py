@@ -8,6 +8,7 @@ from . import info  # noqa: F401
 from . import cashflow  # noqa: F401
 from . import stockmeta  # noqa: F401
 from . import session  # noqa: F401
+from . import watchitem  # noqa: F401
 
 __all__ = [
     'operation',
@@ -15,5 +16,6 @@ __all__ = [
     'cashflow',
     'stockmeta',
     'session',
+    'watchitem',
 ]
 

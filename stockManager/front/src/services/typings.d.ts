@@ -117,4 +117,23 @@ declare namespace API {
   type ClearCacheResult = BaseResult & {
     data?: { deletedCount: number };
   };
+
+  type WatchItem = {
+    code: string;
+    name: string;
+    holding: boolean;
+    priceNow: number | null;
+    histHigh: number | null;
+    pb: number | null;
+    pe: number | null;
+    risk: string;
+    opportunity: string;
+    leftPoint: number | null;
+    trendPoint: number | null;
+    bloodPoint: number | null;
+  };
+
+  type WatchlistResult = BaseResult & {
+    data?: WatchItem[];
+  };
 }

@@ -4,7 +4,7 @@ from easyquotation import use as eq_use
 from ...common import logger
 from ...common.market import hk_api_code, split_codes_by_market
 from ...common.types import RealtimePriceData, RealtimePriceDict
-from ...common.utils import format_percent
+from ...common.utils import format_percent, safe_float
 
 _quotations: dict[str, object] = {}
 
@@ -28,6 +28,20 @@ def _build_price(stock_data: dict, price_key: str, close_key: str) -> RealtimePr
     })
 
 
+def _build_price_cn(stock_data: dict, price_key: str, close_key: str) -> RealtimePriceData:
+    base = _build_price(stock_data, price_key, close_key)
+    high_raw = stock_data.get("high_2")
+    base["yearHigh"] = safe_float(high_raw) if high_raw else None
+    return base
+
+
+def _build_price_hk(stock_data: dict, price_key: str, close_key: str) -> RealtimePriceData:
+    base = _build_price(stock_data, price_key, close_key)
+    high_raw = stock_data.get("year_high")
+    base["yearHigh"] = safe_float(high_raw) if high_raw else None
+    return base
+
+
 def fetch_prices(code_list: list[str]) -> RealtimePriceDict:
     if not code_list:
         return {}
@@ -43,7 +57,7 @@ def fetch_prices(code_list: list[str]) -> RealtimePriceDict:
 def _fetch_cn(code_list: list[str]) -> RealtimePriceDict:
     try:
         return {
-            code: _build_price(data, "now", "close")
+            code: _build_price_cn(data, "now", "close")
             for code, data in _quotation("tencent").real(code_list, prefix=True).items()
         }
     except Exception as e:
@@ -55,7 +69,7 @@ def _fetch_hk(code_list: list[str]) -> RealtimePriceDict:
     try:
         raw = _quotation("hkquote").real([hk_api_code(code) for code in code_list])
         return {
-            code: _build_price(raw[hk_api_code(code)], "price", "lastPrice")
+            code: _build_price_hk(raw[hk_api_code(code)], "price", "lastPrice")
             for code in code_list
             if raw.get(hk_api_code(code))
         }

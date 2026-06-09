@@ -63,6 +63,15 @@ def refresh_dividend(request: HttpRequest) -> JsonResponse:
     return json_response(status=ResponseStatus.SUCCESS, data=codes, message="刷新除权除息信息成功")
 
 
+@require_authentication
+@handle_exception
+def watchlist(request: HttpRequest) -> JsonResponse:
+    """获取关注列表 - GET /api/watchlist"""
+    logger.info(f"watchlist - 用户: {request.user.username}, IP: {get_client_ip(request)}")
+    data = Integrate.get_watchlist(request.user)
+    return json_response(status=ResponseStatus.SUCCESS, data=data)
+
+
 @require_superuser
 @require_methods(['POST'])
 @handle_exception

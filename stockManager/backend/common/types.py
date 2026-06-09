@@ -4,13 +4,14 @@ from typing import TypedDict
 from ..models import Operation
 
 
-class RealtimePriceData(TypedDict):
+class RealtimePriceData(TypedDict, total=False):
     """实时价格数据"""
     name: str
     currentPrice: float
     priceOffset: float
     offsetRatio: str
     yesterdayClose: float
+    yearHigh: float | None
 
 
 class CashFlowData(TypedDict):
@@ -92,6 +93,38 @@ class DividendUpdateData(TypedDict):
     """除权更新项"""
     code: str
     name: str
+
+
+class WatchItemDict(TypedDict):
+    """关注列表原始项（缓存/DB）"""
+    code: str
+    risk: str
+    opportunity: str
+    leftPoint: float | None
+    trendPoint: float | None
+    bloodPoint: float | None
+
+
+class WatchResultItem(TypedDict):
+    """关注列表 API 返回项"""
+    code: str
+    name: str
+    holding: bool
+    priceNow: float | None
+    histHigh: float | None  # 近 6 年历史最高价
+    pb: float | None
+    pe: float | None
+    risk: str
+    opportunity: str
+    leftPoint: float | None
+    trendPoint: float | None
+    bloodPoint: float | None
+
+
+class ValuationData(TypedDict):
+    """每股估值指标（价格无关）"""
+    epsTtm: float | None
+    bvps: float | None
 
 
 OperationDict = dict[str, list[Operation]]

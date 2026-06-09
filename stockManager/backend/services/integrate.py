@@ -2,10 +2,10 @@
 from django.contrib.auth.models import User
 
 from ..common import logger
-from ..common.types import CalculatedResult, DividendUpdateData, OperationDataDict
+from ..common.types import CalculatedResult, DividendUpdateData, OperationDataDict, WatchResultItem
 from ..models import Info
 from .cache import CacheRepository
-from .calculation import Calculator
+from .calculation import Calculator, StockHold
 from .dividend import Dividend
 
 
@@ -63,3 +63,45 @@ class Integrate:
             defaults={"value": str(income_cash)},
         )
         logger.info(f"用户 {user.username} 更新收益现金: {income_cash}")
+
+    @classmethod
+    def get_watchlist(cls, user: User) -> list[WatchResultItem]:
+        items = CacheRepository.get_user_watchlist(user)
+        if not items:
+            return []
+
+        codes = [item["code"] for item in items]
+        operation_list = CacheRepository.get_user_operations(user)
+        holding_set = set(StockHold.get_holding_stocks(operation_list))
+        prices = CacheRepository.query_stock_prices(codes)
+        valuations = CacheRepository.get_valuations(codes, prices)
+        hist_highs = CacheRepository.get_hist_highs(codes)
+
+        def _ratio(price: float | None, per_share: float | None) -> float | None:
+            if price and per_share:
+                return round(price / per_share, 2)
+            return None
+
+        result: list[WatchResultItem] = []
+        for item in items:
+            code = item["code"]
+            price_data = prices.get(code, {})
+            valuation = valuations.get(code, {})
+            price_now = price_data.get("currentPrice")
+            result.append(
+                WatchResultItem(
+                    code=code,
+                    name=price_data.get("name", code),
+                    holding=code in holding_set,
+                    priceNow=price_now,
+                    histHigh=hist_highs.get(code),
+                    pe=_ratio(price_now, valuation.get("epsTtm")),
+                    pb=_ratio(price_now, valuation.get("bvps")),
+                    risk=item["risk"] or "",
+                    opportunity=item["opportunity"] or "",
+                    leftPoint=item["leftPoint"],
+                    trendPoint=item["trendPoint"],
+                    bloodPoint=item["bloodPoint"],
+                )
+            )
+        return result

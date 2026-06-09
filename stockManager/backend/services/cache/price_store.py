@@ -14,7 +14,14 @@ from . import keys
 from . import meta_store
 from . import user_store
 
-_PRICE_FIELDS = frozenset({"name", "currentPrice", "priceOffset", "offsetRatio", "yesterdayClose"})
+_PRICE_FIELDS = frozenset({
+    "name",
+    "currentPrice",
+    "priceOffset",
+    "offsetRatio",
+    "yesterdayClose",
+    "yearHigh",
+})
 
 
 def is_in_trading_hours(market: Market) -> bool:

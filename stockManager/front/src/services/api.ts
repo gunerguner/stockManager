@@ -73,3 +73,8 @@ export async function updateDividend(options?: RequestOptions) {
 export async function clearCache(options?: RequestOptions) {
   return postRequest<API.ClearCacheResult>('/api/clearCache', undefined, options);
 }
+
+/** 获取关注列表 GET /api/watchlist */
+export async function getWatchlist(options?: RequestOptions) {
+  return getRequest<API.WatchlistResult>('/api/watchlist', options);
+}

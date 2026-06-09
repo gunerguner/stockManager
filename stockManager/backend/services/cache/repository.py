@@ -5,12 +5,23 @@ from django.contrib.auth.models import User
 
 from ...common.cache import Cache
 from ...common import logger
-from ...common.types import CalculatedResult, MarketsData, OperationDict, CashFlowList, RealtimePriceDict
+from ...common.types import (
+    CalculatedResult,
+    MarketsData,
+    OperationDict,
+    CashFlowList,
+    RealtimePriceDict,
+    ValuationData,
+    WatchItemDict,
+)
 from ...models import StockMeta as StockMetaModel
 from . import fx_store
+from . import hist_high_store
 from . import meta_store
 from . import price_store
 from . import user_store
+from . import valuation_store
+from . import watch_store
 
 
 class CacheRepository:
@@ -54,6 +65,18 @@ class CacheRepository:
     @classmethod
     def get_markets_metadata(cls) -> MarketsData:
         return price_store.get_markets_metadata()
+
+    @classmethod
+    def get_user_watchlist(cls, user: User) -> list[WatchItemDict]:
+        return watch_store.get_user_watchlist(user)
+
+    @classmethod
+    def get_valuations(cls, codes: list[str], price_map: RealtimePriceDict) -> dict[str, ValuationData]:
+        return valuation_store.get_valuations(codes, price_map)
+
+    @classmethod
+    def get_hist_highs(cls, codes: list[str]) -> dict[str, float | None]:
+        return hist_high_store.get_hist_highs(codes)
 
     @classmethod
     def clear_all(cls) -> int:

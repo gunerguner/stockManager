@@ -9,6 +9,9 @@ KEY_STOCK_PRICE_TIMESTAMP = "stock:price:timestamp:{market}"
 KEY_STOCK_PRICE_TIMESTAMP_LEGACY = "stock:price:timestamp"
 KEY_STOCK_NAME_SYNC_MARK = "stock:name:sync:mark"
 KEY_FX_HKD_CNY = "fx:hkd_cny"
+KEY_USER_WATCHLIST = "user:{user_id}:watchlist"
+KEY_VALUATION = "stock:valuation:{code}"
+KEY_HIST_HIGH = "stock:hist_high:{code}"
 
 TTL_USER_DATA = 36000
 TTL_CALCULATED_TARGET = 86400
@@ -16,3 +19,5 @@ TTL_STOCK_META = 86400
 TTL_STOCK_PRICE = 86400
 TTL_STOCK_NAME_SYNC = 86400
 TTL_FX = 86400
+TTL_VALUATION = 86400
+TTL_HIST_HIGH = 86400  # 历史高价每日更新一次即可
