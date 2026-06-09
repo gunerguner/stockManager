@@ -28,6 +28,7 @@ export type CostListProps = {
   operations: Record<string, API.Operation[]>;
   totalCost: number;
   hkdCnyRate?: number;
+  loading?: boolean;
 };
 
 // ==================== 配置 ====================
@@ -115,6 +116,7 @@ export const CostList: React.FC<CostListProps> = ({
   operations,
   totalCost,
   hkdCnyRate = 0,
+  loading = false,
 }) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
@@ -205,6 +207,7 @@ export const CostList: React.FC<CostListProps> = ({
         rowKey="id"
         columns={getColumns()}
         dataSource={costList}
+        loading={loading}
         bordered
         pagination={false}
         expandable={{ expandedRowRender }}

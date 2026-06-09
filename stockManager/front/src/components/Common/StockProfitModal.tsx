@@ -2,8 +2,8 @@ import { Space, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
-import { isHkCode } from '@/utils/format/stock';
+import { renderAmount, renderAmountByCurrency, renderHoldingStatus } from '@/utils/format/render';
+import { isHkCode, LOSS_COLOR, MarketCurrency, PROFIT_COLOR } from '@/utils/format/stock';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -34,12 +34,12 @@ const SummaryItems: React.FC<{
   profit: number;
   loss: number;
   netIncome: number;
-  amountCode?: string;
-}> = ({ profit, loss, netIncome, amountCode }) => (
+  currency: MarketCurrency;
+}> = ({ profit, loss, netIncome, currency }) => (
   <>
-    <Text>获利：{renderAmount(profit, 'red', 2, amountCode)} </Text>
-    <Text>亏损：{renderAmount(loss, 'green', 2, amountCode)} </Text>
-    <Text>净盈亏：{renderAmount(netIncome, undefined, 2, amountCode)} </Text>
+    <Text>获利：{renderAmountByCurrency(profit, currency, PROFIT_COLOR, 2)} </Text>
+    <Text>亏损：{renderAmountByCurrency(loss, currency, LOSS_COLOR, 2)} </Text>
+    <Text>净盈亏：{renderAmountByCurrency(netIncome, currency, undefined, 2)} </Text>
   </>
 );
 
@@ -49,8 +49,8 @@ const SummaryHeader: React.FC<{
   profit: number;
   loss: number;
   netIncome: number;
-  amountCode?: string;
-}> = ({ categoryName, profit, loss, netIncome, amountCode }) => {
+  currency: MarketCurrency;
+}> = ({ categoryName, profit, loss, netIncome, currency }) => {
   const isMobile = useIsMobile();
 
   return (
@@ -66,7 +66,7 @@ const SummaryHeader: React.FC<{
                 profit={profit}
                 loss={loss}
                 netIncome={netIncome}
-                amountCode={amountCode}
+                currency={currency}
               />
             </Space>
           </div>
@@ -78,7 +78,7 @@ const SummaryHeader: React.FC<{
             profit={profit}
             loss={loss}
             netIncome={netIncome}
-            amountCode={amountCode}
+            currency={currency}
           />
         </Space>
       )}
@@ -100,7 +100,7 @@ export const useStockProfitModal = () => {
         return;
       }
 
-      const amountCode = isHkCategory ? 'hk00000' : undefined;
+      const currency: MarketCurrency = isHkCategory ? 'hkd' : 'cny';
       const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
 
       const columns: ColumnsType<StockProfitData> = [
@@ -132,7 +132,7 @@ export const useStockProfitModal = () => {
           profit={profit}
           loss={loss}
           netIncome={netIncome}
-          amountCode={amountCode}
+          currency={currency}
         />
       );
 

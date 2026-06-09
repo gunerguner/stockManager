@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Button, Row, Space, App } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
-import { history, useModel } from '@umijs/max';
-import { updateDividend, clearCache } from '../../services/api';
+import { useModel } from '@umijs/max';
+import { updateDividend, clearCache } from '@/services/api';
 import { RESPONSE_STATUS } from '@/utils/apiConstants';
 
 const Admin: React.FC = () => {
@@ -33,8 +33,6 @@ const Admin: React.FC = () => {
                 </>
               ),
             });
-          } else if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
-            history.push('/login');
           }
         } catch (error) {
           // 更新除权信息失败由全局 errorHandler 处理
@@ -68,8 +66,6 @@ const Admin: React.FC = () => {
               title: '缓存已清理',
               content: `已删除 ${response.data?.deletedCount ?? 0} 个 key`,
             });
-          } else if (response.status === RESPONSE_STATUS.UNAUTHORIZED) {
-            history.push('/login');
           }
         } catch {
           modal.error({

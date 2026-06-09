@@ -14,9 +14,10 @@ export async function getInitialState(): Promise<{
     try {
       const result = await queryCurrentUser();
       if (result.status === RESPONSE_STATUS.SUCCESS) return result.info;
-      if (result.status === RESPONSE_STATUS.UNAUTHORIZED) history.push(LOGIN_PATH);
     } catch {
-      history.push(LOGIN_PATH);
+      if (history.location.pathname !== LOGIN_PATH) {
+        history.push(LOGIN_PATH);
+      }
     }
     return undefined;
   };

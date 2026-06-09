@@ -1,7 +1,14 @@
 import React from 'react';
 import { CheckCircleTwoTone } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
-import { colorFromValue, formatMarketAmount } from './stock';
+import {
+  colorFromValue,
+  formatAmountByCurrency,
+  formatMarketAmount,
+  LOSS_COLOR,
+  MarketCurrency,
+  PROFIT_COLOR,
+} from './stock';
 
 const { Link } = Typography;
 
@@ -30,6 +37,20 @@ export const renderAmount = (
   );
 };
 
+export const renderAmountByCurrency = (
+  value: number,
+  currency: MarketCurrency,
+  color?: string,
+  precision: number = 2,
+): React.ReactNode => {
+  const displayColor = color || colorFromValue(value);
+  return (
+    <span style={{ color: displayColor }}>
+      {formatAmountByCurrency(value, currency, precision)}
+    </span>
+  );
+};
+
 // ==================== 股票名称与持有状态 ====================
 
 export type RenderHoldingStatusParams = {
@@ -52,7 +73,7 @@ export const renderHoldingStatus = ({
   isHk,
   nameClassName,
 }: RenderHoldingStatusParams): React.ReactNode => {
-  const iconColor = isProfit ? 'red' : '#33b317f1';
+  const iconColor = isProfit ? PROFIT_COLOR : LOSS_COLOR;
 
   const nameNode = link ? (
     <Link href={link} target="_blank" rel="noreferrer" strong className="stock-group-link">

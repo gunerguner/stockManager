@@ -7,6 +7,7 @@ import {
   formatMarketAmount,
   formatMarketPrice,
   isHkCode,
+  parsePercent,
   toXueqiuStockUrl,
 } from '@/utils/format/stock';
 import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
@@ -46,7 +47,7 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
         资金加权收益率：
         <span
           style={{
-            color: colorFromValue(parseFloat(stock.moneyWeightedReturn.replace('%', '')) || 0),
+            color: colorFromValue(parsePercent(stock.moneyWeightedReturn)),
           }}
         >
           {stock.moneyWeightedReturn}

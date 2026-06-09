@@ -2,8 +2,15 @@ import { Col, Row, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { colorFromValue, toCnyAmount } from '@/utils/format/stock';
-import { renderAmount as renderAmountTool } from '@/utils/format/render';
+import {
+  colorFromValue,
+  formatPercentage,
+  LOSS_COLOR,
+  MarketCurrency,
+  PROFIT_COLOR,
+  toCnyAmount,
+} from '@/utils/format/stock';
+import { renderAmountByCurrency } from '@/utils/format/render';
 import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
 import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
@@ -32,10 +39,10 @@ export type AnalysisListProps = {
   data: API.Stock[];
   incomeCash?: number;
   hkdCnyRate?: number;
+  loading?: boolean;
 };
 
 const HK_CATEGORY = '港股通';
-const HK_AMOUNT_CODE = 'hk00000';
 
 // ==================== 配置 ====================
 
@@ -66,6 +73,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
   data,
   incomeCash = 0,
   hkdCnyRate = 0,
+  loading = false,
 }) => {
   const isMobile = useIsMobile();
   const { showStockProfit } = useStockProfitModal();
@@ -134,8 +142,11 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
   const toCnyForPct = (record: AnalysisModel, value: number): number =>
     record.type === HK_CATEGORY ? value * (hkdCnyRate || 1) : value;
 
+  const categoryCurrency = (record: AnalysisModel): MarketCurrency =>
+    record.type === HK_CATEGORY ? 'hkd' : 'cny';
+
   const renderCategoryAmount = (value: number, color: string, record: AnalysisModel) =>
-    renderAmountTool(value, color, 2, record.type === HK_CATEGORY ? HK_AMOUNT_CODE : undefined);
+    renderAmountByCurrency(value, categoryCurrency(record), color, 2);
 
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
@@ -167,10 +178,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         sorter: (a, b) => a.profit - b.profit,
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
-            title={`${totalProfit ? ((toCnyForPct(record, value) / totalProfit) * 100).toFixed(2) : '0.00'}%`}
-            color="red"
+            title={`${formatPercentage(toCnyForPct(record, value), totalProfit)}%`}
+            color={PROFIT_COLOR}
           >
-            {renderCategoryAmount(value, 'red', record)}
+            {renderCategoryAmount(value, PROFIT_COLOR, record)}
           </Tooltip>
         ),
       },
@@ -180,10 +191,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         sorter: (a, b) => a.loss - b.loss,
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
-            title={`${totalLoss ? ((toCnyForPct(record, value) / totalLoss) * 100).toFixed(2) : '0.00'}%`}
-            color="green"
+            title={`${formatPercentage(toCnyForPct(record, value), totalLoss)}%`}
+            color={LOSS_COLOR}
           >
-            {renderCategoryAmount(value, 'green', record)}
+            {renderCategoryAmount(value, LOSS_COLOR, record)}
           </Tooltip>
         ),
       },
@@ -206,7 +217,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             title="总获利"
             value={totalProfit}
             precision={2}
-            styles={getHeaderStatisticStyles(isMobile, 'red')}
+            styles={getHeaderStatisticStyles(isMobile, PROFIT_COLOR)}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -214,7 +225,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             title="总亏损"
             value={totalLoss}
             precision={2}
-            styles={getHeaderStatisticStyles(isMobile, 'green')}
+            styles={getHeaderStatisticStyles(isMobile, LOSS_COLOR)}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -230,6 +241,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         rowKey="type"
         columns={columns}
         dataSource={analysisList}
+        loading={loading}
         bordered
         pagination={false}
         scroll={isMobile ? { x: 'max-content' } : undefined}

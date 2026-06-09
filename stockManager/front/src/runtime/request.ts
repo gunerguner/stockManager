@@ -1,7 +1,14 @@
 import { notification } from 'antd';
-import type { RequestConfig } from '@umijs/max';
+import { history, type RequestConfig } from '@umijs/max';
 import { getCsrfToken } from '@/utils';
 import { RESPONSE_STATUS, HTTP_CODE_MESSAGE } from '@/utils/apiConstants';
+import { LOGIN_PATH } from './constants';
+
+const redirectToLogin = () => {
+  if (history.location.pathname !== LOGIN_PATH) {
+    history.push(LOGIN_PATH);
+  }
+};
 
 const errorHandler = (error: any) => {
   const { response } = error;
@@ -46,6 +53,11 @@ const requestInterceptor = (url: string, options: any) => {
 
 const responseInterceptor = (response: any) => {
   const data = response?.data || response;
+
+  if (data?.status === RESPONSE_STATUS.UNAUTHORIZED) {
+    redirectToLogin();
+    return response;
+  }
 
   if (data?.message && data.status === RESPONSE_STATUS.ERROR) {
     notification.error({

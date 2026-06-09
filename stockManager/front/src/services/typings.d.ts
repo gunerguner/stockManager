@@ -95,10 +95,6 @@ declare namespace API {
     holdingDuration: number;
   };
 
-  type StockWithOperations = Stock & {
-    operationList: Operation[];
-  };
-
   type Operation = {
     date: string;
     type: string;

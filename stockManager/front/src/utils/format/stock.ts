@@ -1,6 +1,9 @@
 // ==================== 颜色工具 ====================
+export const PROFIT_COLOR = 'red';
+export const LOSS_COLOR = 'green';
+
 export const colorFromValue = (value: number): string => {
-  return value > 0 ? 'red' : value < 0 ? 'green' : '';
+  return value > 0 ? PROFIT_COLOR : value < 0 ? LOSS_COLOR : '';
 };
 
 // ==================== 价格格式化 ====================
@@ -77,6 +80,28 @@ export const formatMarketAmount = (
 
 export const toCnyAmount = (code: string, amount: number, hkdCnyRate: number): number =>
   isHkCode(code) ? amount * hkdCnyRate : amount;
+
+export type MarketCurrency = 'cny' | 'hkd';
+
+export const formatAmountByCurrency = (
+  value: number,
+  currency: MarketCurrency,
+  precision: number = 2,
+  grouped = false,
+): string =>
+  currency === 'hkd'
+    ? formatHkdAmount(value, precision, grouped)
+    : formatAmount(value, precision, grouped);
+
+/** 计算占比百分比字符串，total 为 0 时返回 "0.00" */
+export const formatPercentage = (
+  part: number,
+  total: number,
+  precision: number = 2,
+): string => {
+  if (!total) return '0.00';
+  return ((part / total) * 100).toFixed(precision);
+};
 
 /** 从 "12.34%" 等形式解析数值 */
 export const parsePercent = (text: string): number =>

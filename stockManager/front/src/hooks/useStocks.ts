@@ -3,11 +3,11 @@ import { useModel } from '@umijs/max';
 
 /** 股票数据 Hook - 自动处理数据加载 */
 export const useStocks = () => {
-  const { stock, operations, fetchStockData, initialized } = useModel('stocks');
+  const { stock, operations, fetchStockData, initialized, loading } = useModel('stocks');
 
   useEffect(() => {
     if (!initialized) fetchStockData();
   }, [initialized, fetchStockData]);
 
-  return { stock, operations, fetchStockData, initialized };
+  return { stock, operations, fetchStockData, initialized, loading };
 };

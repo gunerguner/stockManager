@@ -7,7 +7,7 @@ import { AnalysisList } from './components/AnalysisList';
 import { CostList } from './components/CostList';
 
 const DataPage: React.FC = () => {
-  const { stock, operations } = useStocks();
+  const { stock, operations, loading } = useStocks();
 
   return (
     <ProCard gutter={[0, 16]}>
@@ -22,6 +22,7 @@ const DataPage: React.FC = () => {
                 data={stock.stocks}
                 incomeCash={stock.overall.incomeCash}
                 hkdCnyRate={stock.overall.hkdCnyRate}
+                loading={loading}
               />
             ),
           },
@@ -34,6 +35,7 @@ const DataPage: React.FC = () => {
                 operations={operations}
                 totalCost={stock.overall.totalCost}
                 hkdCnyRate={stock.overall.hkdCnyRate}
+                loading={loading}
               />
             ),
           },

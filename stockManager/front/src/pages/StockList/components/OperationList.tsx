@@ -6,6 +6,7 @@ import {
   colorFromValue,
   formatMarketAmount,
   formatMarketPrice,
+  formatPercentage,
   isHkCode,
   toCnyAmount,
 } from '@/utils/format/stock';
@@ -20,11 +21,18 @@ type OperationListProps = {
   operations: Record<string, API.Operation[]>;
   showAll: boolean;
   showConv: boolean;
+  loading?: boolean;
 };
 
 // ==================== 组件 ====================
 
-export const OperationList: React.FC<OperationListProps> = ({ data, operations, showAll, showConv }) => {
+export const OperationList: React.FC<OperationListProps> = ({
+  data,
+  operations,
+  showAll,
+  showConv,
+  loading = false,
+}) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
@@ -82,9 +90,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
       render: (_, r) => {
         const hkdCnyRate = data.overall.hkdCnyRate ?? 0;
         const valueCny = toCnyAmount(r.code, r.totalValue, hkdCnyRate);
-        const percentage = data.overall.totalValue
-          ? ((valueCny / data.overall.totalValue) * 100).toFixed(2)
-          : '0.00';
+        const percentage = formatPercentage(valueCny, data.overall.totalValue);
         return (
           <Tooltip title={`${percentage}%`}>
             <div>{formatMarketAmount(r.totalValue, r.code)}</div>
@@ -144,6 +150,7 @@ export const OperationList: React.FC<OperationListProps> = ({ data, operations, 
         rowKey="code"
         columns={columns}
         dataSource={filteredData}
+        loading={loading}
         bordered
         pagination={false}
         onRow={(r) => ({ onClick: () => handleRowClick(r), style: { cursor: 'pointer' } })}

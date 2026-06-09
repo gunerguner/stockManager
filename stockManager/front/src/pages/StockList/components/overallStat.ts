@@ -1,4 +1,4 @@
-import { formatAmount, parsePercent } from '@/utils/format/stock';
+import { formatAmount, formatPercentage, parsePercent } from '@/utils/format/stock';
 
 export type OverallStatKey = Exclude<keyof API.Overall, 'cashFlowList' | 'totalCost'>;
 
@@ -17,7 +17,7 @@ const STAT_RESOLVERS: Partial<
   Record<OverallStatKey, (data: API.Overall) => ResolvedStat>
 > = {
   totalValue: (d) => {
-    const pct = d.totalAsset ? Math.round((d.totalValue / d.totalAsset) * 100) : 0;
+    const pct = formatPercentage(d.totalValue, d.totalAsset, 0);
     return {
       value: `${formatAmount(d.totalValue, 2, true)} (${pct}%)`,
       numeric: d.totalValue,

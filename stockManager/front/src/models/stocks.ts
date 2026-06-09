@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
+import { notification } from 'antd';
 import { getStocks, getOperations } from '@/services/api';
-import { history } from '@umijs/max';
 import { RESPONSE_STATUS } from '@/utils/apiConstants';
 
 // ==================== 配置 ====================
@@ -28,8 +28,10 @@ export default () => {
   const [stock, setStock] = useState<API.StockData>(DEFAULT_STOCK_DATA);
   const [operations, setOperations] = useState<Record<string, API.Operation[]>>({});
   const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchStockData = useCallback(async () => {
+    setLoading(true);
     try {
       // 并行请求两个接口
       const [stocksResponse, operationsResponse] = await Promise.all([
@@ -46,14 +48,19 @@ export default () => {
       }
 
       if (stocksResponse.status === RESPONSE_STATUS.UNAUTHORIZED) {
-        history.push('/login');
         return false;
       }
 
       setInitialized(true);
       return true;
-    } catch (error) {
+    } catch {
+      notification.error({
+        title: '加载失败',
+        description: '获取持仓数据失败，请稍后重试',
+      });
       return false;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -66,7 +73,8 @@ export default () => {
     setStock(DEFAULT_STOCK_DATA);
     setOperations({});
     setInitialized(false);
+    setLoading(false);
   }, []);
 
-  return { stock, operations, initialized, setStockData, fetchStockData, resetStockData };
+  return { stock, operations, initialized, loading, setStockData, fetchStockData, resetStockData };
 };

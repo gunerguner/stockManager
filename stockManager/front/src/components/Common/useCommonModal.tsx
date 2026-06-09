@@ -12,27 +12,36 @@ type ShowModalParams = {
   width?: number;
 };
 
-type SingleTableParams = {
+type SingleTableParams<T> = {
   title: string;
   width?: number;
   headerView?: React.ReactNode;
-  columns: ColumnsType<any>;
-  dataSource: any[];
+  columns: ColumnsType<T>;
+  dataSource: T[];
 };
 
-type TableGroup = {
+type TableGroup<T> = {
   headerView?: React.ReactNode;
-  columns: ColumnsType<any>;
-  dataSource: any[];
+  columns: ColumnsType<T>;
+  dataSource: T[];
 };
 
-type MultiTableParams = {
+type MultiTableParams<T> = {
   title: string;
   width?: number;
-  tables: TableGroup[];
+  tables: TableGroup<T>[];
 };
 
-type RenderTableParams = TableGroup & { rowKey: GetRowKey<any> };
+type RenderTableParams<T> = TableGroup<T> & { rowKey: GetRowKey<T> };
+
+type RowKeyRecord = { id?: React.Key; key?: React.Key };
+
+const prefixedRowKey =
+  <T extends object>(prefix: string): GetRowKey<T> =>
+  (record, index) => {
+    const row = record as RowKeyRecord;
+    return row.id ?? row.key ?? `${prefix}-${index ?? 0}`;
+  };
 
 /**
  * 通用 Modal Hook
@@ -41,9 +50,6 @@ type RenderTableParams = TableGroup & { rowKey: GetRowKey<any> };
 export const useCommonModal = () => {
   const { modal } = App.useApp();
   const isMobile = useIsMobile();
-
-  const prefixedRowKey = (prefix: string): GetRowKey<any> => (record) =>
-    record?.id ?? record?.key ?? `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
 
   const commonTableProps = React.useMemo(
     () =>
@@ -58,18 +64,23 @@ export const useCommonModal = () => {
             header: { row: { fontSize: 11 } },
           },
         }),
-      } as const),
+      }) as const,
     [isMobile],
   );
 
-  const renderTable = ({ headerView, columns, dataSource, rowKey }: RenderTableParams) => (
+  const renderTable = <T extends object>({
+    headerView,
+    columns,
+    dataSource,
+    rowKey,
+  }: RenderTableParams<T>) => (
     <div className="common-table-group-item">
       {headerView && <div className="common-table-header">{headerView}</div>}
       <Table {...commonTableProps} columns={columns} dataSource={dataSource} rowKey={rowKey} />
     </div>
   );
 
-  const renderTables = (tables: TableGroup[], variant: 'single' | 'multi') =>
+  const renderTables = <T extends object>(tables: TableGroup<T>[], variant: 'single' | 'multi') =>
     !tables?.length || tables.every((t) => !t.dataSource?.length) ? (
       <div className="common-empty-data">暂无数据</div>
     ) : (
@@ -81,9 +92,11 @@ export const useCommonModal = () => {
                 headerView: table.headerView,
                 columns: table.columns,
                 dataSource: table.dataSource,
-                rowKey: prefixedRowKey(`row-${tableIndex}`),
+                rowKey: prefixedRowKey<T>(`row-${tableIndex}`),
               })}
-              {variant === 'multi' && tableIndex < tables.length - 1 && <div className="table-group-divider" />}
+              {variant === 'multi' && tableIndex < tables.length - 1 && (
+                <div className="table-group-divider" />
+              )}
             </React.Fragment>
           ),
         )}
@@ -114,28 +127,27 @@ export const useCommonModal = () => {
     [modal, isMobile],
   );
 
-  const showSingleTable = React.useCallback(
-    ({ title, width = 600, headerView, columns, dataSource }: SingleTableParams) => {
-      showModal({
-        title,
-        content: renderTables([{ headerView, columns, dataSource }], 'single'),
-        width,
-      });
-    },
-    [showModal, renderTables],
-  );
+  const showSingleTable = <T extends object>({
+    title,
+    width = 600,
+    headerView,
+    columns,
+    dataSource,
+  }: SingleTableParams<T>) => {
+    showModal({
+      title,
+      content: renderTables([{ headerView, columns, dataSource }], 'single'),
+      width,
+    });
+  };
 
-  const showMultiTable = React.useCallback(
-    ({ title, width = 600, tables }: MultiTableParams) => {
-      showModal({
-        title,
-        content: renderTables(tables, 'multi'),
-        width,
-      });
-    },
-    [showModal, renderTables],
-  );
+  const showMultiTable = <T extends object>({ title, width = 600, tables }: MultiTableParams<T>) => {
+    showModal({
+      title,
+      content: renderTables(tables, 'multi'),
+      width,
+    });
+  };
 
   return { showModal, showSingleTable, showMultiTable };
 };
-
