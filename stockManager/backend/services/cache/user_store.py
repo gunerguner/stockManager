@@ -14,7 +14,7 @@ from ...common.types import CalculatedResult, OperationDict, CashFlowList
 from ...models import Operation, Info, CashFlow
 from . import keys
 from . import operation_codec
-from . import price_store
+from . import refresh_policy
 
 
 def get_user_operations_cache(user: User) -> OperationDict | None:
@@ -53,7 +53,7 @@ def clear_user_cash_info(user_id: int) -> None:
 
 def should_invalidate_calculated_cache(user_codes: Iterable[str]) -> bool:
     return any(
-        price_store._should_refresh_market(market)
+        refresh_policy.should_refresh_market(market)
         for market in markets_in_codes(user_codes)
     )
 
@@ -66,8 +66,6 @@ def get_calculated_target(
     cached = cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.id))
     if not cached:
         return None
-    if "markets" not in cached:
-        return None
     if should_invalidate_calculated_cache(codes):
         return None
     return cached
@@ -79,7 +77,7 @@ def set_calculated_target(
     user_codes: Iterable[str],
 ) -> None:
     markets = markets_in_codes(user_codes)
-    if price_store.any_market_in_trading_hours(markets):
+    if refresh_policy.any_market_in_trading_hours(markets):
         return
     cache.set(keys.KEY_CALCULATED_TARGET.format(user_id=user_id), result, keys.TTL_CALCULATED_TARGET)
 

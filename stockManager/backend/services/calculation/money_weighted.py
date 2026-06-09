@@ -2,29 +2,10 @@
 import datetime
 
 from ...common.constants import OperationType
+from ...common.operations import apply_net_invested
 from ...common.utils import format_percent, operation_sort_key
 from ...models import Operation
 from .constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
-
-
-def _apply_net_invested(
-    net_invested: float,
-    current_hold: float,
-    operation: Operation,
-) -> tuple[float, float]:
-    """按 overall_sum 规则更新净占用资金与持股数"""
-    match operation.operationType:
-        case OperationType.BUY:
-            net_invested += operation.count * operation.price + operation.fee
-            current_hold += operation.count
-        case OperationType.SELL:
-            net_invested -= operation.count * operation.price - operation.fee
-            current_hold -= operation.count
-        case OperationType.DIVIDEND:
-            dividend_multiplier = operation.reserve + operation.stock
-            net_invested -= current_hold * operation.cash
-            current_hold += current_hold * dividend_multiplier
-    return net_invested, current_hold
 
 
 def calculate_money_weighted_return(
@@ -53,7 +34,7 @@ def calculate_money_weighted_return(
             dollar_days += max(net_invested, 0.0) * seg_days
             holding_days += seg_days
 
-        net_invested, current_hold = _apply_net_invested(
+        net_invested, current_hold = apply_net_invested(
             net_invested, current_hold, operation
         )
         peak_net_invested = max(peak_net_invested, max(net_invested, 0.0))

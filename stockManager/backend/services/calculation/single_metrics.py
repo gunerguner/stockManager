@@ -3,6 +3,7 @@ import datetime
 from dataclasses import dataclass
 
 from ...common.constants import OperationType
+from ...common.operations import apply_operation_to_hold, dividend_multiplier
 from ...models import Operation
 from .constants import MIN_HOLD_COUNT_THRESHOLD
 
@@ -78,10 +79,10 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
                 hold_total_count = 0.0
 
         elif op_type == OperationType.DIVIDEND:
-            dividend_multiplier = operation.reserve + operation.stock
-            hold_total_count += hold_total_count * dividend_multiplier
+            multiplier = dividend_multiplier(operation)
+            hold_total_count += hold_total_count * multiplier
             overall_sum -= current_hold * operation.cash
-            current_hold += current_hold * dividend_multiplier
+            current_hold = apply_operation_to_hold(current_hold, operation)
 
         if not is_today:
             yesterday_hold = current_hold

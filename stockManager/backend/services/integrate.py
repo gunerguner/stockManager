@@ -25,30 +25,28 @@ class Integrate:
 
         cached = CacheRepository.get_calculated_target(user, user_codes)
         if cached is not None:
-            cls._ensure_hkd_cny_rate(cached, user_codes)
             return cached
 
-        income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
-        hkd_cny_rate = CacheRepository.get_hkd_cny_rate(user_codes)
-        stock_list = Calculator.calculate_stock_list(operation_list)
+        inputs = CacheRepository.load_calculation_inputs(user, operation_list)
+        stock_list = Calculator.calculate_stock_list(
+            operation_list,
+            inputs.prices,
+            inputs.stock_meta,
+        )
         overall = Calculator.calculate_overall(
-            stock_list, income_cash, cash_flow_list, hkd_cny_rate
+            stock_list,
+            inputs.income_cash,
+            inputs.cash_flow_list,
+            inputs.hkd_cny_rate,
         )
 
         result: CalculatedResult = {
             "stocks": stock_list,
             "overall": overall,
-            "markets": CacheRepository.get_markets_metadata(),
+            "markets": inputs.markets,
         }
         CacheRepository.set_calculated_target(user.id, result, user_codes)
         return result
-
-    @staticmethod
-    def _ensure_hkd_cny_rate(result: CalculatedResult, user_codes: list[str]) -> None:
-        """旧版 calculated_target 缓存可能缺少 hkdCnyRate，命中缓存时补全供前端展示。"""
-        overall = result.setdefault("overall", {})
-        if overall.get("hkdCnyRate") is None:
-            overall["hkdCnyRate"] = CacheRepository.get_hkd_cny_rate(user_codes)
 
     @classmethod
     def generate_dividend(cls, user: User) -> list[DividendUpdateData]:
@@ -73,9 +71,7 @@ class Integrate:
         codes = [item["code"] for item in items]
         operation_list = CacheRepository.get_user_operations(user)
         holding_set = set(StockHold.get_holding_stocks(operation_list))
-        prices = CacheRepository.query_stock_prices(codes)
-        valuations = CacheRepository.get_valuations(codes, prices)
-        hist_highs = CacheRepository.get_hist_highs(codes)
+        market_data = CacheRepository.load_watchlist_market_data(codes)
 
         def _ratio(price: float | None, per_share: float | None) -> float | None:
             if price and per_share:
@@ -85,8 +81,8 @@ class Integrate:
         result: list[WatchResultItem] = []
         for item in items:
             code = item["code"]
-            price_data = prices.get(code, {})
-            valuation = valuations.get(code, {})
+            price_data = market_data.prices.get(code, {})
+            valuation = market_data.valuations.get(code, {})
             price_now = price_data.get("currentPrice")
             result.append(
                 WatchResultItem(
@@ -94,7 +90,7 @@ class Integrate:
                     name=price_data.get("name", code),
                     holding=code in holding_set,
                     priceNow=price_now,
-                    histHigh=hist_highs.get(code),
+                    histHigh=market_data.hist_highs.get(code),
                     pe=_ratio(price_now, valuation.get("epsTtm")),
                     pb=_ratio(price_now, valuation.get("bvps")),
                     risk=item["risk"] or "",

@@ -17,11 +17,6 @@ const isBuyPointTriggered = (priceNow: number | null, point: number | null): boo
 const isTrendPointTriggered = (priceNow: number | null, point: number | null): boolean =>
   priceNow != null && point != null && point > 0 && priceNow > point;
 
-const rowTriggered = (record: API.WatchItem): boolean =>
-  isBuyPointTriggered(record.priceNow, record.leftPoint) ||
-  isBuyPointTriggered(record.priceNow, record.bloodPoint) ||
-  isTrendPointTriggered(record.priceNow, record.trendPoint);
-
 const formatRatio = (value: number | null): string =>
   value != null && !Number.isNaN(value) ? value.toFixed(2) : '—';
 
@@ -164,10 +159,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       pagination={false}
       onRow={(record) => ({
         onClick: () => handleRowClick(record),
-        style: {
-          cursor: 'pointer',
-          background: rowTriggered(record) ? '#fff7e6' : undefined,
-        },
+        style: { cursor: 'pointer' },
       })}
       scroll={isMobile ? { x: 'max-content' } : undefined}
       size={isMobile ? 'small' : 'middle'}

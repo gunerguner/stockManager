@@ -1,7 +1,7 @@
 """港股近 6 年历史最高价（腾讯 gtimg 周线，不复权）
 
 返回的 K 线行格式为 [日期, 开, 收, 高, 低, 量]，最高价位于索引 3。
-A 股历史高由 baostock_source.fetch_cn_hist_high 承接。
+A 股历史高由 baostock_source.fetch_cn_hist_highs 承接。
 """
 from datetime import datetime, timedelta
 

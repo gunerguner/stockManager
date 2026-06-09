@@ -6,11 +6,11 @@ from django.core.cache import cache
 from ...common.market import markets_in_codes
 from ..market.exchangeRate import fetch_hkd_cny_rate
 from . import keys
-from . import price_store
+from . import refresh_policy
 
 
 def get_hkd_cny_rate(user_codes: Iterable[str]) -> float:
-    if not price_store.any_market_in_trading_hours(markets_in_codes(user_codes)):
+    if not refresh_policy.any_market_in_trading_hours(markets_in_codes(user_codes)):
         cached = cache.get(keys.KEY_FX_HKD_CNY)
         if cached is not None:
             return float(cached)

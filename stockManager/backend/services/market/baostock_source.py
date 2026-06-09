@@ -116,12 +116,6 @@ def fetch_cn_valuation(codes: list[str]) -> dict[str, CnValuationRow]:
     return result
 
 
-def fetch_cn_hist_high(code: str) -> float | None:
-    """A 股近 6 年周线前复权最高价。"""
-    highs = fetch_cn_hist_highs([code])
-    return highs.get(code)
-
-
 def fetch_cn_hist_highs(codes: list[str]) -> dict[str, float | None]:
     """批量获取 A 股近 6 年周线前复权最高价。"""
     if not codes:

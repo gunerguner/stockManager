@@ -1,4 +1,5 @@
-"""缓存仓库门面"""
+"""缓存仓库门面：对外统一入口，聚合多 store 的编排调用"""
+from dataclasses import dataclass
 from typing import Iterable
 
 from django.contrib.auth.models import User
@@ -7,9 +8,9 @@ from ...common.cache import Cache
 from ...common import logger
 from ...common.types import (
     CalculatedResult,
+    CashFlowList,
     MarketsData,
     OperationDict,
-    CashFlowList,
     RealtimePriceDict,
     ValuationData,
     WatchItemDict,
@@ -24,14 +25,27 @@ from . import valuation_store
 from . import watch_store
 
 
+@dataclass(frozen=True)
+class CalculationInputs:
+    income_cash: float
+    cash_flow_list: CashFlowList
+    hkd_cny_rate: float
+    prices: RealtimePriceDict
+    stock_meta: dict[str, StockMetaModel]
+    markets: MarketsData
+
+
+@dataclass(frozen=True)
+class WatchlistMarketData:
+    prices: RealtimePriceDict
+    valuations: dict[str, ValuationData]
+    hist_highs: dict[str, float | None]
+
+
 class CacheRepository:
     @classmethod
     def get_user_operations(cls, user: User) -> OperationDict:
         return user_store.get_user_operations(user)
-
-    @classmethod
-    def get_user_cash_info(cls, user: User) -> tuple[float, CashFlowList]:
-        return user_store.get_user_cash_info(user)
 
     @classmethod
     def get_calculated_target(
@@ -55,28 +69,32 @@ class CacheRepository:
         return meta_store.get_stock_meta_dict()
 
     @classmethod
-    def query_stock_prices(cls, code_list: list[str]) -> RealtimePriceDict:
-        return price_store.query_prices(code_list)
-
-    @classmethod
-    def get_hkd_cny_rate(cls, user_codes: Iterable[str]) -> float:
-        return fx_store.get_hkd_cny_rate(user_codes)
-
-    @classmethod
-    def get_markets_metadata(cls) -> MarketsData:
-        return price_store.get_markets_metadata()
-
-    @classmethod
     def get_user_watchlist(cls, user: User) -> list[WatchItemDict]:
         return watch_store.get_user_watchlist(user)
 
     @classmethod
-    def get_valuations(cls, codes: list[str], price_map: RealtimePriceDict) -> dict[str, ValuationData]:
-        return valuation_store.get_valuations(codes, price_map)
+    def load_calculation_inputs(cls, user: User, operation_list: OperationDict) -> CalculationInputs:
+        """聚合持仓计算所需的现金流、汇率、行情与元数据。"""
+        user_codes = list(operation_list.keys())
+        income_cash, cash_flow_list = user_store.get_user_cash_info(user)
+        return CalculationInputs(
+            income_cash=income_cash,
+            cash_flow_list=cash_flow_list,
+            hkd_cny_rate=fx_store.get_hkd_cny_rate(user_codes),
+            prices=price_store.query_prices(user_codes),
+            stock_meta=meta_store.get_stock_meta_dict(),
+            markets=price_store.get_markets_metadata(),
+        )
 
     @classmethod
-    def get_hist_highs(cls, codes: list[str]) -> dict[str, float | None]:
-        return hist_high_store.get_hist_highs(codes)
+    def load_watchlist_market_data(cls, codes: list[str]) -> WatchlistMarketData:
+        """聚合关注列表所需的行情、估值与历史高价。"""
+        prices = price_store.query_prices(codes)
+        return WatchlistMarketData(
+            prices=prices,
+            valuations=valuation_store.get_valuations(codes, prices),
+            hist_highs=hist_high_store.get_hist_highs(codes),
+        )
 
     @classmethod
     def clear_all(cls) -> int:

@@ -5,7 +5,7 @@
 import functools
 import json
 from .constants import ResponseStatus
-from .middleware import json_response, get_client_ip
+from .middleware import json_response
 
 # 配置logger
 import logging
@@ -72,32 +72,6 @@ def require_methods(methods):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
-
-
-def log_view_access(view_func):
-    """
-    装饰器：记录视图访问日志
-    
-    使用方法:
-        @log_view_access
-        def my_view(request):
-            # 视图逻辑
-            pass
-    """
-    @functools.wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        ip = get_client_ip(request)
-        user = request.user.username if request.user.is_authenticated else "匿名用户"
-        logger.info(f"访问 {view_func.__name__} - 用户: {user}, IP: {ip}, 方法: {request.method}")
-        
-        try:
-            response = view_func(request, *args, **kwargs)
-            return response
-        except Exception as e:
-            logger.error(f"视图 {view_func.__name__} 执行异常: {str(e)}", exc_info=True)
-            raise
-            
-    return wrapper
 
 
 def handle_exception(view_func):
