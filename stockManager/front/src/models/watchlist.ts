@@ -11,7 +11,11 @@ export default () => {
   const fetchWatchlist = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getWatchlist();
+      const res = await getWatchlist({
+        timeout: 30000,
+        // 首次关注项会触发外部行情/估值请求，允许更长等待并避免全局与局部重复报错。
+        skipErrorHandler: true,
+      });
       if (res.status === RESPONSE_STATUS.SUCCESS && res.data) {
         setList(res.data);
       }

@@ -1,4 +1,5 @@
 """缓存仓库门面：对外统一入口，聚合多 store 的编排调用"""
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -90,10 +91,36 @@ class CacheRepository:
     def load_watchlist_market_data(cls, codes: list[str]) -> WatchlistMarketData:
         """聚合关注列表所需的行情、估值与历史高价。"""
         prices = price_store.query_prices(codes)
+
+        cached_vals, missing_vals = valuation_store.get_cached_valuations(codes)
+        cached_hist, missing_hist = hist_high_store.get_cached_hist_highs(codes)
+
+        valuations = dict(cached_vals)
+        hist_highs = dict(cached_hist)
+
+        futures: list[tuple[str, object]] = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            if missing_vals:
+                futures.append((
+                    "val",
+                    executor.submit(valuation_store.fetch_and_cache_valuations, missing_vals, prices),
+                ))
+            if missing_hist:
+                futures.append((
+                    "hist",
+                    executor.submit(hist_high_store.fetch_and_cache_hist_highs, missing_hist),
+                ))
+
+            for name, future in futures:
+                if name == "val":
+                    valuations.update(future.result())
+                elif name == "hist":
+                    hist_highs.update(future.result())
+
         return WatchlistMarketData(
             prices=prices,
-            valuations=valuation_store.get_valuations(codes, prices),
-            hist_highs=hist_high_store.get_hist_highs(codes),
+            valuations=valuations,
+            hist_highs=hist_highs,
         )
 
     @classmethod

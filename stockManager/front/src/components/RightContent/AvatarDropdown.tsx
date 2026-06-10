@@ -49,7 +49,10 @@ const AvatarDropdown: React.FC = () => {
       async onOk() {
         try {
           setDividendLoading(true);
-          const response = await updateDividend({ timeout: 20000 });
+          const response = await updateDividend({
+            timeout: 120000,
+            skipErrorHandler: true,
+          });
 
           if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
             modal.info({

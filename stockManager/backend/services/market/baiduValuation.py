@@ -5,7 +5,13 @@ from .http_client import get_json
 _BAIDU_URL = "https://gushitong.baidu.com/opendata"
 
 
-def _baidu_indicator(code: str, market: str, indicator: str) -> float | None:
+def _baidu_indicator(
+    code: str,
+    market: str,
+    indicator: str,
+    *,
+    timeout: int = 10,
+) -> float | None:
     """返回该指标最新一日的值；失败返回 None。"""
     params = {
         "openapi": "1",
@@ -25,7 +31,7 @@ def _baidu_indicator(code: str, market: str, indicator: str) -> float | None:
     }
     try:
         body = (
-            get_json(_BAIDU_URL, params=params)["Result"][0]["DisplayData"][
+            get_json(_BAIDU_URL, params=params, timeout=timeout)["Result"][0]["DisplayData"][
                 "resultData"
             ]["tplData"]["result"]["chartInfo"][0]["body"]
         )
@@ -35,9 +41,9 @@ def _baidu_indicator(code: str, market: str, indicator: str) -> float | None:
         return None
 
 
-def fetch_pe_pb(code: str, market: str) -> tuple[float | None, float | None]:
+def fetch_pe_pb(code: str, market: str, *, timeout: int = 10) -> tuple[float | None, float | None]:
     """market: 'hk'(港股); code 已去前缀。返回 (peTtm, pb)。"""
     return (
-        _baidu_indicator(code, market, "市盈率(TTM)"),
-        _baidu_indicator(code, market, "市净率"),
+        _baidu_indicator(code, market, "市盈率(TTM)", timeout=timeout),
+        _baidu_indicator(code, market, "市净率", timeout=timeout),
     )

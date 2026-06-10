@@ -85,7 +85,7 @@ flowchart LR
 | 实时价 | `backend/services/market/realtimePrice.py`（`fetch_prices`，沪深+港股） |
 | 关注列表 | `WatchItem` 模型 + `GET /api/watchlist`；`cache/watch_store.py`、前端 `pages/Watch/`（risk/opportunity/leftPoint/trendPoint/bloodPoint） |
 | 估值 PE/PB | `market/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
-| 历史高价 | `market/historicalHigh.py`、`baostock_source.fetch_cn_hist_highs` + `cache/hist_high_store.py` |
+| 历史高价 | `market/historicalHigh.py`（gtimg 周线 qfq/bfq）+ `cache/hist_high_store.py` |
 | 港股/汇率 | `common/market.py`（CN/HK 抽象）、`market/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
 | 缓存 | `services/cache/` + `common/cache.py`；详见 `backend/docs/缓存机制分析.md` |
 

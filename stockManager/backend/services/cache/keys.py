@@ -19,5 +19,7 @@ TTL_STOCK_META = TTL_DAY
 TTL_STOCK_PRICE = TTL_DAY
 TTL_STOCK_NAME_SYNC = TTL_DAY
 TTL_FX = TTL_DAY
-TTL_VALUATION = TTL_DAY
-TTL_HIST_HIGH = TTL_DAY
+# 基本面慢变；watchlist PE/PB 展示仍用 realtime 现价 / epsTtm(bvps) 现算
+TTL_VALUATION = 7 * TTL_DAY
+# 6 年周线最高；仅创新高或除权时变化
+TTL_HIST_HIGH = 30 * TTL_DAY
