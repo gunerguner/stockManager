@@ -4,9 +4,9 @@ import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   colorFromValue,
-  formatMarketAmount,
+  formatAmount,
   formatMarketPrice,
-  formatPercentage,
+  formatPercent,
   isHkCode,
   toCnyAmount,
 } from '@/utils/format/stock';
@@ -78,7 +78,7 @@ export const OperationList: React.FC<OperationListProps> = ({
       dataIndex: 'offsetTodayRatio',
       render: (_, r) => (
         <div style={{ color: colorFromValue(r.offsetToday) }}>
-          {`${formatMarketPrice(r.offsetToday, r.code)} (${r.offsetTodayRatio})`}
+          {`${formatMarketPrice(r.offsetToday, r.code)} (${formatPercent(r.offsetTodayRatio * 100)})`}
         </div>
       ),
     },
@@ -90,10 +90,11 @@ export const OperationList: React.FC<OperationListProps> = ({
       render: (_, r) => {
         const hkdCnyRate = data.overall.hkdCnyRate ?? 0;
         const valueCny = toCnyAmount(r.code, r.totalValue, hkdCnyRate);
-        const percentage = formatPercentage(valueCny, data.overall.totalValue);
+        const total = data.overall.totalValue;
+        const percentage = formatPercent(total ? (valueCny / total) * 100 : 0);
         return (
-          <Tooltip title={`${percentage}%`}>
-            <div>{formatMarketAmount(r.totalValue, r.code)}</div>
+          <Tooltip title={percentage}>
+            <div>{formatAmount(r.totalValue, { code: r.code })}</div>
           </Tooltip>
         );
       },
@@ -112,7 +113,7 @@ export const OperationList: React.FC<OperationListProps> = ({
       dataIndex: 'overallCost',
       render: (_, r) => (
         <div>
-          {`${formatMarketAmount(r.overallCost, r.code)}/${formatMarketAmount(r.holdCost, r.code)}`}
+          {`${formatAmount(r.overallCost, { code: r.code })}/${formatAmount(r.holdCost, { code: r.code })}`}
         </div>
       ),
     },
@@ -124,10 +125,10 @@ export const OperationList: React.FC<OperationListProps> = ({
         const todayTotal = r.offsetToday * r.holdCount;
         return (
           <Tooltip
-            title={formatMarketAmount(todayTotal, r.code)}
+            title={formatAmount(todayTotal, { code: r.code })}
             color={colorFromValue(todayTotal)}
           >
-            <div>{renderAmount(r.offsetCurrent, undefined, 2, r.code)}</div>
+            <div>{renderAmount(r.offsetCurrent, { code: r.code })}</div>
           </Tooltip>
         );
       },
@@ -138,7 +139,7 @@ export const OperationList: React.FC<OperationListProps> = ({
       sorter: (a, b) => a.offsetTotal - b.offsetTotal,
       render: (_, r) => (
         <div style={{ color: colorFromValue(r.offsetTotal) }}>
-          {`${formatMarketAmount(r.offsetTotal, r.code)} (${r.moneyWeightedReturn})`}
+          {`${formatAmount(r.offsetTotal, { code: r.code })} (${formatPercent(r.moneyWeightedReturn * 100)})`}
         </div>
       ),
     },

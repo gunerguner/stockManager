@@ -65,7 +65,7 @@ declare namespace API {
     totalAsset: number;
     totalCost: number;
     cashFlowList: CashFlowRecord[];
-    xirrAnnualized: string;
+    xirrAnnualized: number;
     hkdCnyRate?: number;
   };
 
@@ -77,18 +77,18 @@ declare namespace API {
   type Stock = {
     code: string;
     name: string;
-    priceNow: string;
+    priceNow: number;
     offsetToday: number;
-    offsetTodayRatio: string;
+    offsetTodayRatio: number;
     holdCount: number;
     holdCost: number;
     overallCost: number;
     totalValue: number;
     totalValueYesterday: number;
     offsetCurrent: number;
-    offsetCurrentRatio: string;
+    offsetCurrentRatio: number;
     offsetTotal: number;
-    moneyWeightedReturn: string;
+    moneyWeightedReturn: number;
     totalOffsetToday: number;
     isNew: boolean;
     stockType: string;

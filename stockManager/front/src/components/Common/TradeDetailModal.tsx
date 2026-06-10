@@ -4,10 +4,10 @@ import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   colorFromValue,
-  formatMarketAmount,
+  formatAmount,
   formatMarketPrice,
+  formatPercent,
   isHkCode,
-  parsePercent,
   toXueqiuStockUrl,
 } from '@/utils/format/stock';
 import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
@@ -42,15 +42,15 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
     <>
       <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
       <Text>持股：{stock.holdCount} </Text>
-      <Text>累计盈亏：{renderAmount(stock.offsetTotal, undefined, 2, stock.code)} </Text>
+      <Text>累计盈亏：{renderAmount(stock.offsetTotal, { code: stock.code })} </Text>
       <Text>
         资金加权收益率：
         <span
           style={{
-            color: colorFromValue(parsePercent(stock.moneyWeightedReturn)),
+            color: colorFromValue(stock.moneyWeightedReturn),
           }}
         >
-          {stock.moneyWeightedReturn}
+          {formatPercent(stock.moneyWeightedReturn * 100)}
         </span>
       </Text>
     </>
@@ -136,13 +136,13 @@ export const useTradeDetailModal = () => {
           title: '佣金',
           dataIndex: 'fee',
           width: isMobile ? 60 : 80,
-          render: (v: number) => <div>{formatMarketAmount(v, code)}</div>,
+          render: (v: number) => <div>{formatAmount(v, { code })}</div>,
         },
         {
           title: '成交金额',
           dataIndex: 'sum',
           width: isMobile ? 80 : 100,
-          render: (v: number) => <div>{formatMarketAmount(v, code)}</div>,
+          render: (v: number) => <div>{formatAmount(v, { code })}</div>,
         },
         { title: '说明', dataIndex: 'comment', width: isMobile ? 100 : 150 },
       ];

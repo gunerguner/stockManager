@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SCREEN_MD_MAX } from '@/utils/layoutConstants';
+import { SCREEN_MD_MAX } from '@/utils/constants';
 
 const getIsMobile = (): boolean => {
   if (typeof window === 'undefined') return false;

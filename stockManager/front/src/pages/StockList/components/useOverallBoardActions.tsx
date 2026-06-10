@@ -1,6 +1,6 @@
 import { Form, InputNumber, App } from 'antd';
 import { updateIncomeCash } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/apiConstants';
+import { RESPONSE_STATUS } from '@/utils/constants';
 import { useCashFlowModal } from '@/components/Common/CashFlowModal';
 import type { OverallBoardActions } from './overallStat';
 

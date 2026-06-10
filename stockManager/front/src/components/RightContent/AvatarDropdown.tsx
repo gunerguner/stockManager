@@ -10,7 +10,7 @@ import {
 import { App, Avatar, Dropdown, Row } from 'antd';
 import { history, useModel } from '@umijs/max';
 import { clearCache, logout, updateDividend } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/apiConstants';
+import { RESPONSE_STATUS } from '@/utils/constants';
 import styles from './index.less';
 
 // ==================== 组件 ====================

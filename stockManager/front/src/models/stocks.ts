@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { notification } from 'antd';
 import { getStocks, getOperations } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/apiConstants';
+import { RESPONSE_STATUS } from '@/utils/constants';
 
 // ==================== 配置 ====================
 
@@ -18,7 +18,7 @@ const DEFAULT_STOCK_DATA: API.StockData = {
     totalAsset: 0,
     totalCost: 0,
     cashFlowList: [],
-    xirrAnnualized: '0.00%',
+    xirrAnnualized: 0,
   },
 };
 

@@ -1,3 +1,6 @@
+/** 移动端断点（与 styles/variables.less @screen-md 一致） */
+export const SCREEN_MD_MAX = 768;
+
 /**
  * 状态码常量定义
  * 与后端 constants.py 保持一致
@@ -42,5 +45,5 @@ const HTTP_STATUS_CONFIG = {
  * HTTP 状态码对应的错误信息
  */
 export const HTTP_CODE_MESSAGE: Record<number, string> = Object.fromEntries(
-  Object.values(HTTP_STATUS_CONFIG).map(({ code, message }) => [code, message])
+  Object.values(HTTP_STATUS_CONFIG).map(({ code, message }) => [code, message]),
 );

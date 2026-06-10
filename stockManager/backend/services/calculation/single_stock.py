@@ -29,7 +29,7 @@ def _default_realtime_price() -> RealtimePriceData:
         "name": "",
         "currentPrice": 0.0,
         "priceOffset": 0.0,
-        "offsetRatio": "0%",
+        "offsetRatio": 0.0,
         "yesterdayClose": 0.0,
     })
 
@@ -46,8 +46,8 @@ def attach_price_fields(
     fields["name"] = _resolve_stock_name(code, single_real_time, stock_meta)
     fields["priceNow"] = single_real_time["currentPrice"]
     if fields["priceNow"] < MIN_PRICE_THRESHOLD:
-        fields["offsetToday"] = 0
-        fields["offsetTodayRatio"] = "0%"
+        fields["offsetToday"] = 0.0
+        fields["offsetTodayRatio"] = 0.0
     else:
         fields["offsetToday"] = single_real_time["priceOffset"]
         fields["offsetTodayRatio"] = single_real_time["offsetRatio"]
@@ -108,7 +108,7 @@ def attach_pnl_fields(
 
     return {
         "offsetCurrent": current_offset,
-        "offsetCurrentRatio": "%.2f%%" % (current_offset_ratio * 100),
+        "offsetCurrentRatio": current_offset_ratio,
         "offsetTotal": offset_total,
         "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total),
         "totalCost": metrics.total_fee,

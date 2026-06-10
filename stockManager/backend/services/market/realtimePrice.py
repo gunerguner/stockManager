@@ -4,7 +4,7 @@ from easyquotation import use as eq_use
 from ...common import logger
 from ...common.market import hk_api_code, split_codes_by_market
 from ...common.types import RealtimePriceData, RealtimePriceDict
-from ...common.utils import format_percent, safe_float
+from ...common.utils import safe_float
 
 _quotations: dict[str, object] = {}
 
@@ -23,7 +23,7 @@ def _build_price(stock_data: dict, price_key: str, close_key: str) -> RealtimePr
         "name": stock_data.get("name", ""),
         "currentPrice": current,
         "priceOffset": offset,
-        "offsetRatio": format_percent(offset / close) if close else "0%",
+        "offsetRatio": offset / close if close else 0.0,
         "yesterdayClose": close,
     })
 

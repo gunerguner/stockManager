@@ -2,8 +2,8 @@ import { Space, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { renderAmount, renderAmountByCurrency, renderHoldingStatus } from '@/utils/format/render';
-import { isHkCode, LOSS_COLOR, MarketCurrency, PROFIT_COLOR } from '@/utils/format/stock';
+import { isHkCode, LOSS_COLOR, MarketCurrency, PROFIT_COLOR, toMarketCurrency } from '@/utils/format/stock';
+import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -37,9 +37,9 @@ const SummaryItems: React.FC<{
   currency: MarketCurrency;
 }> = ({ profit, loss, netIncome, currency }) => (
   <>
-    <Text>获利：{renderAmountByCurrency(profit, currency, PROFIT_COLOR, 2)} </Text>
-    <Text>亏损：{renderAmountByCurrency(loss, currency, LOSS_COLOR, 2)} </Text>
-    <Text>净盈亏：{renderAmountByCurrency(netIncome, currency, undefined, 2)} </Text>
+    <Text>获利：{renderAmount(profit, { currency }, PROFIT_COLOR)} </Text>
+    <Text>亏损：{renderAmount(loss, { currency }, LOSS_COLOR)} </Text>
+    <Text>净盈亏：{renderAmount(netIncome, { currency })} </Text>
   </>
 );
 
@@ -100,7 +100,7 @@ export const useStockProfitModal = () => {
         return;
       }
 
-      const currency: MarketCurrency = isHkCategory ? 'hkd' : 'cny';
+      const currency: MarketCurrency = toMarketCurrency(!!isHkCategory);
       const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
 
       const columns: ColumnsType<StockProfitData> = [
@@ -122,7 +122,7 @@ export const useStockProfitModal = () => {
           dataIndex: 'netIncome',
           width: isMobile ? 100 : 150,
           render: (value: number, record: StockProfitData) =>
-            renderAmount(value, undefined, 2, record.code),
+            renderAmount(value, { code: record.code }),
         },
       ];
 

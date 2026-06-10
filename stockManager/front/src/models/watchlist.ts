@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { notification } from 'antd';
 import { getWatchlist } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/apiConstants';
+import { RESPONSE_STATUS } from '@/utils/constants';
 
 export default () => {
   const [list, setList] = useState<API.WatchItem[]>([]);

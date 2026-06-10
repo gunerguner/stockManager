@@ -4,8 +4,6 @@
 
 import { isHoliday } from 'chinese-days';
 
-// ==================== 类型定义 ====================
-
 export type MarketId = 'cn' | 'hk';
 
 export type TradingTimeStatus = {
@@ -14,31 +12,21 @@ export type TradingTimeStatus = {
   message: string;
 };
 
-// ==================== 配置 ====================
-
 const MARKET_LABEL: Record<MarketId, string> = {
   cn: 'A股',
   hk: '港股',
 };
 
-const CN_TRADING_PERIODS = [
-  { start: 9 * 60 + 30, end: 11 * 60 + 30 },
-  { start: 13 * 60, end: 15 * 60 },
-] as const;
-
-const HK_TRADING_PERIODS = [
-  { start: 9 * 60 + 30, end: 12 * 60 },
-  { start: 13 * 60, end: 16 * 60 },
-] as const;
-
 const MARKET_PERIODS: Record<MarketId, readonly { start: number; end: number }[]> = {
-  cn: CN_TRADING_PERIODS,
-  hk: HK_TRADING_PERIODS,
+  cn: [
+    { start: 9 * 60 + 30, end: 11 * 60 + 30 },
+    { start: 13 * 60, end: 15 * 60 },
+  ],
+  hk: [
+    { start: 9 * 60 + 30, end: 12 * 60 },
+    { start: 13 * 60, end: 16 * 60 },
+  ],
 };
-
-// ==================== 内部工具函数 ====================
-
-const toMinutes = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
 const createDateWithMinutes = (baseDate: Date, minutes: number, dayOffset = 0): Date => {
   const date = new Date(baseDate);
@@ -51,14 +39,6 @@ const isTradingDay = (date: Date) => {
   const day = date.getDay();
   return day !== 0 && day !== 6 && !isHoliday(date);
 };
-
-const isTradingTime = (date: Date, market: MarketId) => {
-  const minutes = toMinutes(date);
-  return MARKET_PERIODS[market].some(({ start, end }) => minutes >= start && minutes < end);
-};
-
-const diffMinutes = (date1: Date, date2: Date) =>
-  Math.ceil((date1.getTime() - date2.getTime()) / 60000);
 
 const formatMinutes = (minutes: number): string => {
   if (minutes < 60) return `${minutes} 分钟`;
@@ -83,9 +63,11 @@ const getStatusForMarket = (market: MarketId, currentTime = new Date()): Trading
   const afternoonOpen = periods[1].start;
   const afternoonClose = periods[1].end;
 
-  const currentMinutes = toMinutes(currentTime);
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
   const isTodayTradingDay = isTradingDay(currentTime);
-  const isTrading = isTodayTradingDay && isTradingTime(currentTime, market);
+  const isTrading =
+    isTodayTradingDay &&
+    periods.some(({ start, end }) => currentMinutes >= start && currentMinutes < end);
 
   if (isTrading) {
     const closeMinutes = currentMinutes < morningClose ? morningClose : afternoonClose;
@@ -118,7 +100,9 @@ const getStatusForMarket = (market: MarketId, currentTime = new Date()): Trading
     }
   }
 
-  const minutesToOpen = diffMinutes(createDateWithMinutes(openDate, openMinutes), currentTime);
+  const minutesToOpen = Math.ceil(
+    (createDateWithMinutes(openDate, openMinutes).getTime() - currentTime.getTime()) / 60000,
+  );
   return {
     market,
     isTrading: false,
@@ -126,12 +110,5 @@ const getStatusForMarket = (market: MarketId, currentTime = new Date()): Trading
   };
 };
 
-// ==================== 导出函数 ====================
-
-export const getTradingTimeStatus = (
-  market: MarketId = 'cn',
-  currentTime = new Date(),
-): TradingTimeStatus => getStatusForMarket(market, currentTime);
-
 export const getAllTradingTimeStatuses = (currentTime = new Date()): TradingTimeStatus[] =>
-  (['cn', 'hk'] as MarketId[]).map((m) => getTradingTimeStatus(m, currentTime));
+  (['cn', 'hk'] as MarketId[]).map((m) => getStatusForMarket(m, currentTime));

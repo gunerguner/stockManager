@@ -1,17 +1,17 @@
 """类型定义模块"""
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from ..models import Operation
 
 
-class RealtimePriceData(TypedDict, total=False):
+class RealtimePriceData(TypedDict):
     """实时价格数据"""
     name: str
     currentPrice: float
     priceOffset: float
-    offsetRatio: str
+    offsetRatio: float  # 原始比率，如 0.0123 表示 1.23%
     yesterdayClose: float
-    yearHigh: float | None
+    yearHigh: NotRequired[float | None]
 
 
 class CashFlowData(TypedDict):
@@ -25,7 +25,7 @@ class OperationData(TypedDict):
     date: str
     type: str
     price: float
-    count: int
+    count: int  # 单笔成交股数，整股
     fee: float
     sum: float
     comment: str
@@ -37,16 +37,16 @@ class StockData(TypedDict):
     name: str
     priceNow: float
     offsetToday: float
-    offsetTodayRatio: str
-    holdCount: float
+    offsetTodayRatio: float  # 原始比率
+    holdCount: float  # 持仓份额，基金等可为小数
     holdCost: float
     overallCost: float
     totalValue: float
     totalValueYesterday: float
     offsetCurrent: float
-    offsetCurrentRatio: str
+    offsetCurrentRatio: float  # 原始比率
     offsetTotal: float
-    moneyWeightedReturn: str
+    moneyWeightedReturn: float  # 原始比率
     totalCost: float
     totalOffsetToday: float
     holdingDuration: int
@@ -54,7 +54,7 @@ class StockData(TypedDict):
     isNew: bool
 
 
-class MarketStatusData(TypedDict, total=False):
+class MarketStatusData(TypedDict):
     """单市场状态元数据"""
     inTradingHours: bool
     priceUpdatedAt: str | None
@@ -66,7 +66,7 @@ class MarketsData(TypedDict, total=False):
     hk: MarketStatusData
 
 
-class OverallData(TypedDict, total=False):
+class OverallData(TypedDict):
     """整体指标"""
     offsetCurrent: float
     offsetTotal: float
@@ -77,7 +77,7 @@ class OverallData(TypedDict, total=False):
     totalCost: float
     incomeCash: float
     originCash: float
-    xirrAnnualized: str
+    xirrAnnualized: float  # 原始比率
     cashFlowList: list[CashFlowData]
     hkdCnyRate: float
 

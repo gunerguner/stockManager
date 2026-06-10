@@ -6,63 +6,30 @@ export const colorFromValue = (value: number): string => {
   return value > 0 ? PROFIT_COLOR : value < 0 ? LOSS_COLOR : '';
 };
 
-// ==================== 价格格式化 ====================
+// ==================== 市场 / 货币 ====================
+export type MarketCurrency = 'cny' | 'hkd';
+
 export const isHkCode = (code?: string): boolean =>
   !!code && code.toLowerCase().startsWith('hk');
+
+export const toMarketCurrency = (isHk: boolean): MarketCurrency => (isHk ? 'hkd' : 'cny');
+
+export const marketCurrency = (code?: string): MarketCurrency => toMarketCurrency(isHkCode(code));
 
 export const toXueqiuStockUrl = (code: string): string =>
   `https://xueqiu.com/S/${isHkCode(code) ? `HK${code.slice(2)}` : code}`;
 
-const formatNumberAbs = (
-  value: number,
-  precision: number = 2,
-  grouped = false,
-): string => {
-  const abs = Math.abs(value);
-  return grouped
-    ? abs.toLocaleString('en-US', {
-        minimumFractionDigits: precision,
-        maximumFractionDigits: precision,
-      })
-    : abs.toFixed(precision);
-};
+export const toCnyByCurrency = (
+  currency: MarketCurrency,
+  amount: number,
+  hkdCnyRate: number,
+): number => (currency === 'hkd' ? amount * hkdCnyRate : amount);
 
-export const formatPrice = (value?: number | string | null): string => {
-  if (value === undefined || value === null || value === '') return '-';
+export const toCnyAmount = (code: string, amount: number, hkdCnyRate: number): number =>
+  toCnyByCurrency(marketCurrency(code), amount, hkdCnyRate);
 
-  const numValue = typeof value === 'string' ? Number(value) : value;
-  if (Number.isNaN(numValue)) return '-';
-
-  const fixed3 = Math.abs(numValue).toFixed(3);
-  const absFormatted = fixed3.endsWith('0') ? Math.abs(numValue).toFixed(2) : fixed3;
-  return numValue < 0 ? `-${absFormatted}` : absFormatted;
-};
-
-export const formatHkdAmount = (
-  value: number,
-  precision: number = 2,
-  grouped = false,
-): string => {
-  const num = formatNumberAbs(value, precision, grouped);
-  return value < 0 ? `-$${num}` : `$${num}`;
-};
-
-export const formatMarketPrice = (
-  value?: number | string | null,
-  code?: string,
-): string => {
-  const num = formatPrice(value);
-  if (num === '-') return num;
-  if (!isHkCode(code)) return num;
-  return num.startsWith('-') ? `-$${num.slice(1)}` : `$${num}`;
-};
-
-// ==================== 金额格式化 ====================
-export const formatAmount = (
-  value: number,
-  precision: number = 2,
-  grouped = false,
-): string =>
+// ==================== 数字格式化 ====================
+const formatNumber = (value: number, precision: number = 2, grouped = false): string =>
   grouped
     ? value.toLocaleString('en-US', {
         minimumFractionDigits: precision,
@@ -70,39 +37,45 @@ export const formatAmount = (
       })
     : value.toFixed(precision);
 
-export const formatMarketAmount = (
-  value: number,
-  code?: string,
-  precision: number = 2,
-  grouped = false,
-): string =>
-  isHkCode(code) ? formatHkdAmount(value, precision, grouped) : formatAmount(value, precision, grouped);
+/** 给已格式化的数字串加港币 $ 前缀（保留负号位置） */
+const withHkdSymbol = (numStr: string): string =>
+  numStr.startsWith('-') ? `-$${numStr.slice(1)}` : `$${numStr}`;
 
-export const toCnyAmount = (code: string, amount: number, hkdCnyRate: number): number =>
-  isHkCode(code) ? amount * hkdCnyRate : amount;
+// ==================== 价格格式化（可变精度 2~3 位，无千分位） ====================
+export const formatMarketPrice = (value: number | string | null, code?: string): string => {
+  if (value === null || value === '') return '-';
 
-export type MarketCurrency = 'cny' | 'hkd';
+  const numValue = typeof value === 'string' ? Number(value) : value;
+  if (Number.isNaN(numValue)) return '-';
 
-export const formatAmountByCurrency = (
-  value: number,
-  currency: MarketCurrency,
-  precision: number = 2,
-  grouped = false,
-): string =>
-  currency === 'hkd'
-    ? formatHkdAmount(value, precision, grouped)
-    : formatAmount(value, precision, grouped);
+  const fixed3 = Math.abs(numValue).toFixed(3);
+  const abs = fixed3.endsWith('0') ? Math.abs(numValue).toFixed(2) : fixed3;
+  const num = numValue < 0 ? `-${abs}` : abs;
 
-/** 计算占比百分比字符串，total 为 0 时返回 "0.00" */
-export const formatPercentage = (
-  part: number,
-  total: number,
-  precision: number = 2,
-): string => {
-  if (!total) return '0.00';
-  return ((part / total) * 100).toFixed(precision);
+  return isHkCode(code) ? withHkdSymbol(num) : num;
 };
 
-/** 从 "12.34%" 等形式解析数值 */
-export const parsePercent = (text: string): number =>
-  parseFloat(text.replace('%', '')) || 0;
+// ==================== 金额格式化（固定精度，可千分位） ====================
+export type FormatAmountOptions = {
+  code?: string;
+  currency?: MarketCurrency;
+  grouped?: boolean;
+};
+
+export const formatAmount = (
+  value: number,
+  options?: FormatAmountOptions,
+  precision: number = 2,
+): string => {
+  const { grouped = false, code, currency = marketCurrency(code) } = options ?? {};
+
+  if (currency === 'hkd') {
+    return withHkdSymbol(formatNumber(value, precision));
+  }
+  return formatNumber(value, precision, grouped);
+};
+
+// ==================== 百分比 ====================
+/** 数值（已是百分数）→ "x.xx%"，null/NaN → "—" */
+export const formatPercent = (value: number | null, precision: number = 2): string =>
+  value != null && !Number.isNaN(value) ? `${value.toFixed(precision)}%` : '—';

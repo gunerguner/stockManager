@@ -1,7 +1,7 @@
 import { notification } from 'antd';
 import { history, type RequestConfig } from '@umijs/max';
-import { getCsrfToken } from '@/utils';
-import { RESPONSE_STATUS, HTTP_CODE_MESSAGE } from '@/utils/apiConstants';
+import { getCsrfToken } from '@/utils/browser';
+import { RESPONSE_STATUS, HTTP_CODE_MESSAGE } from '@/utils/constants';
 import { LOGIN_PATH } from './constants';
 
 const redirectToLogin = () => {

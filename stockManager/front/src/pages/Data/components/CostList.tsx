@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
 import { formatAmount, toCnyAmount } from '@/utils/format/stock';
-import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
+import { getHeaderStatisticStyles } from './statisticStyles';
 import './index.less';
 
 const { Link } = Typography;

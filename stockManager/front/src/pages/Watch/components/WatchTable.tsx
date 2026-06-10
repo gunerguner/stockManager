@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   colorFromValue,
   formatMarketPrice,
+  formatPercent,
   isHkCode,
   toXueqiuStockUrl,
 } from '@/utils/format/stock';
@@ -25,6 +26,13 @@ const isTrendPointTriggered = (priceNow: number | null, point: number | null): b
 const formatRatio = (value: number | null): string =>
   value != null && !Number.isNaN(value) ? value.toFixed(2) : '—';
 
+const calcRoeFromPbPe = (pb: number | null, pe: number | null): number | null => {
+  if (pb == null || pe == null || Number.isNaN(pb) || Number.isNaN(pe) || pe === 0) {
+    return null;
+  }
+  return (pb / pe) * 100;
+};
+
 const renderHistHighDropPct = (
   histHigh: number | null,
   priceNow: number | null,
@@ -32,7 +40,7 @@ const renderHistHighDropPct = (
   if (priceNow == null || histHigh == null || histHigh <= 0) return '—';
   const dropPct = ((priceNow - histHigh) / histHigh) * 100;
   return (
-    <span style={{ color: colorFromValue(dropPct) }}>{dropPct.toFixed(2)}%</span>
+    <span style={{ color: colorFromValue(dropPct) }}>{formatPercent(dropPct)}</span>
   );
 };
 
@@ -98,6 +106,9 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           </Descriptions.Item>
           <Descriptions.Item label="PB">{formatRatio(record.pb)}</Descriptions.Item>
           <Descriptions.Item label="PE(TTM)">{formatRatio(record.pe)}</Descriptions.Item>
+          <Descriptions.Item label="ROE">
+            {formatPercent(calcRoeFromPbPe(record.pb, record.pe))}
+          </Descriptions.Item>
         </Descriptions>
       ),
     });
@@ -154,6 +165,15 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         title: 'PE(TTM)',
         dataIndex: 'pe',
         render: (value) => formatRatio(value),
+      },
+      {
+        title: (
+          <Tooltip title="按 PB / PE(TTM) 估算：ROE ≈ PB / PE">
+            <span>ROE</span>
+          </Tooltip>
+        ),
+        key: 'roe',
+        render: (_, record) => formatPercent(calcRoeFromPbPe(record.pb, record.pe)),
       },
       {
         title: '左侧点',

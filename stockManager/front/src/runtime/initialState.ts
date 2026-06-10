@@ -2,7 +2,7 @@ import type { ProLayoutProps } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import defaultSettings from '../../config/defaultSettings';
 import { getCurrentUser as queryCurrentUser } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/apiConstants';
+import { RESPONSE_STATUS } from '@/utils/constants';
 import { LOGIN_PATH } from './constants';
 
 export async function getInitialState(): Promise<{

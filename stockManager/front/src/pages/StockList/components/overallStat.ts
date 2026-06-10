@@ -1,4 +1,4 @@
-import { formatAmount, formatPercentage, parsePercent } from '@/utils/format/stock';
+import { formatAmount, formatPercent } from '@/utils/format/stock';
 
 export type OverallStatKey = Exclude<keyof API.Overall, 'cashFlowList' | 'totalCost'>;
 
@@ -17,18 +17,18 @@ const STAT_RESOLVERS: Partial<
   Record<OverallStatKey, (data: API.Overall) => ResolvedStat>
 > = {
   totalValue: (d) => {
-    const pct = formatPercentage(d.totalValue, d.totalAsset, 0);
+    const pct = formatPercent(d.totalAsset ? (d.totalValue / d.totalAsset) * 100 : 0, 0);
     return {
-      value: `${formatAmount(d.totalValue, 2, true)} (${pct}%)`,
+      value: `${formatAmount(d.totalValue, { grouped: true })} (${pct})`,
       numeric: d.totalValue,
     };
   },
   xirrAnnualized: (d) => ({
-    value: d.xirrAnnualized,
-    numeric: parsePercent(d.xirrAnnualized),
+    value: formatPercent(d.xirrAnnualized * 100),
+    numeric: d.xirrAnnualized,
   }),
   hkdCnyRate: (d) => ({
-    value: formatAmount(d.hkdCnyRate ?? 0, 4),
+    value: formatAmount(d.hkdCnyRate ?? 0, undefined, 4),
   }),
 };
 

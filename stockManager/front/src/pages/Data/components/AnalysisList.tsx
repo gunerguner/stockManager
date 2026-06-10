@@ -4,14 +4,16 @@ import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   colorFromValue,
-  formatPercentage,
+  formatPercent,
   LOSS_COLOR,
   MarketCurrency,
   PROFIT_COLOR,
   toCnyAmount,
+  toCnyByCurrency,
+  toMarketCurrency,
 } from '@/utils/format/stock';
-import { renderAmountByCurrency } from '@/utils/format/render';
-import { getHeaderStatisticStyles } from '@/utils/statisticStyles';
+import { renderAmount } from '@/utils/format/render';
+import { getHeaderStatisticStyles } from './statisticStyles';
 import { useStockProfitModal } from '@/components/Common/StockProfitModal';
 import './index.less';
 
@@ -139,14 +141,14 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
     };
   }, [data, incomeCash, hkdCnyRate]);
 
-  const toCnyForPct = (record: AnalysisModel, value: number): number =>
-    record.type === HK_CATEGORY ? value * (hkdCnyRate || 1) : value;
-
   const categoryCurrency = (record: AnalysisModel): MarketCurrency =>
-    record.type === HK_CATEGORY ? 'hkd' : 'cny';
+    toMarketCurrency(record.type === HK_CATEGORY);
+
+  const toCnyForPct = (record: AnalysisModel, value: number): number =>
+    toCnyByCurrency(categoryCurrency(record), value, hkdCnyRate || 1);
 
   const renderCategoryAmount = (value: number, color: string, record: AnalysisModel) =>
-    renderAmountByCurrency(value, categoryCurrency(record), color, 2);
+    renderAmount(value, { currency: categoryCurrency(record) }, color);
 
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
@@ -178,7 +180,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         sorter: (a, b) => a.profit - b.profit,
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
-            title={`${formatPercentage(toCnyForPct(record, value), totalProfit)}%`}
+            title={formatPercent(totalProfit ? (toCnyForPct(record, value) / totalProfit) * 100 : 0)}
             color={PROFIT_COLOR}
           >
             {renderCategoryAmount(value, PROFIT_COLOR, record)}
@@ -191,7 +193,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         sorter: (a, b) => a.loss - b.loss,
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
-            title={`${formatPercentage(toCnyForPct(record, value), totalLoss)}%`}
+            title={formatPercent(totalLoss ? (toCnyForPct(record, value) / totalLoss) * 100 : 0)}
             color={LOSS_COLOR}
           >
             {renderCategoryAmount(value, LOSS_COLOR, record)}

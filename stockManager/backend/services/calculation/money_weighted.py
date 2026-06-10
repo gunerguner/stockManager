@@ -3,7 +3,7 @@ import datetime
 
 from ...common.constants import OperationType
 from ...common.operations import apply_net_invested
-from ...common.utils import format_percent, operation_sort_key
+from ...common.utils import operation_sort_key
 from ...models import Operation
 from .constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
 
@@ -11,11 +11,11 @@ from .constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
 def calculate_money_weighted_return(
     operations: list[Operation],
     offset_total: float,
-) -> str:
+) -> float:
     """资金加权累计收益率：offsetTotal / 加权平均占用资金"""
     sorted_ops = sorted(operations, key=operation_sort_key)
     if not sorted_ops:
-        return format_percent(0.0)
+        return 0.0
 
     start_date = sorted_ops[0].date
     today = datetime.date.today()
@@ -60,5 +60,5 @@ def calculate_money_weighted_return(
         if adjusted_begin < MIN_VALUE_THRESHOLD:
             adjusted_begin = total_buy_amount
     if adjusted_begin < MIN_VALUE_THRESHOLD:
-        return format_percent(0.0)
-    return format_percent(offset_total / adjusted_begin)
+        return 0.0
+    return offset_total / adjusted_begin

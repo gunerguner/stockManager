@@ -3,10 +3,9 @@ import { CheckCircleTwoTone } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import {
   colorFromValue,
-  formatAmountByCurrency,
-  formatMarketAmount,
+  formatAmount,
+  FormatAmountOptions,
   LOSS_COLOR,
-  MarketCurrency,
   PROFIT_COLOR,
 } from './stock';
 
@@ -27,27 +26,13 @@ const HOLDING_ICON_STYLE: React.CSSProperties = {
 // ==================== 金额渲染 ====================
 export const renderAmount = (
   value: number,
-  color?: string,
-  precision: number = 2,
-  code?: string,
-): React.ReactNode => {
-  const displayColor = color || colorFromValue(value);
-  return (
-    <span style={{ color: displayColor }}>{formatMarketAmount(value, code, precision)}</span>
-  );
-};
-
-export const renderAmountByCurrency = (
-  value: number,
-  currency: MarketCurrency,
+  options?: FormatAmountOptions,
   color?: string,
   precision: number = 2,
 ): React.ReactNode => {
   const displayColor = color || colorFromValue(value);
   return (
-    <span style={{ color: displayColor }}>
-      {formatAmountByCurrency(value, currency, precision)}
-    </span>
+    <span style={{ color: displayColor }}>{formatAmount(value, options, precision)}</span>
   );
 };
 

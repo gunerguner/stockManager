@@ -9,7 +9,6 @@ from pyxirr import xirr
 from ...common import logger
 from ...common.market import Market, code_to_market
 from ...common.types import CashFlowList, OverallData, StockData
-from ...common.utils import format_percent
 
 
 def to_cny_amount(code: str, amount: float, hkd_cny_rate: float) -> float:
@@ -86,7 +85,7 @@ def compute_overall(
 
     total_asset = to_return["totalAsset"]
     xirr_rate = calculate_xirr(cash_flow_list, total_asset)
-    to_return["xirrAnnualized"] = format_percent(xirr_rate)
+    to_return["xirrAnnualized"] = xirr_rate
 
     to_return["cashFlowList"] = [
         {

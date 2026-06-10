@@ -13,7 +13,17 @@ export const getEnv = (): EnvType | undefined => {
   return undefined;
 };
 
+/**
+ * 环境标签颜色配置
+ */
+export const ENV_TAG_COLORS = {
+  dev: 'orange',
+  test: 'green',
+  pre: '#87d068',
+} as const;
+
 // ==================== CSRF Token 工具 ====================
+
 export const getCsrfToken = (): string | null => {
   const name = 'csrftoken';
   const cookies = document.cookie.split(';');
