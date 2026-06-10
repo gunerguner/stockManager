@@ -1,6 +1,8 @@
 """股价缓存与刷新策略（分市场 CN / HK）"""
 from datetime import datetime
 
+from django.core.cache import cache
+
 from ...common.cache import Cache
 from ...common import logger
 from ...common.market import Market, code_to_market, split_codes_by_market

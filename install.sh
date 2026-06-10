@@ -176,7 +176,7 @@ echo "=========================================="
 # 检查 Python
 PYTHON_CMD=$(get_python_cmd)
 if [ -z "$PYTHON_CMD" ]; then
-    log_error "Python 未安装，请先安装 Python (版本 >= 3.11)"
+    log_error "Python 未安装，请先安装 Python 3.13+"
     exit 1
 fi
 
@@ -184,8 +184,8 @@ PYTHON_VERSION=$($PYTHON_CMD -c 'import sys; print(f"{sys.version_info.major}.{s
 PYTHON_MAJOR=$($PYTHON_CMD -c 'import sys; print(sys.version_info.major)')
 PYTHON_MINOR=$($PYTHON_CMD -c 'import sys; print(sys.version_info.minor)')
 
-if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 11 ]); then
-    log_error "Python 版本需要 >= 3.11，当前版本：$PYTHON_VERSION"
+if [ "$PYTHON_MAJOR" -ne 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 13 ]); then
+    log_error "Python 版本需要 >= 3.13，当前版本：$PYTHON_VERSION"
     exit 1
 fi
 log_success "Python 版本：$PYTHON_VERSION ($PYTHON_CMD)"

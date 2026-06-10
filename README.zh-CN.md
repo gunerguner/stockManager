@@ -94,7 +94,7 @@
 
 ## 手动搭建（前后端分离开发）
 
-1. 安装 Python(版本>=3.11)、pip、git、redis。
+1. 安装 Python(版本>=3.13)、pip、git、redis。
 2. 使用 pip 安装依赖（`requirements.txt`）。
 3. 安装 Node(版本>=20)、utoo（`npm install -g utoo`）。
 4. git clone：https://github.com/gunerguner/stockManager

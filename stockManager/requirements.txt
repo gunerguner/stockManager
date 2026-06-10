@@ -1,5 +1,5 @@
 # Django 核心框架
-Django
+Django>=6.0
 
 # 环境变量管理
 python-dotenv>=1.0.0

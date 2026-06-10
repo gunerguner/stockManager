@@ -24,14 +24,6 @@
     component: './Watch',
   },
   {
-    path: '/admin',
-    name: '后台管理',
-    icon: 'crown',
-    access: 'canAdmin',
-    component: './Admin',
-    
-  },
-  {
     path: '/account',
     component: './Account',
   },

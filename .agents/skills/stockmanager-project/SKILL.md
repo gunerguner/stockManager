@@ -1,12 +1,12 @@
 ---
 name: stockmanager-project
-description: stockManager 个人股票交易记录项目参考：Django 5 + Umi 4 架构、雪球盈亏公式、Redis 缓存、SQLite、Docker 三服务部署。在 stockManager 仓库内改功能、修 bug、加 API、动缓存/行情/前端页面或 Docker 时使用。
+description: stockManager 个人股票交易记录项目参考：Django 6 + Umi 4 架构、雪球盈亏公式、沪深/港股行情与汇率、关注列表、Redis 缓存、SQLite、Docker 三服务部署。在 stockManager 仓库内改功能、修 bug、加 API、动缓存/行情/前端页面或 Docker 时使用。
 disable-model-invocation: false
 ---
 
 # stockManager 项目参考
 
-个人 A 股持仓与盈亏记录工具（雪球公式），股票代码为 `sh`/`sz` 前缀。
+个人持仓与盈亏记录工具（雪球公式），覆盖沪深 A 股 / 北交所 / 港股通；股票代码用小写前缀，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`（港股按 HKD/CNY 汇率换算为人民币口径）。
 
 ## 仓库布局
 
@@ -30,11 +30,11 @@ stockManager/                 # Git 根
 
 | 层 | 技术 |
 |----|------|
-| 后端 | Python ≥3.11，Django **5.2**，Gunicorn（Docker） |
+| 后端 | Python ≥3.13，Django **6.x**，Gunicorn（Docker） |
 | 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
-| 行情 | `easyquotation` **tencent**（A 股实时）；`baostock`（除权除息） |
+| 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（除权除息、A 股估值/历史高）；百度 opendata（PE/PB）；港股汇率源 |
 | 日历 | `exchange_calendars` **XSHG** |
 
 ## 架构要点
@@ -45,9 +45,9 @@ stockManager/                 # Git 根
 
 | 子包 | 模块 | 说明 |
 |------|------|------|
-| `cache/` | `CacheRepository` 门面 | 逻辑 key、TTL、失效 |
-| `market/` | `realtimePrice`、`stockMeta`、`stockNameSync` | 行情与元数据 |
-| `calculation/` | `calculator`、`stockHold` | 盈亏与持仓 |
+| `cache/` | `repository`（门面 `CacheRepository`）+ `keys` + 各 store | `user_store`/`price_store`/`meta_store`/`fx_store`/`valuation_store`/`hist_high_store`/`watch_store`/`refresh_policy`/`operation_codec`；逻辑 key、TTL、失效、分市场刷新 |
+| `market/` | `realtimePrice`(`fetch_prices`)、`baostock_source`、`baiduValuation`、`exchangeRate`、`historicalHigh`、`http_client` | 外部数据源适配（仅拉取与标准化，不含缓存编排），多为**模块级函数** |
+| `calculation/` | `calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`、`stockHold`、`constants` | 盈亏、组合汇总、单股指标、资金加权、持仓推算 |
 | 根目录 | `integrate`、`dividend` | 编排与除权 |
 
 **统一响应**：`json_response(status, data, message)`，`ResponseStatus`：SUCCESS=1、ERROR=0、UNAUTHORIZED=401。装饰器：`@require_authentication`、`@require_superuser`、`@handle_exception`、`@parse_json_body`。
@@ -56,17 +56,20 @@ stockManager/                 # Git 根
 
 **读路径（持仓列表）**：
 1. `GET /api/stocks` → `Integrate.get_calculated_result`
-2. 缓存命中 → 返回 `CalculatedResult`
-3. 否则：加载 `Operation` → `Calculator.calculate_stock_list`（需 `RealtimePrice.query`）→ `calculate_overall` → 写缓存
+2. 缓存命中 → 返回 `CalculatedResult`（含 `stocks` / `overall` / `markets`）
+3. 否则：加载 `Operation` → `CacheRepository.load_calculation_inputs`（聚合现金流、汇率、行情 `price_store.query_prices`→`fetch_prices`、元数据、各市场状态）→ `Calculator.calculate_stock_list` → `calculate_overall` → 写缓存
 
-**写后失效**：`Operation` / `Info` / `CashFlow` 的 `post_save`/`post_delete` 清用户缓存（`integrate.py`）。
+**写后失效**：信号在 `cache/` 内（**非** `integrate.py`）。`cache/user_store.py` 的 `post_save`/`post_delete` 清 `Operation` / `CashFlow` / `Info`（仅 `INCOME_CASH`）用户缓存；`cache/watch_store.py` 清 `WatchItem` 关注列表缓存。
 
 ```mermaid
 flowchart LR
   Umi[Umi :8001] -->|proxy /api| Django[Django :8000]
   Django --> SQLite[(SQLite)]
   Django --> Redis[(Redis)]
-  Django --> Tencent[easyquotation]
+  Django --> Quote[easyquotation tencent/hkquote]
+  Django --> Baostock[baostock 除权/估值/历史高]
+  Django --> Baidu[百度 opendata PE/PB]
+  Django --> FX[港股 HKD/CNY 汇率]
 ```
 
 ## 业务域（已实现）
@@ -77,21 +80,26 @@ flowchart LR
 | 盈亏计算 | `backend/services/calculation/calculator.py`（雪球规则，含 XIRR） |
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
-| 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN…） |
+| 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER） |
 | 除权除息 | `backend/services/dividend.py` + `POST /api/dividend` |
-| 实时价 | `backend/services/market/realtimePrice.py` |
+| 实时价 | `backend/services/market/realtimePrice.py`（`fetch_prices`，沪深+港股） |
+| 关注列表 | `WatchItem` 模型 + `GET /api/watchlist`；`cache/watch_store.py`、前端 `pages/Watch/`（risk/opportunity/leftPoint/trendPoint/bloodPoint） |
+| 估值 PE/PB | `market/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
+| 历史高价 | `market/historicalHigh.py`、`baostock_source.fetch_cn_hist_highs` + `cache/hist_high_store.py` |
+| 港股/汇率 | `common/market.py`（CN/HK 抽象）、`market/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
 | 缓存 | `services/cache/` + `common/cache.py`；详见 `backend/docs/缓存机制分析.md` |
 
-**股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`。
+**股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`（港股为 `hk` + 5 位）。
 
 ## 修改导航（最常改哪里）
 
 | 目标 | 改动位置 |
 |------|----------|
-| 新 API | `backend/views/*.py` → `backend/urls.py` → `front/src/services/api.ts` |
-| 新计算字段 | `calculation/calculator.py` + `common/types.py` → `StockList` / `Data` 页面 |
-| 缓存逻辑 | `services/cache/`（`CacheRepository` 门面）；先读 `docs/缓存机制分析.md`；失效在 `integrate.py` |
-| 行情 | `market/realtimePrice.py` |
+| 新 API | `backend/views/`（仅 `stock.py` / `user.py`）→ `backend/urls.py` → `front/src/services/api.ts` |
+| 新计算字段 | `calculation/calculator.py`（或 `overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `Data` 页面 |
+| 缓存逻辑 | `services/cache/`（`repository` 门面 + 各 `*_store`）；先读 `docs/缓存机制分析.md`；失效信号在 `cache/user_store.py`、`cache/watch_store.py` |
+| 行情/估值/汇率 | `market/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在对应 `cache/*_store.py` |
+| 关注列表 | `models.WatchItem` → `cache/watch_store.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
 | 数据库 | `models.py` → `makemigrations` → `migrate` → `backend/admin/` |
 | 新前端页 | `front/config/routes.ts` + `src/pages/`；权限 `access.ts` |
 | 价格展示 | `front/src/utils/renderTool.tsx`（`formatPrice`） |
@@ -100,7 +108,7 @@ flowchart LR
 ## 快速决策树（先定位再改）
 
 - **症状：接口 401/403、登录态异常**
-  - 先看：`backend/views/auth.py`、`backend/common/decorators.py`
+  - 先看：`backend/views/user.py`、`backend/common/decorators.py`
   - 再看：`front/src/services/api.ts` 是否保留 `credentials: 'include'`
 - **症状：持仓页慢/数据不刷新**
   - 先看：`backend/services/integrate.py`（是否命中缓存）
@@ -139,6 +147,7 @@ flowchart LR
 |------|------|------|
 | GET | `/api/operations` | 登录用户 |
 | GET | `/api/stocks` | 登录用户 |
+| GET | `/api/watchlist` | 登录用户 |
 | POST | `/api/dividend` | 登录用户 |
 | POST | `/api/updateIncomeCash` | 登录用户 |
 | POST | `/api/clearCache` | superuser |
@@ -160,9 +169,9 @@ Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
 
 ## 编码约定
 
-- 后端服务类用 **classmethod**（`Integrate`、`Calculator`、`RealtimePrice`、`CacheRepository`），无重度 DI
+- 编排/计算类用 **classmethod**（`Integrate`、`Calculator`、`StockHold`、`Dividend`、`CacheRepository`），无重度 DI；行情/汇率/缓存 store 层为**模块级函数**（如 `fetch_prices`、`price_store.query_prices`、`fx_store.get_hkd_cny_rate`）
 - 模型/API JSON 字段多为 **camelCase**（`operationType`、`stockType`）
-- 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`）
+- 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`、`market.py`(CN/HK 抽象)、`tradingCalendar.py`、`utils.py`）
 - 语言与时区：`zh-hans`、`Asia/Shanghai`
 - 用户角色：`admin` | `staff` | `user`；前端 `access.ts` 控制 `canAdmin`
 

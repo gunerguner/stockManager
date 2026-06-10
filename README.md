@@ -88,7 +88,7 @@ You can export trades from your broker or another platform. My broker had no Mac
 
 ## Manual setup (split dev servers)
 
-1. Install Python (≥3.11), pip, git, and Redis.
+1. Install Python (≥3.13), pip, git, and Redis.
 2. Install Python deps from `requirements.txt`.
 3. Install Node (≥20) and utoo (`npm install -g utoo`).
 4. Clone: `https://github.com/gunerguner/stockManager`

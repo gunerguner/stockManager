@@ -3,7 +3,12 @@ import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useCommonModal } from '@/components/Common/useCommonModal';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { formatMarketPrice, isHkCode, toXueqiuStockUrl } from '@/utils/format/stock';
+import {
+  colorFromValue,
+  formatMarketPrice,
+  isHkCode,
+  toXueqiuStockUrl,
+} from '@/utils/format/stock';
 import { renderHoldingStatus } from '@/utils/format/render';
 
 type WatchTableProps = {
@@ -19,6 +24,17 @@ const isTrendPointTriggered = (priceNow: number | null, point: number | null): b
 
 const formatRatio = (value: number | null): string =>
   value != null && !Number.isNaN(value) ? value.toFixed(2) : '—';
+
+const renderHistHighDropPct = (
+  histHigh: number | null,
+  priceNow: number | null,
+): React.ReactNode => {
+  if (priceNow == null || histHigh == null || histHigh <= 0) return '—';
+  const dropPct = ((priceNow - histHigh) / histHigh) * 100;
+  return (
+    <span style={{ color: colorFromValue(dropPct) }}>{dropPct.toFixed(2)}%</span>
+  );
+};
 
 const renderMultilineText = (text: string) => {
   if (!text) return '—';
@@ -113,12 +129,21 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       {
         title: (
           <Tooltip title="近6年历史最高价（A股前复权）">
-            <span>6年内高</span>
+            <span>最高价</span>
           </Tooltip>
         ),
         dataIndex: 'histHigh',
         render: (value, record) =>
           value != null ? formatMarketPrice(value, record.code) : '—',
+      },
+      {
+        title: (
+          <Tooltip title="现价相对近6年最高价的涨跌幅">
+            <span>降幅</span>
+          </Tooltip>
+        ),
+        key: 'histHighDrop',
+        render: (_, record) => renderHistHighDropPct(record.histHigh, record.priceNow),
       },
       {
         title: 'PB',

@@ -1,5 +1,5 @@
 import { Dropdown } from 'antd';
-import { SunOutlined, MoonFilled, SyncOutlined } from '@ant-design/icons';
+import { DesktopOutlined, MoonFilled, SunOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import type { ThemeMode } from '@/models/theme';
 import styles from './index.less';
@@ -9,7 +9,7 @@ import styles from './index.less';
 const THEME_CONFIG: Record<ThemeMode, { label: string; icon: React.ReactNode }> = {
   light: { label: '白天模式', icon: <SunOutlined /> },
   dark: { label: '暗夜模式', icon: <MoonFilled /> },
-  auto: { label: '跟随系统', icon: <SyncOutlined /> },
+  auto: { label: '跟随系统', icon: <DesktopOutlined /> },
 };
 
 // ==================== 组件 ====================
