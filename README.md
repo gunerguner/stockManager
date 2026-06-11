@@ -43,7 +43,7 @@ I had not written much frontend before, so I spent time learning the framework a
 
 **Live quotes** come from Tencent via [easyquotation](https://github.com/shidenggui/easyquotation)—stocks, on-exchange funds, convertible bonds, etc. Endpoint: `http://qt.gtimg.cn/q=`.
 
-**Historical corporate actions** use [BaoStock](http://baostock.com/baostock/index.php) for dividend and rights-adjustment history.
+**Historical corporate actions** use [BaoStock](http://baostock.com/baostock/index.php) for dividend and rights-adjustment history (A-shares only; not available for HK). Valuation (PE/PB) and historical highs use Baidu opendata and Tencent gtimg instead of BaoStock.
 
 ## AI-assisted development
 

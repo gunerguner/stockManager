@@ -1,6 +1,6 @@
 ---
 name: stockmanager-project
-description: stockManager 个人股票交易记录项目参考：Django 6 + Umi 4 架构、雪球盈亏公式、沪深/港股行情与汇率、关注列表、Redis 缓存、SQLite、Docker 三服务部署。在 stockManager 仓库内改功能、修 bug、加 API、动缓存/行情/前端页面或 Docker 时使用。
+description: stockManager 个人股票交易记录项目参考：Django 6 + Umi 4 架构、雪球盈亏公式、沪深/港股行情与汇率、关注列表、Redis 缓存失效、行情源、SQLite、Docker 三服务部署。在 stockManager 仓库内改功能、修 bug、加 API、动缓存/行情/前端页面或 Docker 时使用。
 disable-model-invocation: false
 ---
 
@@ -34,8 +34,8 @@ stockManager/                 # Git 根
 | 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
-| 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（除权除息、A 股估值/历史高）；百度 opendata（PE/PB）；港股汇率源 |
-| 日历 | `exchange_calendars` **XSHG** |
+| 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（仅除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高）；sina 外汇（HKD/CNY） |
+| 日历 | `exchange_calendars` **XSHG / XHKG**（`common/tradingCalendar.py`，CN/HK 分市场；前端交易时间 UI 用 `chinese-days`） |
 
 ## 架构要点
 
@@ -59,7 +59,7 @@ stockManager/                 # Git 根
 2. 缓存命中 → 返回 `CalculatedResult`（含 `stocks` / `overall` / `markets`）
 3. 否则：加载 `Operation` → `CacheRepository.load_calculation_inputs`（聚合现金流、汇率、行情 `price_store.query_prices`→`fetch_prices`、元数据、各市场状态）→ `Calculator.calculate_stock_list` → `calculate_overall` → 写缓存
 
-**写后失效**：信号在 `cache/` 内（**非** `integrate.py`）。`cache/user_store.py` 的 `post_save`/`post_delete` 清 `Operation` / `CashFlow` / `Info`（仅 `INCOME_CASH`）用户缓存；`cache/watch_store.py` 清 `WatchItem` 关注列表缓存。
+**写后失效**：信号在 `cache/` 内（**非** `integrate.py`）。`cache/user_store.py` 的 `post_save`/`post_delete` 清 `Operation` / `CashFlow` / `Info`（仅 `INCOME_CASH`）用户缓存；`cache/meta_store.py` 清 `StockMeta` 全量元数据；`cache/watch_store.py` 清 `WatchItem` 关注列表缓存。
 
 ```mermaid
 flowchart LR
@@ -67,7 +67,7 @@ flowchart LR
   Django --> SQLite[(SQLite)]
   Django --> Redis[(Redis)]
   Django --> Quote[easyquotation tencent/hkquote]
-  Django --> Baostock[baostock 除权/估值/历史高]
+  Django --> Baostock[baostock 除权除息]
   Django --> Baidu[百度 opendata PE/PB]
   Django --> FX[港股 HKD/CNY 汇率]
 ```
@@ -87,7 +87,7 @@ flowchart LR
 | 估值 PE/PB | `market/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
 | 历史高价 | `market/historicalHigh.py`（gtimg 周线 qfq/bfq）+ `cache/hist_high_store.py` |
 | 港股/汇率 | `common/market.py`（CN/HK 抽象）、`market/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
-| 缓存 | `services/cache/` + `common/cache.py`；详见 `backend/docs/缓存机制分析.md` |
+| 缓存 | `services/cache/` + `common/cache.py`；详见 [references/cache.md](references/cache.md) |
 
 **股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`（港股为 `hk` + 5 位）。
 
@@ -97,7 +97,7 @@ flowchart LR
 |------|----------|
 | 新 API | `backend/views/`（仅 `stock.py` / `user.py`）→ `backend/urls.py` → `front/src/services/api.ts` |
 | 新计算字段 | `calculation/calculator.py`（或 `overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `Data` 页面 |
-| 缓存逻辑 | `services/cache/`（`repository` 门面 + 各 `*_store`）；先读 `docs/缓存机制分析.md`；失效信号在 `cache/user_store.py`、`cache/watch_store.py` |
+| 缓存逻辑 | `services/cache/`（`repository` 门面 + 各 `*_store`）；先读 [references/cache.md](references/cache.md)；失效信号在 `cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py` |
 | 行情/估值/汇率 | `market/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在对应 `cache/*_store.py` |
 | 关注列表 | `models.WatchItem` → `cache/watch_store.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
 | 数据库 | `models.py` → `makemigrations` → `migrate` → `backend/admin/` |
@@ -155,7 +155,7 @@ flowchart LR
 | POST | `/api/logout` | 登录用户 |
 | GET | `/api/currentUser` | 登录用户 |
 
-Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
+Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开；**无**独立 `/admin` 前端路由）。
 
 ## 测试
 
@@ -180,10 +180,13 @@ Django Admin：`/sys/admin/`。应用内管理页：`/admin`（`canAdmin`）。
 - 是否新增/修改 API：`backend/urls.py` 与 `front/src/services/api.ts` 是否同时更新
 - 是否修改模型：是否完成 `makemigrations` 与 `migrate`，并检查 admin 展示
 - 是否修改计算字段：`common/types.py`、`calculator.py`、前端页面字段是否三处一致
-- 是否修改缓存：是否覆盖写后失效路径（`Operation` / `Info` / `CashFlow`）
+- 是否修改缓存：是否覆盖写后失效路径（`Operation` / `Info` / `CashFlow` / `StockMeta` / `WatchItem`）
 - 是否修改前端路由或静态资源：是否验证 Docker frontend 重建流程
 
-## 更多细节
+## 深度参考（按需阅读）
 
-- 缓存键、TTL、失效策略：[reference.md](reference.md)
-- 关键文件路径表、迁移历史、Docker 检查清单：[reference.md](reference.md)
+| 场景 | 文档 |
+|------|------|
+| 路径索引 / 部署 / 迁移 / 排障 | [references/reference.md](references/reference.md) |
+| 缓存 key / TTL / 失效 / 交易时段刷新 | [references/cache.md](references/cache.md) |
+| 外部数据源 / market 层 / 失败行为 | [references/external-data.md](references/external-data.md) |

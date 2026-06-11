@@ -1,6 +1,12 @@
 # Backend 缓存机制完整分析
 
-> 范围：`stockManager/backend` 目录下实际生效的缓存相关实现（键设计、数据内容、过期策略、失效策略、调用路径、代码结构）。
+> 范围：`stockManager/backend` 目录下实际生效的缓存相关实现（键设计、数据内容、过期策略、失效策略、调用路径、代码结构）。外部数据源详见 [external-data.md](external-data.md)。
+
+## 阅读指引
+
+- **改缓存 key / TTL / 失效**：优先查 §9 策略速查表；新增缓存走 §10 检查清单
+- **持仓不刷新 / 价格过期**：读 §5.1 交易时段逻辑失效与典型场景表
+- **查读写路径**：读 §6；market 拉取细节见 [external-data.md](external-data.md)
 
 ## 1. 总览：缓存分层与职责
 
@@ -354,7 +360,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - **失效链完整**：用户数据、价格时间戳、元数据、关注列表、管理员清缓存均有覆盖。
 - **market 与 cache 分离**：外部数据源适配在 `market/`，缓存编排在 `cache/*_store.py`，职责清晰。
 
-### 8.2 待改进点（非阻塞）
+### 8.2 待改进点（非阻塞，日常改动可跳过）
 
 1. **pattern 删除使用 KEYS** — 数据量大时改 `SCAN`。
 2. **Operation 反序列化** — `operation_codec` 用 `Operation.__new__` + `ModelState`，与 ORM 内部结构耦合；可考虑缓存 DTO，在上层再转模型。
@@ -383,7 +389,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 2. 单条读写用 `cache.get/set/delete`；批量读写用 `Cache.get_many` / `Cache.set_many`；模式删除用 `Cache.delete_pattern`。
 3. 明确是否需要接入 `refresh_policy.should_refresh_market` 或 Django 信号失效（参考 `user_store` / `meta_store` / `watch_store`）。
 4. 勿在业务代码手写 `stockmanager:1:`；调试时用 `Cache.make_key`。
-5. 更新本文档第 3、9 节表格。
+5. 同步更新本文档（`references/cache.md`）第 3、9 节表格。
 
 ## 11. 关键代码入口索引
 

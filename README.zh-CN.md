@@ -43,9 +43,7 @@
 
 实时交易指标来自腾讯接口，通过 [easyquotation](https://github.com/shidenggui/easyquotation) 库获取。支持股票、场内基金、可转债等产品，接口地址 `http://qt.gtimg.cn/q=`。
 
-离线交易指标来自 baoStock：http://baostock.com/baostock/index.php
-
-主要用来获取历史除权除息的数据。
+历史除权除息数据来自 [BaoStock](http://baostock.com/baostock/index.php)（仅 A 股；港股不支持）。估值 PE/PB、历史高价等已改用百度 opendata 与腾讯 gtimg，不再经 baostock。
 
 ## AI辅助
 
