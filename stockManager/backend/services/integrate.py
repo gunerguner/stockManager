@@ -1,12 +1,13 @@
 """用户数据集成（外观模式）：协调缓存、计算、分红等服务。"""
 from django.contrib.auth.models import User
 
-from ..common import logger
-from ..common.types import CalculatedResult, DividendUpdateData, OperationDataDict, WatchResultItem
-from ..models import Info
-from .cache import CacheRepository
-from .calculation import Calculator, StockHold
-from .dividend import Dividend
+from backend.common import logger
+from backend.common.types import CalculatedResult, DividendUpdateData, OperationDataDict, WatchResultItem
+from backend.models import Info
+from backend.services.cache import CacheRepository
+from backend.services.calculation import Calculator, StockHold
+from backend.services.calculation.watchlist import build_watchlist
+from backend.services.dividend import Dividend
 
 
 class Integrate:
@@ -73,31 +74,10 @@ class Integrate:
         holding_set = set(StockHold.get_holding_stocks(operation_list))
         market_data = CacheRepository.load_watchlist_market_data(codes)
 
-        def _ratio(price: float | None, per_share: float | None) -> float | None:
-            if price and per_share:
-                return round(price / per_share, 2)
-            return None
-
-        result: list[WatchResultItem] = []
-        for item in items:
-            code = item["code"]
-            price_data = market_data.prices.get(code, {})
-            valuation = market_data.valuations.get(code, {})
-            price_now = price_data.get("currentPrice")
-            result.append(
-                WatchResultItem(
-                    code=code,
-                    name=price_data.get("name", code),
-                    holding=code in holding_set,
-                    priceNow=price_now,
-                    histHigh=market_data.hist_highs.get(code),
-                    pe=_ratio(price_now, valuation.get("epsTtm")),
-                    pb=_ratio(price_now, valuation.get("bvps")),
-                    risk=item["risk"] or "",
-                    opportunity=item["opportunity"] or "",
-                    leftPoint=item["leftPoint"],
-                    trendPoint=item["trendPoint"],
-                    bloodPoint=item["bloodPoint"],
-                )
-            )
-        return result
+        return build_watchlist(
+            items,
+            market_data.prices,
+            market_data.valuations,
+            market_data.hist_highs,
+            holding_set,
+        )

@@ -138,6 +138,18 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           value != null ? formatMarketPrice(value, record.code) : '—',
       },
       {
+        title: '涨跌',
+        dataIndex: 'offsetTodayRatio',
+        render: (_, record) =>
+          record.priceNow != null ? (
+            <div style={{ color: colorFromValue(record.offsetToday) }}>
+              {`${formatMarketPrice(record.offsetToday, record.code)} (${formatPercent(record.offsetTodayRatio * 100)})`}
+            </div>
+          ) : (
+            '—'
+          ),
+      },
+      {
         title: (
           <Tooltip title="近6年历史最高价（A股前复权）">
             <span>最高价</span>

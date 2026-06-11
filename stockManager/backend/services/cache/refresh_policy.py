@@ -4,9 +4,9 @@ from datetime import datetime
 
 from django.core.cache import cache
 
-from ...common.market import Market
-from ...common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
-from . import keys
+from backend.common.market import Market
+from backend.common.tradingCalendar import TradingCalendar, TZ_SHANGHAI
+from backend.services.cache import keys
 
 
 def is_in_trading_hours(market: Market) -> bool:

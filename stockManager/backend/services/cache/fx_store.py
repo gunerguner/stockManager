@@ -3,10 +3,10 @@ from collections.abc import Iterable
 
 from django.core.cache import cache
 
-from ...common.market import markets_in_codes
-from ..market.exchangeRate import fetch_hkd_cny_rate
-from . import keys
-from . import refresh_policy
+from backend.common.market import markets_in_codes
+from backend.services.market.exchangeRate import fetch_hkd_cny_rate
+from backend.services.cache import keys
+from backend.services.cache import refresh_policy
 
 
 def get_hkd_cny_rate(user_codes: Iterable[str]) -> float:

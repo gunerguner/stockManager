@@ -1,11 +1,11 @@
 """资金加权累计收益率计算"""
 import datetime
 
-from ...common.constants import OperationType
-from ...common.operations import apply_net_invested
-from ...common.utils import operation_sort_key
-from ...models import Operation
-from .constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
+from backend.common.constants import OperationType
+from backend.common.operations import apply_net_invested
+from backend.common.utils import operation_sort_key
+from backend.models import Operation
+from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
 
 
 def calculate_money_weighted_return(

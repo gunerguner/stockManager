@@ -5,8 +5,8 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.db.models.base import ModelState
 
-from ...models import Operation
-from ...common.types import OperationDict
+from backend.models import Operation
+from backend.common.types import OperationDict
 
 _OPERATION_FIELDS = (
     "id",

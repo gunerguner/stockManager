@@ -1,8 +1,8 @@
 from django.http import HttpRequest, JsonResponse
 
-from ..services.cache import CacheRepository
-from ..services.integrate import Integrate
-from ..common import (
+from backend.services.cache import CacheRepository
+from backend.services.integrate import Integrate
+from backend.common import (
     ResponseStatus,
     logger,
     require_authentication,

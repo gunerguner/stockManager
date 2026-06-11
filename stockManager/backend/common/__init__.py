@@ -2,8 +2,8 @@
 公共组件模块
 提供装饰器、响应工具、常量等可复用组件
 """
-from .constants import ResponseStatus, OperationType
-from .decorators import (
+from backend.common.constants import ResponseStatus, OperationType
+from backend.common.decorators import (
     require_authentication,
     require_superuser,
     require_methods,
@@ -11,8 +11,8 @@ from .decorators import (
     parse_json_body,
     validate_required_fields,
 )
-from .middleware import json_response, get_client_ip
-from .cache import Cache
+from backend.common.middleware import json_response, get_client_ip
+from backend.common.cache import Cache
 
 # 配置logger
 import logging

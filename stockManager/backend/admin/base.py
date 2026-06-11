@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 
-from ..models import Operation, Info, StockMeta, CashFlow
+from backend.models import Operation, Info, StockMeta, CashFlow
 
 User = get_user_model()
 

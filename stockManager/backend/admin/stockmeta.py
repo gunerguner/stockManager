@@ -3,7 +3,7 @@
 """
 from django.contrib import admin
 
-from .base import StockMeta
+from backend.admin.base import StockMeta
 
 @admin.register(StockMeta)
 class StockMetaAdmin(admin.ModelAdmin):

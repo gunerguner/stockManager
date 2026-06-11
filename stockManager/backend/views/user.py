@@ -2,7 +2,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import auth
 from django.http import HttpRequest, JsonResponse
 
-from ..common import (
+from backend.common import (
     ResponseStatus,
     logger,
     require_authentication,

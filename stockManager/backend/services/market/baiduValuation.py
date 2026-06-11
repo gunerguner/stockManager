@@ -1,6 +1,6 @@
 """百度股市通估值数据（港股 TTM PE、PB）"""
-from ...common import logger
-from .http_client import get_json
+from backend.common import logger
+from backend.services.market.http_client import get_json
 
 _BAIDU_URL = "https://gushitong.baidu.com/opendata"
 

@@ -4,9 +4,9 @@ from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from ...common.types import WatchItemDict
-from ...models import WatchItem
-from . import keys
+from backend.common.types import WatchItemDict
+from backend.models import WatchItem
+from backend.services.cache import keys
 
 
 def get_user_watchlist(user: User) -> list[WatchItemDict]:

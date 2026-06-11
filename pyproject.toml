@@ -1,0 +1,5 @@
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "stockManager"]
+
+[tool.ruff.lint]
+select = ["I"]

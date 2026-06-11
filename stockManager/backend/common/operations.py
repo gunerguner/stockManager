@@ -1,6 +1,6 @@
 """Operation 类型相关的共享计算逻辑"""
-from ..models import Operation
-from .constants import OperationType
+from backend.models import Operation
+from backend.common.constants import OperationType
 
 
 def dividend_multiplier(operation: Operation) -> float:

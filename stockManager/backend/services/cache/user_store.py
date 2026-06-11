@@ -6,15 +6,15 @@ from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from ...common.cache import Cache
-from ...common import logger
-from ...common.market import markets_in_codes
-from ...common.utils import format_operations
-from ...common.types import CalculatedResult, OperationDict, CashFlowList
-from ...models import Operation, Info, CashFlow
-from . import keys
-from . import operation_codec
-from . import refresh_policy
+from backend.common.cache import Cache
+from backend.common import logger
+from backend.common.market import markets_in_codes
+from backend.common.utils import format_operations
+from backend.common.types import CalculatedResult, OperationDict, CashFlowList
+from backend.models import Operation, Info, CashFlow
+from backend.services.cache import keys
+from backend.services.cache import operation_codec
+from backend.services.cache import refresh_policy
 
 
 def get_user_operations_cache(user: User) -> OperationDict | None:

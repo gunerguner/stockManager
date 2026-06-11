@@ -3,8 +3,8 @@
 """
 from django.db.models import Max
 
-from ..common.market import is_hk_code
-from .base import Operation, StockMeta, UserScopedModelAdmin, admin, messages
+from backend.common.market import is_hk_code
+from backend.admin.base import Operation, StockMeta, UserScopedModelAdmin, admin, messages
 
 
 @admin.register(Operation)

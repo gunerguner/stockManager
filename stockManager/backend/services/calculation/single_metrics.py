@@ -2,10 +2,10 @@
 import datetime
 from dataclasses import dataclass
 
-from ...common.constants import OperationType
-from ...common.operations import apply_operation_to_hold, dividend_multiplier
-from ...models import Operation
-from .constants import MIN_HOLD_COUNT_THRESHOLD
+from backend.common.constants import OperationType
+from backend.common.operations import apply_operation_to_hold, dividend_multiplier
+from backend.models import Operation
+from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD
 
 
 @dataclass(frozen=True)

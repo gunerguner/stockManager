@@ -1,7 +1,7 @@
 """中间件工具模块"""
 from typing import Any
 from django.http import JsonResponse, HttpRequest
-from .constants import ResponseStatus
+from backend.common.constants import ResponseStatus
 
 
 def json_response(status: ResponseStatus, message: str | None = None, data: Any | None = None, **kwargs) -> JsonResponse:

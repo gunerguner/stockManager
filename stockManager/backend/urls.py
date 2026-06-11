@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import stock, user
+from backend.views import stock, user
 
 urlpatterns = [
     # 股票相关接口

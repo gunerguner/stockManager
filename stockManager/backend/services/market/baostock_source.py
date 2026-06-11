@@ -4,8 +4,8 @@ from typing import TypedDict
 
 import baostock as bs
 
-from ...common import logger
-from ...common.utils import safe_float
+from backend.common import logger
+from backend.common.utils import safe_float
 
 
 class DividendRow(TypedDict):

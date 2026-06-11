@@ -1,10 +1,10 @@
 """股票实时价格外部数据源（easyquotation tencent / hkquote）"""
 from easyquotation import use as eq_use
 
-from ...common import logger
-from ...common.market import hk_api_code, split_codes_by_market
-from ...common.types import RealtimePriceData, RealtimePriceDict
-from ...common.utils import safe_float
+from backend.common import logger
+from backend.common.market import hk_api_code, split_codes_by_market
+from backend.common.types import RealtimePriceData, RealtimePriceDict
+from backend.common.utils import safe_float
 
 _quotations: dict[str, object] = {}
 

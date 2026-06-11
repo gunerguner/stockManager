@@ -123,6 +123,8 @@ declare namespace API {
     name: string;
     holding: boolean;
     priceNow: number | null;
+    offsetToday: number;
+    offsetTodayRatio: number;
     histHigh: number | null;
     pb: number | null;
     pe: number | null;

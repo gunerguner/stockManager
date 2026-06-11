@@ -1,7 +1,7 @@
 """
 用户资金信息管理
 """
-from .base import Info, UserScopedModelAdmin, admin
+from backend.admin.base import Info, UserScopedModelAdmin, admin
 
 
 @admin.register(Info)

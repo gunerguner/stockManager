@@ -1,7 +1,7 @@
 """类型定义模块"""
 from typing import NotRequired, TypedDict
 
-from ..models import Operation
+from backend.models import Operation
 
 
 class RealtimePriceData(TypedDict):
@@ -111,6 +111,8 @@ class WatchResultItem(TypedDict):
     name: str
     holding: bool
     priceNow: float | None
+    offsetToday: float
+    offsetTodayRatio: float  # 原始比率
     histHigh: float | None  # 近 6 年历史最高价
     pb: float | None
     pe: float | None

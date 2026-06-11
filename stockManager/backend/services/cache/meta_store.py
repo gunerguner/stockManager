@@ -3,10 +3,10 @@ from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from ...common import logger
-from ...common.types import RealtimePriceDict
-from ...models import StockMeta as StockMetaModel
-from . import keys
+from backend.common import logger
+from backend.common.types import RealtimePriceDict
+from backend.models import StockMeta as StockMetaModel
+from backend.services.cache import keys
 
 
 def clear_stock_meta_all() -> None:

@@ -6,9 +6,9 @@ import datetime
 
 from pyxirr import xirr
 
-from ...common import logger
-from ...common.market import Market, code_to_market
-from ...common.types import CashFlowList, OverallData, StockData
+from backend.common import logger
+from backend.common.market import Market, code_to_market
+from backend.common.types import CashFlowList, OverallData, StockData
 
 
 def to_cny_amount(code: str, amount: float, hkd_cny_rate: float) -> float:

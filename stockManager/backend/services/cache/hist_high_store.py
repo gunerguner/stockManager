@@ -3,11 +3,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from django.core.cache import cache
 
-from ...common.cache import Cache
-from ...common import logger
-from ...common.market import Market, code_to_market
-from ..market import fetch_cn_hist_high, fetch_hk_hist_high
-from . import keys
+from backend.common.cache import Cache
+from backend.common import logger
+from backend.common.market import Market, code_to_market
+from backend.services.market import fetch_cn_hist_high, fetch_hk_hist_high
+from backend.services.cache import keys
 
 _SENTINEL_NONE = "__none__"
 _HIST_HIGH_TIMEOUT = 5

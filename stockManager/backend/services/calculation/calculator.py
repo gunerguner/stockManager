@@ -2,10 +2,10 @@
 股票计算器模块
 提供股票指标计算功能，包括单股指标和整体指标计算（纯计算，无 I/O）
 """
-from ...common.types import CashFlowList, OperationDict, OverallData, RealtimePriceDict, StockData
-from ...models import StockMeta as StockMetaModel
-from .overall import compute_overall
-from .single_stock import build_single_stock
+from backend.common.types import CashFlowList, OperationDict, OverallData, RealtimePriceDict, StockData
+from backend.models import StockMeta as StockMetaModel
+from backend.services.calculation.overall import compute_overall
+from backend.services.calculation.single_stock import build_single_stock
 
 
 class Calculator:

@@ -6,8 +6,8 @@
 """
 from datetime import datetime, timedelta
 
-from ...common import logger
-from .http_client import get_json
+from backend.common import logger
+from backend.services.market.http_client import get_json
 
 _KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 _MONTHS = 72  # 6 年

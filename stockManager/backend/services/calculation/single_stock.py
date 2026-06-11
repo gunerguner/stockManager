@@ -2,12 +2,12 @@
 
 港股通个股金额与价格为港币（HKD），不做汇率换算；组合汇总见 overall.py。
 """
-from ...common import logger
-from ...common.types import RealtimePriceData, StockData
-from ...models import Operation, StockMeta as StockMetaModel
-from .constants import MIN_HOLD_COUNT_THRESHOLD, MIN_PRICE_THRESHOLD, MIN_VALUE_THRESHOLD
-from .money_weighted import calculate_money_weighted_return
-from .single_metrics import SingleStockMetrics, compute_single_metrics
+from backend.common import logger
+from backend.common.types import RealtimePriceData, StockData
+from backend.models import Operation, StockMeta as StockMetaModel
+from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD, MIN_PRICE_THRESHOLD, MIN_VALUE_THRESHOLD
+from backend.services.calculation.money_weighted import calculate_money_weighted_return
+from backend.services.calculation.single_metrics import SingleStockMetrics, compute_single_metrics
 
 
 def _resolve_stock_name(

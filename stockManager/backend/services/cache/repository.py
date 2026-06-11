@@ -5,9 +5,9 @@ from typing import Iterable
 
 from django.contrib.auth.models import User
 
-from ...common.cache import Cache
-from ...common import logger
-from ...common.types import (
+from backend.common.cache import Cache
+from backend.common import logger
+from backend.common.types import (
     CalculatedResult,
     CashFlowList,
     MarketsData,
@@ -16,14 +16,14 @@ from ...common.types import (
     ValuationData,
     WatchItemDict,
 )
-from ...models import StockMeta as StockMetaModel
-from . import fx_store
-from . import hist_high_store
-from . import meta_store
-from . import price_store
-from . import user_store
-from . import valuation_store
-from . import watch_store
+from backend.models import StockMeta as StockMetaModel
+from backend.services.cache import fx_store
+from backend.services.cache import hist_high_store
+from backend.services.cache import meta_store
+from backend.services.cache import price_store
+from backend.services.cache import user_store
+from backend.services.cache import valuation_store
+from backend.services.cache import watch_store
 
 
 @dataclass(frozen=True)

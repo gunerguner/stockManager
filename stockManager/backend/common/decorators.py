@@ -4,8 +4,8 @@
 """
 import functools
 import json
-from .constants import ResponseStatus
-from .middleware import json_response
+from backend.common.constants import ResponseStatus
+from backend.common.middleware import json_response
 
 # 配置logger
 import logging

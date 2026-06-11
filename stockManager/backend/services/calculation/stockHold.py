@@ -3,10 +3,10 @@
 """
 import datetime
 
-from ...models import Operation
-from ...common.operations import apply_operation_to_hold
-from ...common.types import OperationDict
-from ...common.utils import operation_sort_key
+from backend.models import Operation
+from backend.common.operations import apply_operation_to_hold
+from backend.common.types import OperationDict
+from backend.common.utils import operation_sort_key
 
 
 class StockHold:

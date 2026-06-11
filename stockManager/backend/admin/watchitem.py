@@ -1,6 +1,6 @@
 """关注列表管理"""
-from ..models import WatchItem
-from .base import UserScopedModelAdmin, admin
+from backend.models import WatchItem
+from backend.admin.base import UserScopedModelAdmin, admin
 
 
 @admin.register(WatchItem)

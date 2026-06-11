@@ -1,7 +1,7 @@
 """
 出入金记录管理
 """
-from .base import CashFlow, UserScopedModelAdmin, admin
+from backend.admin.base import CashFlow, UserScopedModelAdmin, admin
 
 
 @admin.register(CashFlow)

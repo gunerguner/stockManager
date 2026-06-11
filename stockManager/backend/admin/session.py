@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.db import transaction
 
-from .base import User
+from backend.admin.base import User
 
 # 取消 Django 默认的 Session 注册（如果已注册）
 if Session in admin.site._registry:

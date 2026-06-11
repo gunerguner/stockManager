@@ -6,14 +6,14 @@ import datetime
 
 from django.contrib.auth.models import User
 
-from ..common import logger
-from ..common.constants import OperationType
-from ..common.types import OperationDict, DividendUpdateData
-from ..common.utils import operation_sort_key
-from ..models import Operation
-from .cache import CacheRepository
-from .calculation import StockHold
-from .market import baostock_session, fetch_dividends
+from backend.common import logger
+from backend.common.constants import OperationType
+from backend.common.types import OperationDict, DividendUpdateData
+from backend.common.utils import operation_sort_key
+from backend.models import Operation
+from backend.services.cache import CacheRepository
+from backend.services.calculation import StockHold
+from backend.services.market import baostock_session, fetch_dividends
 
 
 class Dividend:
