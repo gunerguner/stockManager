@@ -10,7 +10,7 @@ from . import keys
 
 
 def is_in_trading_hours(market: Market) -> bool:
-    return TradingCalendar.is_current_time_in_trading_hours(market)
+    return TradingCalendar.is_in_trading_hours_at(datetime.now(TZ_SHANGHAI), market)
 
 
 def any_market_in_trading_hours(markets: Iterable[Market]) -> bool:
@@ -30,11 +30,13 @@ def set_price_timestamp(market: Market, timestamp: str) -> None:
 
 
 def should_refresh_market(market: Market) -> bool:
-    if is_in_trading_hours(market):
-        return True
+    """上次拉价至今是否经过该市场任意交易时段（含跨日、法定假日跳过）。"""
     ts = get_price_timestamp(market)
     if not ts:
         return True
-    return TradingCalendar.is_trading_time_passed(
-        datetime.fromisoformat(ts), datetime.now(TZ_SHANGHAI), market
-    )
+    last_time = datetime.fromisoformat(ts)
+    if last_time.tzinfo is None:
+        last_time = TZ_SHANGHAI.localize(last_time)
+    else:
+        last_time = last_time.astimezone(TZ_SHANGHAI)
+    return TradingCalendar.is_trading_time_passed(last_time, datetime.now(TZ_SHANGHAI), market)
