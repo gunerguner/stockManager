@@ -1,7 +1,7 @@
-import { Statistic, Row, Col, Divider } from 'antd';
+import { Statistic, Row, Col, Divider, theme } from 'antd';
 import { useState } from 'react';
 import { UpOutlined, DownOutlined } from '@ant-design/icons';
-import { colorFromValue } from '@/utils/format/stock';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   EXPANDED_STATISTICS,
@@ -26,6 +26,8 @@ type StatisticItemProps = {
   showColor?: boolean;
   isMain?: boolean;
   onClick?: () => void;
+  colorFromValue: (value: number) => string | undefined;
+  primaryColor: string;
 };
 
 const StatisticItem: React.FC<StatisticItemProps> = ({
@@ -35,6 +37,8 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
   showColor,
   isMain,
   onClick,
+  colorFromValue,
+  primaryColor,
 }) => {
   const isMobile = useIsMobile();
   const clickable = !!onClick;
@@ -45,11 +49,15 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
       marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
     },
     content: {
-      fontWeight: isMain ? 'bold' : 'normal',
-      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 28 : 20,
+      fontWeight: isMain ? 600 : 'normal',
+      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 32 : 20,
       lineHeight: 1.2,
-      ...(showColor && numericValue !== undefined && { color: colorFromValue(numericValue) }),
-      ...(clickable && { color: '#1890ff' }),
+      fontVariantNumeric: 'tabular-nums' as const,
+      ...(showColor &&
+        numericValue !== undefined && {
+          color: colorFromValue(numericValue),
+        }),
+      ...(clickable && { color: primaryColor }),
     },
   };
 
@@ -64,6 +72,10 @@ const renderStatistics = (
   configs: OverallStatConfig[],
   data: API.Overall,
   actions: OverallBoardActions,
+  colors: {
+    colorFromValue: (value: number) => string | undefined;
+    primaryColor: string;
+  },
   isMain = false,
 ) =>
   configs.map(({ key, title, showColor }) => {
@@ -80,6 +92,7 @@ const renderStatistics = (
         showColor={showColor}
         isMain={isMain}
         onClick={onClick}
+        {...colors}
       />
     );
   });
@@ -88,10 +101,17 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
   const actions = useOverallBoardActions({ data, onModifySuccess });
+  const { colorFromValue } = useProfitLossColors();
+  const { token } = theme.useToken();
+
+  const colorProps = {
+    colorFromValue,
+    primaryColor: token.colorPrimary,
+  };
 
   return (
     <div className="overall-board-wrapper">
-      <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS, data, actions, true)}</Row>
+      <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS, data, actions, colorProps, true)}</Row>
 
       <div
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
@@ -104,7 +124,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
 
       {isExpanded && (
         <Row gutter={[16, 16]} style={{ marginTop: isMobile ? 16 : 24 }}>
-          {renderStatistics(EXPANDED_STATISTICS, data, actions)}
+          {renderStatistics(EXPANDED_STATISTICS, data, actions, colorProps)}
         </Row>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { FloatButton, Button } from 'antd';
+import { FloatButton, Button, Row, Col } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { WatchTable } from './components/WatchTable';
@@ -11,13 +11,21 @@ const Watch: React.FC = () => {
     <>
       <FloatButton.BackTop />
       <div style={{ borderRadius: 8, padding: 16 }}>
-        <ProCard
-          extra={
-            <Button icon={<ReloadOutlined />} onClick={fetchWatchlist} loading={loading}>
-              刷新
-            </Button>
-          }
-        >
+        <ProCard>
+          <Row align="middle" gutter={[16, 16]}>
+            <Col xs={24} sm={4} md={2}>
+              <Button
+                type="primary"
+                ghost
+                icon={<ReloadOutlined />}
+                onClick={fetchWatchlist}
+                loading={loading}
+                block
+              >
+                刷新
+              </Button>
+            </Col>
+          </Row>
           <WatchTable data={list} loading={loading} />
         </ProCard>
       </div>

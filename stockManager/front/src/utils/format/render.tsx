@@ -1,13 +1,7 @@
 import React from 'react';
 import { CheckCircleTwoTone } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
-import {
-  colorFromValue,
-  formatAmount,
-  FormatAmountOptions,
-  LOSS_COLOR,
-  PROFIT_COLOR,
-} from './stock';
+import { theme, Tooltip, Typography } from 'antd';
+import { colorFromValue, formatAmount, FormatAmountOptions } from './stock';
 
 const { Link } = Typography;
 
@@ -23,20 +17,38 @@ const HOLDING_ICON_STYLE: React.CSSProperties = {
   gap: 6,
 };
 
-// ==================== 金额渲染 ====================
+/** 持仓标识：主色 + 主题浅底，暗色模式随 token 适配 */
+const HoldingIcon: React.FC<{
+  isProfit: boolean;
+  profitColor: string;
+  lossColor: string;
+}> = ({ isProfit, profitColor, lossColor }) => {
+  const { token } = theme.useToken();
+  const primary = isProfit ? profitColor : lossColor;
+  const secondary = isProfit ? token.colorErrorBg : token.colorSuccessBg;
+
+  return (
+    <CheckCircleTwoTone twoToneColor={[primary, secondary]} style={{ fontSize: '0.8em' }} />
+  );
+};
+
+export type ProfitLossColorOptions = {
+  profitColor?: string;
+  lossColor?: string;
+};
+
 export const renderAmount = (
   value: number,
   options?: FormatAmountOptions,
   color?: string,
   precision: number = 2,
+  profitLossColors?: ProfitLossColorOptions,
 ): React.ReactNode => {
-  const displayColor = color || colorFromValue(value);
+  const displayColor = color || colorFromValue(value, profitLossColors);
   return (
     <span style={{ color: displayColor }}>{formatAmount(value, options, precision)}</span>
   );
 };
-
-// ==================== 股票名称与持有状态 ====================
 
 export type RenderHoldingStatusParams = {
   name: string;
@@ -46,9 +58,10 @@ export type RenderHoldingStatusParams = {
   holding: boolean;
   isHk: boolean;
   nameClassName?: string;
+  profitColor?: string;
+  lossColor?: string;
 };
 
-/** 渲染股票名称及持有状态，业务判断由调用方完成 */
 export const renderHoldingStatus = ({
   name,
   code,
@@ -57,9 +70,9 @@ export const renderHoldingStatus = ({
   holding,
   isHk,
   nameClassName,
+  profitColor = '#ff4d4f',
+  lossColor = '#389e0d',
 }: RenderHoldingStatusParams): React.ReactNode => {
-  const iconColor = isProfit ? PROFIT_COLOR : LOSS_COLOR;
-
   const nameNode = link ? (
     <Link href={link} target="_blank" rel="noreferrer" strong className="stock-group-link">
       {name}
@@ -75,7 +88,7 @@ export const renderHoldingStatus = ({
         <span style={HOLDING_ICON_STYLE}>
           {isHk && <span aria-label="港股">🇭🇰</span>}
           {holding && (
-            <CheckCircleTwoTone twoToneColor={iconColor} style={{ fontSize: '0.8em' }} />
+            <HoldingIcon isProfit={isProfit} profitColor={profitColor} lossColor={lossColor} />
           )}
         </span>
       )}

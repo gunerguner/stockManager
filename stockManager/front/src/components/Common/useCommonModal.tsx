@@ -55,7 +55,6 @@ export const useCommonModal = () => {
     () =>
       ({
         size: 'small',
-        bordered: true,
         pagination: false,
         scroll: { x: 'max-content' },
         ...(isMobile && {

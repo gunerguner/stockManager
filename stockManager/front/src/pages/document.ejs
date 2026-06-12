@@ -3,19 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    
-    <!-- SEO 优化 -->
-    <meta name="keywords" content="股票管理,股票系统,股票分析,stock manager,antd,umi,umijs,ant design" />
-    <meta name="description" content="开源的股票管理系统，提供股票交易记录、收益分析、持仓管理等功能" />
+    <meta name="keywords" content="股票管理,股票系统,股票分析,stock manager" />
+    <meta name="description" content="个人持仓与盈亏记录工具" />
     <meta name="author" content="Stock Manager" />
-    
-    <!-- 安全相关 -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    
-    <!-- 性能优化 -->
-    <link rel="preconnect" href="https://gw.alipayobjects.com" crossorigin />
-    <link rel="dns-prefetch" href="https://gw.alipayobjects.com" />
-    
     <title>Stock Manager - 股票管理系统</title>
     <link rel="icon" href="<%= context.config.publicPath %>favicon.ico" type="image/x-icon" />
   </head>
@@ -28,7 +19,6 @@
     </noscript>
     <div id="root">
       <style>
-        /* 基础样式 */
         html,
         body,
         #root {
@@ -37,15 +27,10 @@
           padding: 0;
         }
 
-        /* 加载页面背景 */
         #root {
-          background-image: url('<%= context.config.publicPath %>home_bg.png');
-          background-repeat: no-repeat;
-          background-size: cover;
-          background-position: center;
+          background: linear-gradient(135deg, #f5f7fa 0%, #eef2f8 100%);
         }
 
-        /* 加载容器 */
         .page-loading-container {
           display: flex;
           flex-direction: column;
@@ -55,37 +40,34 @@
           min-height: 420px;
         }
 
-        /* Logo 样式 */
         .page-loading-logo {
-          width: 256px;
-          height: auto;
-          margin-bottom: 32px;
+          width: 56px;
+          height: 56px;
+          margin-bottom: 24px;
         }
 
-        /* 加载动画容器 */
         .page-loading-spinner {
-          padding: 48px 0;
+          padding: 24px 0;
         }
 
-        /* 品牌信息 */
         .page-loading-brand {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 24px;
+          margin-top: 16px;
           font-size: 16px;
           color: rgba(0, 0, 0, 0.65);
+          font-weight: 500;
         }
 
-        .page-loading-brand-icon {
-          width: 32px;
-          height: 32px;
-          margin-right: 8px;
-        }
-
-        /* 简化版加载动画（antd 加载后会被替换） */
-        .page-loading-spinner .ant-spin {
-          display: inline-block;
+        .page-loading-spinner .ant-spin-dot-item {
+          position: absolute;
+          display: block;
+          width: 14px;
+          height: 14px;
+          background-color: #1677ff;
+          border-radius: 50%;
+          transform: scale(0.75);
+          transform-origin: 50% 50%;
+          opacity: 0.3;
+          animation: antSpinMove 1s infinite linear alternate;
         }
 
         .page-loading-spinner .ant-spin-dot {
@@ -96,63 +78,22 @@
           font-size: 32px;
         }
 
-        .page-loading-spinner .ant-spin-dot-item {
-          position: absolute;
-          display: block;
-          width: 14px;
-          height: 14px;
-          background-color: #1890ff;
-          border-radius: 50%;
-          transform: scale(0.75);
-          transform-origin: 50% 50%;
-          opacity: 0.3;
-          animation: antSpinMove 1s infinite linear alternate;
-        }
-
-        .page-loading-spinner .ant-spin-dot-item:nth-child(1) {
-          top: 0;
-          left: 0;
-        }
-
-        .page-loading-spinner .ant-spin-dot-item:nth-child(2) {
-          top: 0;
-          right: 0;
-          animation-delay: 0.4s;
-        }
-
-        .page-loading-spinner .ant-spin-dot-item:nth-child(3) {
-          right: 0;
-          bottom: 0;
-          animation-delay: 0.8s;
-        }
-
-        .page-loading-spinner .ant-spin-dot-item:nth-child(4) {
-          bottom: 0;
-          left: 0;
-          animation-delay: 1.2s;
-        }
-
+        .page-loading-spinner .ant-spin-dot-item:nth-child(1) { top: 0; left: 0; }
+        .page-loading-spinner .ant-spin-dot-item:nth-child(2) { top: 0; right: 0; animation-delay: 0.4s; }
+        .page-loading-spinner .ant-spin-dot-item:nth-child(3) { right: 0; bottom: 0; animation-delay: 0.8s; }
+        .page-loading-spinner .ant-spin-dot-item:nth-child(4) { bottom: 0; left: 0; animation-delay: 1.2s; }
         .page-loading-spinner .ant-spin-dot-spin {
           transform: rotate(45deg);
           animation: antRotate 1.2s infinite linear;
         }
 
-        @keyframes antSpinMove {
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes antRotate {
-          to {
-            transform: rotate(405deg);
-          }
-        }
+        @keyframes antSpinMove { to { opacity: 1; } }
+        @keyframes antRotate { to { transform: rotate(405deg); } }
       </style>
       <div class="page-loading-container">
-        <img 
-          src="<%= context.config.publicPath %>pro_icon.svg" 
-          alt="Stock Manager Logo" 
+        <img
+          src="<%= context.config.publicPath %>logo.svg"
+          alt="Stock Manager Logo"
           class="page-loading-logo"
           loading="eager"
         />
@@ -166,15 +107,7 @@
             </span>
           </div>
         </div>
-        <div class="page-loading-brand">
-          <img
-            src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
-            alt="Ant Design"
-            class="page-loading-brand-icon"
-            loading="lazy"
-          />
-          <span>Stock Manager</span>
-        </div>
+        <div class="page-loading-brand">Stock Manager</div>
       </div>
     </div>
   </body>

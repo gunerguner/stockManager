@@ -1,9 +1,17 @@
-// ==================== 颜色工具 ====================
-export const PROFIT_COLOR = 'red';
-export const LOSS_COLOR = 'green';
+// ==================== 颜色工具（A 股：红涨绿跌） ====================
 
-export const colorFromValue = (value: number): string => {
-  return value > 0 ? PROFIT_COLOR : value < 0 ? LOSS_COLOR : '';
+/** @deprecated 组件内请使用 useProfitLossColors */
+export const PROFIT_COLOR = '#ff4d4f';
+/** @deprecated 组件内请使用 useProfitLossColors */
+export const LOSS_COLOR = '#389e0d';
+
+export const colorFromValue = (
+  value: number,
+  colors?: { profitColor?: string; lossColor?: string },
+): string | undefined => {
+  const profit = colors?.profitColor ?? PROFIT_COLOR;
+  const loss = colors?.lossColor ?? LOSS_COLOR;
+  return value > 0 ? profit : value < 0 ? loss : undefined;
 };
 
 // ==================== 市场 / 货币 ====================

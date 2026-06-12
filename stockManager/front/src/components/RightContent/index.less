@@ -1,7 +1,5 @@
 @pro-header-hover-bg: rgba(0, 0, 0, 0.06);
 
-// ==================== 下拉菜单 ====================
-
 .menu {
   :global(.anticon) {
     margin-right: 8px;
@@ -10,8 +8,6 @@
     min-width: 160px;
   }
 }
-
-// ==================== 右侧容器 ====================
 
 .right {
   display: flex;
@@ -51,7 +47,11 @@
   }
 }
 
-// ==================== 暗色主题 ====================
+.dark {
+  .account .avatar {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
 
 .dark .action {
   &:hover,
@@ -60,30 +60,19 @@
   }
 }
 
-// 顶栏右侧区域不要被父级 overflow 裁切（A股 + 港股双 Tag 较宽）
 :global(.ant-pro-global-header .ant-pro-global-header-header-actions) {
   overflow: visible;
   max-width: none;
 }
 
-// ==================== 响应式 ====================
-
 @media (max-width: @screen-md) {
   .right {
-    height: auto;
     min-height: 48px;
     flex-wrap: wrap;
     gap: 4px;
 
     :global(.ant-space-item) {
       flex-shrink: 0;
-    }
-
-    :global(.ant-tag) {
-      font-size: 11px;
-      padding: 2px 6px;
-      line-height: 18px;
-      margin: 0;
     }
   }
 }

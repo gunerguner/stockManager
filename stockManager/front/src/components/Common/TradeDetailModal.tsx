@@ -2,8 +2,8 @@ import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
-  colorFromValue,
   formatAmount,
   formatMarketPrice,
   formatPercent,
@@ -38,6 +38,8 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 
 /** 股票信息（通用） */
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
+  const { colorFromValue } = useProfitLossColors();
+
   const infoItems = (
     <>
       <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
@@ -77,6 +79,7 @@ const StockHeader: React.FC<{
   showStockInfo: boolean;
 }> = ({ stock, operationsCount, showStockInfo }) => {
   const isMobile = useIsMobile();
+  const { profitColor, lossColor } = useProfitLossColors();
   const stockInfo = showStockInfo ? <StockInfo stock={stock} isMobile={isMobile} /> : null;
 
   return (
@@ -90,6 +93,8 @@ const StockHeader: React.FC<{
             isProfit: stock.offsetTotal > 0,
             holding: stock.holdCount > 0,
             isHk: isHkCode(stock.code),
+            profitColor,
+            lossColor,
           })}
           <Text type="secondary">({stock.code})</Text>
           {!isMobile && stockInfo}

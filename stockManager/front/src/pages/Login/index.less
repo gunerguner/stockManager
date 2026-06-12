@@ -2,74 +2,77 @@
 @text-color-secondary: rgba(0, 0, 0, 0.45);
 @font-size-base: 14px;
 
-// ==================== 容器布局 ====================
-
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: auto;
-  background: #f0f2f5 !important;
-
-  // PC 端背景图
-  @media (min-width: @screen-md-min) {
-    background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
-    background-repeat: no-repeat;
-    background-position: center 110px;
-    background-size: 100%;
-  }
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f8 50%, #f0f4fa 100%);
 }
 
-.content {
+.layout {
   flex: 1;
-  padding: 32px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 48px;
 
-  @media (min-width: @screen-md-min) {
-    padding: 32px 0 24px;
+  @media (max-width: @screen-md) {
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 16px;
   }
 }
 
-// ==================== 头部区域 ====================
-
-.top {
-  text-align: center;
+.brandPanel {
+  flex: 1;
+  max-width: 420px;
+  text-align: left;
 }
 
-.header {
-  height: 44px;
-  line-height: 44px;
-
-  a {
-    text-decoration: none;
-  }
-}
-
-.title {
-  position: relative;
-  top: 2px;
+.brandTitle {
+  margin: 0 0 12px;
   color: @heading-color;
+  font-size: 32px;
   font-weight: 600;
-  font-size: 33px;
-  font-family: Avenir, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  line-height: 1.2;
 }
 
-.desc {
-  margin-top: 12px;
-  margin-bottom: 40px;
+.brandDesc {
+  margin: 0 0 12px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 16px;
+}
+
+.brandSlogan {
+  margin: 0;
   color: @text-color-secondary;
   font-size: @font-size-base;
 }
 
-// ==================== 表单区域 ====================
+.formPanel {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+.loginCard {
+  border-radius: 12px !important;
+  box-shadow: @box-shadow-card;
+}
+
+.formHeader {
+  margin-bottom: 24px;
+}
+
+.formTitle {
+  color: @heading-color;
+  font-weight: 600;
+  font-size: 24px;
+}
 
 .main {
-  width: 328px;
-  margin: 0 auto;
-
-  @media (max-width: @screen-md) {
-    width: 95%;
-    max-width: 328px;
-  }
+  width: 100%;
 }
 
 .prefixIcon {
@@ -85,9 +88,6 @@
   width: 100%;
 }
 
-// ==================== Footer 样式覆盖 ====================
-
-// 使 Footer 背景与页面一致
 .container {
   :global {
     .ant-pro-global-footer,

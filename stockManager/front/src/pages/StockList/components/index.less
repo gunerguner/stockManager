@@ -1,14 +1,6 @@
-// ==================== OperationList 组件样式 ====================
-
 .operation-list-wrapper {
   width: 100%;
   overflow-x: auto;
-
-  .stock-name-cell {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
 
   .stock-name-link {
     display: block;
@@ -18,9 +10,15 @@
     font-weight: bold;
     font-size: 13px;
   }
-}
 
-// ==================== OverallBoard 组件样式 ====================
+  :global {
+    .ant-table-thead > tr > th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+  }
+}
 
 .overall-board-wrapper {
   width: 100%;
@@ -30,45 +28,60 @@
     user-select: none;
     margin-top: 12px;
 
-    &.collapsed { margin-bottom: 0; }
-    &.expanded { margin-bottom: 8px; }
+    &.collapsed {
+      margin-bottom: 0;
+    }
+
+    &.expanded {
+      margin-bottom: 8px;
+    }
 
     .expand-divider {
-      border-color: #e8e8e8;
+      border-color: var(--ant-color-border-secondary);
       transition: all 0.3s ease;
 
       &:hover {
         border-color: @primary-color;
-        .expand-icon { color: @primary-color; }
+
+        .expand-icon {
+          color: @primary-color;
+        }
       }
 
       .expand-icon {
         font-size: 14px;
-        color: #8c8c8c;
+        color: @color-text-secondary;
         transition: inherit;
       }
     }
   }
-
 }
-
-// ==================== 响应式样式 ====================
 
 @media (max-width: @screen-md) {
   .operation-list-wrapper {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
-      &:first-child { min-width: 80px; }
-      &:nth-child(n + 2) { min-width: 70px; }
+      &:first-child {
+        min-width: 80px;
+      }
+
+      &:nth-child(n + 2) {
+        min-width: 70px;
+      }
     }
 
-    .stock-name-link { font-size: 12px; }
+    .stock-name-link {
+      font-size: 12px;
+    }
   }
 
   .overall-board-wrapper {
     .expand-divider-wrapper {
       margin: 12px 0;
-      .expand-icon { font-size: 12px; }
+
+      .expand-icon {
+        font-size: 12px;
+      }
     }
   }
 }

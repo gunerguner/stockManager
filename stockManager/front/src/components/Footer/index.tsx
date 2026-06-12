@@ -1,5 +1,5 @@
 import React from 'react';
-import { GithubOutlined, AntDesignOutlined } from '@ant-design/icons';
+import { AntDesignOutlined, GithubOutlined } from '@ant-design/icons';
 import { DefaultFooter } from '@ant-design/pro-components';
 
 const START_YEAR = 2020;

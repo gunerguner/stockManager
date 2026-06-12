@@ -1,5 +1,7 @@
-
 import type { ProLayoutProps } from '@ant-design/pro-components';
+
+/** 与 src/theme/themeConfig.ts 中 PRIMARY_COLOR 保持一致 */
+const PRIMARY_COLOR = '#1677ff';
 
 const Settings: ProLayoutProps & {
   pwa?: boolean;
@@ -9,21 +11,17 @@ const Settings: ProLayoutProps & {
   colorPrimary?: string;
 } = {
   navTheme: 'light',
-  // 拂晓蓝
-  colorPrimary: '#1890ff',
+  colorPrimary: PRIMARY_COLOR,
   layout: 'top',
   contentWidth: 'Fluid',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
   title: 'Stock Manager',
   pwa: false,
-  // 默认 logo（浅色主题）
   logo: 'https://s21.ax1x.com/2025/10/24/pVXld8U.png',
-  // 浅色主题 logo
   logoLight: 'https://s21.ax1x.com/2025/10/24/pVXld8U.png',
-  // 暗色主题 logo（你需要替换成实际的暗色 logo 地址）
-  logoDark: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png', 
+  logoDark: 'https://z3.ax1x.com/2021/04/10/ca6i9S.png',
   iconfontUrl: '',
 };
 

@@ -1,10 +1,3 @@
-/**
- * 全局样式文件
- * 定义应用级别的基础样式
- */
-
-// ==================== 基础布局样式 ====================
-
 html,
 body,
 #root {
@@ -15,7 +8,14 @@ body,
   min-height: 100vh;
 }
 
-// ==================== 字体渲染优化 ====================
+.ant-pro-layout .ant-layout-content {
+  background: var(--ant-color-bg-layout);
+  color: var(--ant-color-text);
+}
+
+.ant-pro-layout {
+  color: var(--ant-color-text);
+}
 
 body {
   text-rendering: optimizeLegibility;
@@ -23,32 +23,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-// ==================== 列表样式重置 ====================
-
 ul,
 ol {
   list-style: none;
 }
 
-// ==================== 移动端页面布局与表格 ====================
+.cell-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: @screen-md) {
-  .ant-pro-layout .ant-pro-page-container,
-  .ant-pro-layout .ant-pro-page-container-children-content {
-    padding: 8px;
-  }
-
   .ant-layout .ant-layout-content,
   .ant-layout-content {
-    padding: 8px;
+    padding: @page-padding;
   }
 
   .ant-pro-card {
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .ant-pro-page-container .ant-pro-card {
     margin-left: 0;
     margin-right: 0;
   }

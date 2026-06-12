@@ -1,7 +1,5 @@
-import { Button, Row, Col, Checkbox } from 'antd';
+import { Button, Row, Col, Checkbox, Space } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-
-// ==================== 类型定义 ====================
 
 type FilterPanelProps = {
   showAll: boolean;
@@ -11,8 +9,6 @@ type FilterPanelProps = {
   onShowConvChange: (checked: boolean) => void;
 };
 
-// ==================== 组件 ====================
-
 export const FilterPanel: React.FC<FilterPanelProps> = ({
   showAll,
   showConv,
@@ -20,21 +16,21 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onShowAllChange,
   onShowConvChange,
 }) => (
-  <Row align="middle" gutter={[16, 16]}>
+  <Row align="middle" gutter={[16, 16]} style={{ marginTop: 16, marginBottom: 16 }}>
     <Col xs={24} sm={4} md={2}>
-      <Button onClick={onRefresh} icon={<ReloadOutlined />} block>
+      <Button type="primary" ghost onClick={onRefresh} icon={<ReloadOutlined />} block>
         刷新
       </Button>
     </Col>
-    <Col xs={12} sm={10} md={4} lg={{ offset: 15 }}>
-      <Checkbox checked={showAll} onChange={(e) => onShowAllChange(e.target.checked)}>
-        显示市值为零的股票
-      </Checkbox>
-    </Col>
-    <Col xs={12} sm={10} md={3}>
-      <Checkbox checked={showConv} onChange={(e) => onShowConvChange(e.target.checked)}>
-        显示可转债
-      </Checkbox>
+    <Col xs={24} sm={20} md={{ offset: 14, span: 8 }}>
+      <Space wrap size={[16, 8]}>
+        <Checkbox checked={showAll} onChange={(e) => onShowAllChange(e.target.checked)}>
+          显示市值为零的股票
+        </Checkbox>
+        <Checkbox checked={showConv} onChange={(e) => onShowConvChange(e.target.checked)}>
+          显示可转债
+        </Checkbox>
+      </Space>
     </Col>
   </Row>
 );

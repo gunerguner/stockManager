@@ -10,38 +10,40 @@ const DataPage: React.FC = () => {
   const { stock, operations, loading } = useStocks();
 
   return (
-    <ProCard gutter={[0, 16]}>
-      <Tabs
-        defaultActiveKey="1"
-        items={[
-          {
-            key: '1',
-            label: '盈亏归因',
-            children: (
-              <AnalysisList
-                data={stock.stocks}
-                incomeCash={stock.overall.incomeCash}
-                hkdCnyRate={stock.overall.hkdCnyRate}
-                loading={loading}
-              />
-            ),
-          },
-          {
-            key: '2',
-            label: '费用明细',
-            children: (
-              <CostList
-                data={stock.stocks}
-                operations={operations}
-                totalCost={stock.overall.totalCost}
-                hkdCnyRate={stock.overall.hkdCnyRate}
-                loading={loading}
-              />
-            ),
-          },
-        ]}
-      />
-    </ProCard>
+    <div style={{ borderRadius: 8, padding: 16 }}>
+      <ProCard gutter={[0, 16]}>
+        <Tabs
+          defaultActiveKey="1"
+          items={[
+            {
+              key: '1',
+              label: '盈亏归因',
+              children: (
+                <AnalysisList
+                  data={stock.stocks}
+                  incomeCash={stock.overall.incomeCash}
+                  hkdCnyRate={stock.overall.hkdCnyRate}
+                  loading={loading}
+                />
+              ),
+            },
+            {
+              key: '2',
+              label: '费用明细',
+              children: (
+                <CostList
+                  data={stock.stocks}
+                  operations={operations}
+                  totalCost={stock.overall.totalCost}
+                  hkdCnyRate={stock.overall.hkdCnyRate}
+                  loading={loading}
+                />
+              ),
+            },
+          ]}
+        />
+      </ProCard>
+    </div>
   );
 };
 

@@ -6,8 +6,6 @@ import { OperationList } from './components/OperationList';
 import { FilterPanel } from './components/FilterPanel';
 import { useStocks } from '@/hooks/useStocks';
 
-// ==================== 组件 ====================
-
 const StockList: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
   const [showConv, setShowConv] = useState(true);
@@ -19,15 +17,13 @@ const StockList: React.FC = () => {
       <div style={{ borderRadius: 8, padding: 16 }}>
         <ProCard>
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
-          <div style={{ margin: '16px 0' }}>
-            <FilterPanel
-              showAll={showAll}
-              showConv={showConv}
-              onRefresh={fetchStockData}
-              onShowAllChange={setShowAll}
-              onShowConvChange={setShowConv}
-            />
-          </div>
+          <FilterPanel
+            showAll={showAll}
+            showConv={showConv}
+            onRefresh={fetchStockData}
+            onShowAllChange={setShowAll}
+            onShowConvChange={setShowConv}
+          />
           <OperationList
             showAll={showAll}
             showConv={showConv}

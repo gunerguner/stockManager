@@ -3,6 +3,7 @@ import type { RuntimeConfig } from '@umijs/max';
 import { history, useModel } from '@umijs/max';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
+import ThemeLayoutSync from '@/components/ThemeLayoutSync';
 import defaultSettings from '../../config/defaultSettings';
 import { LOGIN_PATH } from './constants';
 
@@ -24,7 +25,6 @@ export const layout: RuntimeConfig['layout'] = ({ initialState }) => ({
   actionsRender: () => <RightContent />,
   rightContentRender: false,
   disableContentMargin: false,
-  waterMarkProps: { content: initialState?.currentUser?.name },
   footerRender: () => <Footer />,
   onPageChange: () => {
     const { location } = history;
@@ -34,4 +34,10 @@ export const layout: RuntimeConfig['layout'] = ({ initialState }) => ({
   },
   menuHeaderRender: undefined,
   logo: <DynamicLogo />,
+  childrenRender: (children) => (
+    <>
+      <ThemeLayoutSync />
+      {children}
+    </>
+  ),
 });

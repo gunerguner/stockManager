@@ -1,16 +1,17 @@
-import { Descriptions, Table, Tooltip } from 'antd';
+import { Descriptions, Table, Tooltip, theme } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useCommonModal } from '@/components/Common/useCommonModal';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
-  colorFromValue,
   formatMarketPrice,
   formatPercent,
   isHkCode,
   toXueqiuStockUrl,
 } from '@/utils/format/stock';
 import { renderHoldingStatus } from '@/utils/format/render';
+import '@/components/Common/index.less';
 
 type WatchTableProps = {
   data: API.WatchItem[];
@@ -33,60 +34,51 @@ const calcRoeFromPbPe = (pb: number | null, pe: number | null): number | null =>
   return (pb / pe) * 100;
 };
 
-const renderHistHighDropPct = (
-  histHigh: number | null,
-  priceNow: number | null,
-): React.ReactNode => {
-  if (priceNow == null || histHigh == null || histHigh <= 0) return '—';
-  const dropPct = ((priceNow - histHigh) / histHigh) * 100;
-  return (
-    <span style={{ color: colorFromValue(dropPct) }}>{formatPercent(dropPct)}</span>
-  );
-};
-
 const renderMultilineText = (text: string) => {
   if (!text) return '—';
   return <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>;
 };
 
-const highlightedPointStyle: React.CSSProperties = {
-  color: '#cf1322',
-  fontWeight: 600,
-  background: '#fff1f0',
-  padding: '2px 6px',
-  borderRadius: 4,
-};
-
-const renderBuyPoint = (val: number | null, record: API.WatchItem) => {
-  if (val == null || val <= 0) return <span style={{ color: '#bbb' }}>—</span>;
-  const hit = isBuyPointTriggered(record.priceNow, val);
-  return (
-    <span style={hit ? highlightedPointStyle : undefined}>
-      {formatMarketPrice(val, record.code)}
-    </span>
-  );
-};
-
-const renderTrendPoint = (val: number | null, record: API.WatchItem) => {
-  if (val == null || val <= 0) return <span style={{ color: '#bbb' }}>—</span>;
-  const hit = isTrendPointTriggered(record.priceNow, val);
-  return (
-    <span style={hit ? highlightedPointStyle : undefined}>
-      {formatMarketPrice(val, record.code)}
-    </span>
-  );
-};
-
 export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false }) => {
   const isMobile = useIsMobile();
   const { showModal } = useCommonModal();
+  const { profitColor, lossColor, colorFromValue, highlightStyle } = useProfitLossColors();
+  const { token } = theme.useToken();
+
+  const renderHistHighDropPct = (histHigh: number | null, priceNow: number | null): React.ReactNode => {
+    if (priceNow == null || histHigh == null || histHigh <= 0) return '—';
+    const dropPct = ((priceNow - histHigh) / histHigh) * 100;
+    return (
+      <span style={{ color: colorFromValue(dropPct) }}>{formatPercent(dropPct)}</span>
+    );
+  };
+
+  const renderBuyPoint = (val: number | null, record: API.WatchItem) => {
+    if (val == null || val <= 0) {
+      return <span style={{ color: token.colorTextDisabled }}>—</span>;
+    }
+    const hit = isBuyPointTriggered(record.priceNow, val);
+    return (
+      <span style={hit ? highlightStyle : undefined}>{formatMarketPrice(val, record.code)}</span>
+    );
+  };
+
+  const renderTrendPoint = (val: number | null, record: API.WatchItem) => {
+    if (val == null || val <= 0) {
+      return <span style={{ color: token.colorTextDisabled }}>—</span>;
+    }
+    const hit = isTrendPointTriggered(record.priceNow, val);
+    return (
+      <span style={hit ? highlightStyle : undefined}>{formatMarketPrice(val, record.code)}</span>
+    );
+  };
 
   const handleRowClick = (record: API.WatchItem) => {
     showModal({
       title: `${record.name}（${record.code}）`,
       width: 768,
       content: (
-        <Descriptions bordered column={1} size="small">
+        <Descriptions column={1} size="small" className="watch-detail-descriptions">
           <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
           <Descriptions.Item label="机会">{renderMultilineText(record.opportunity)}</Descriptions.Item>
           <Descriptions.Item label="左侧点">
@@ -129,6 +121,8 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
             holding: record.holding,
             isHk: isHkCode(record.code),
             nameClassName: 'stock-name-link',
+            profitColor,
+            lossColor,
           }),
       },
       {
@@ -203,7 +197,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         render: (value, record) => renderBuyPoint(value, record),
       },
     ],
-    [isMobile],
+    [isMobile, profitColor, lossColor, colorFromValue, highlightStyle, token.colorTextDisabled],
   );
 
   return (
@@ -212,7 +206,6 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       columns={columns}
       dataSource={data}
       loading={loading}
-      bordered
       pagination={false}
       onRow={(record) => ({
         onClick: () => handleRowClick(record),

@@ -2,7 +2,8 @@ import { Space, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { isHkCode, LOSS_COLOR, MarketCurrency, PROFIT_COLOR, toMarketCurrency } from '@/utils/format/stock';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
+import { isHkCode, MarketCurrency, toMarketCurrency } from '@/utils/format/stock';
 import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
@@ -35,13 +36,17 @@ const SummaryItems: React.FC<{
   loss: number;
   netIncome: number;
   currency: MarketCurrency;
-}> = ({ profit, loss, netIncome, currency }) => (
-  <>
-    <Text>获利：{renderAmount(profit, { currency }, PROFIT_COLOR)} </Text>
-    <Text>亏损：{renderAmount(loss, { currency }, LOSS_COLOR)} </Text>
-    <Text>净盈亏：{renderAmount(netIncome, { currency })} </Text>
-  </>
-);
+}> = ({ profit, loss, netIncome, currency }) => {
+  const { profitColor, lossColor } = useProfitLossColors();
+
+  return (
+    <>
+      <Text>获利：{renderAmount(profit, { currency }, profitColor)} </Text>
+      <Text>亏损：{renderAmount(loss, { currency }, lossColor)} </Text>
+      <Text>净盈亏：{renderAmount(netIncome, { currency })} </Text>
+    </>
+  );
+};
 
 /** 汇总信息头部 */
 const SummaryHeader: React.FC<{
@@ -91,6 +96,7 @@ const SummaryHeader: React.FC<{
 export const useStockProfitModal = () => {
   const { showSingleTable } = useCommonModal();
   const isMobile = useIsMobile();
+  const { profitColor, lossColor } = useProfitLossColors();
 
   const showStockProfit = React.useCallback(
     (params: ShowStockProfitParams) => {
@@ -115,6 +121,8 @@ export const useStockProfitModal = () => {
               isProfit: record.netIncome > 0,
               holding: (record.holdCount ?? 0) > 0,
               isHk: isHkCode(record.code),
+              profitColor,
+              lossColor,
             }),
         },
         {
@@ -143,7 +151,7 @@ export const useStockProfitModal = () => {
         dataSource: sortedData,
       });
     },
-    [showSingleTable, isMobile],
+    [showSingleTable, isMobile, profitColor, lossColor],
   );
 
   return { showStockProfit };

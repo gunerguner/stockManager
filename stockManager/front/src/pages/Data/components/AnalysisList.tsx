@@ -2,12 +2,10 @@ import { Col, Row, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
-  colorFromValue,
   formatPercent,
-  LOSS_COLOR,
   MarketCurrency,
-  PROFIT_COLOR,
   toCnyAmount,
   toCnyByCurrency,
   toMarketCurrency,
@@ -79,6 +77,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { showStockProfit } = useStockProfitModal();
+  const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
 
   /** 计算分析数据 */
   const { analysisList, totalProfit, totalLoss } = useMemo(() => {
@@ -181,9 +180,9 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
             title={formatPercent(totalProfit ? (toCnyForPct(record, value) / totalProfit) * 100 : 0)}
-            color={PROFIT_COLOR}
+            color={profitColor}
           >
-            {renderCategoryAmount(value, PROFIT_COLOR, record)}
+            {renderCategoryAmount(value, profitColor, record)}
           </Tooltip>
         ),
       },
@@ -194,9 +193,9 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         render: (value: number, record: AnalysisModel) => (
           <Tooltip
             title={formatPercent(totalLoss ? (toCnyForPct(record, value) / totalLoss) * 100 : 0)}
-            color={LOSS_COLOR}
+            color={lossColor}
           >
-            {renderCategoryAmount(value, LOSS_COLOR, record)}
+            {renderCategoryAmount(value, lossColor, record)}
           </Tooltip>
         ),
       },
@@ -205,10 +204,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         dataIndex: 'netIncome',
         sorter: (a, b) => a.netIncome - b.netIncome,
         render: (value: number, record: AnalysisModel) =>
-          renderCategoryAmount(value, colorFromValue(value), record),
+          renderCategoryAmount(value, colorFromValue(value) ?? '', record),
       },
     ],
-    [totalProfit, totalLoss, hkdCnyRate],
+    [totalProfit, totalLoss, hkdCnyRate, profitColor, lossColor, colorFromValue],
   );
 
   return (
@@ -219,7 +218,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             title="总获利"
             value={totalProfit}
             precision={2}
-            styles={getHeaderStatisticStyles(isMobile, PROFIT_COLOR)}
+            styles={getHeaderStatisticStyles(isMobile, profitColor)}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -227,7 +226,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             title="总亏损"
             value={totalLoss}
             precision={2}
-            styles={getHeaderStatisticStyles(isMobile, LOSS_COLOR)}
+            styles={getHeaderStatisticStyles(isMobile, lossColor)}
           />
         </Col>
         <Col span={isMobile ? 12 : 6}>
@@ -244,7 +243,6 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         columns={columns}
         dataSource={analysisList}
         loading={loading}
-        bordered
         pagination={false}
         scroll={isMobile ? { x: 'max-content' } : undefined}
         size={isMobile ? 'small' : 'middle'}

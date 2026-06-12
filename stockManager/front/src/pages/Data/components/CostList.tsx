@@ -189,7 +189,6 @@ export const CostList: React.FC<CostListProps> = ({
       rowKey="id"
       columns={getColumns(record.id)}
       dataSource={record.subList}
-      bordered
       size="small"
       tableLayout="auto"
       pagination={false}
@@ -208,7 +207,6 @@ export const CostList: React.FC<CostListProps> = ({
         columns={getColumns()}
         dataSource={costList}
         loading={loading}
-        bordered
         pagination={false}
         expandable={{ expandedRowRender }}
         scroll={isMobile ? { x: 'max-content' } : undefined}

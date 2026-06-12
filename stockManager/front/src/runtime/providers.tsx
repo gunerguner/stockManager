@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { ConfigProvider, theme, App } from 'antd';
+import { ConfigProvider, App } from 'antd';
 import { useModel } from '@umijs/max';
+import { getThemeConfig } from '@/theme/themeConfig';
 
 function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
   const { actualTheme } = useModel('theme');
@@ -10,12 +11,7 @@ function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
   }, [actualTheme]);
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: actualTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: { colorPrimary: '#1890ff' },
-      }}
-    >
+    <ConfigProvider key={actualTheme} theme={getThemeConfig(actualTheme)}>
       <App>{children}</App>
     </ConfigProvider>
   );
@@ -24,3 +20,5 @@ function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
 export function innerProvider(container: React.ReactNode) {
   return <ThemeConfigProvider>{container}</ThemeConfigProvider>;
 }
+
+export { getThemeConfig, lightThemeConfig } from '@/theme/themeConfig';
