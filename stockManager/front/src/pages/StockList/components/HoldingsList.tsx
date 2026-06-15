@@ -118,11 +118,15 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         render: (_, r) => {
           const todayTotal = r.offsetToday * r.holdCount;
           return (
-            <Tooltip title={formatAmount(todayTotal, { code: r.code })} color={colorFromValue(todayTotal)}>
+            <Tooltip
+              title={formatAmount(todayTotal, { code: r.code })}
+              color={colorFromValue(todayTotal)}
+              styles={{ container: { color: '#fff' } }}
+            >
               <div className="cell-number">
-                {renderAmount(r.offsetCurrent, { code: r.code }, undefined, 2, {
-                  profitColor,
-                  lossColor,
+                {renderAmount(r.offsetCurrent, {
+                  code: r.code,
+                  profitLossColors: { profitColor, lossColor },
                 })}
               </div>
             </Tooltip>

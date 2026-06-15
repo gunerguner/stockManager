@@ -30,13 +30,19 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 };
 
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
-  const { colorFromValue } = useProfitLossColors();
+  const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
 
   const infoItems = (
     <>
       <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
       <Text>持股：{stock.holdCount} </Text>
-      <Text>累计盈亏：{renderAmount(stock.offsetTotal, { code: stock.code })} </Text>
+      <Text>
+        累计盈亏：
+        {renderAmount(stock.offsetTotal, {
+          code: stock.code,
+          profitLossColors: { profitColor, lossColor },
+        })}{' '}
+      </Text>
       <Text>
         资金加权收益率：
         <span

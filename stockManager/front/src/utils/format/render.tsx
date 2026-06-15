@@ -1,27 +1,28 @@
 import React from 'react';
-import {
-  colorFromValue,
-  formatAmount,
-  formatDecimalRatio,
-  formatMarketPrice,
-  FormatAmountOptions,
-} from './stock';
+import { formatAmount, formatDecimalRatio, formatMarketPrice, FormatAmountOptions } from './stock';
 
 export type ProfitLossColorOptions = {
-  profitColor?: string;
-  lossColor?: string;
+  profitColor: string;
+  lossColor: string;
 };
 
-export const renderAmount = (
+const colorFromProfitLoss = (
   value: number,
-  options?: FormatAmountOptions,
-  color?: string,
-  precision: number = 2,
-  profitLossColors?: ProfitLossColorOptions,
-): React.ReactNode => {
-  const displayColor = color || colorFromValue(value, profitLossColors);
+  colors: ProfitLossColorOptions,
+): string | undefined =>
+  value > 0 ? colors.profitColor : value < 0 ? colors.lossColor : undefined;
+
+export type RenderAmountOptions = FormatAmountOptions & {
+  color?: string;
+  profitLossColors?: ProfitLossColorOptions;
+};
+
+export const renderAmount = (value: number, options?: RenderAmountOptions): React.ReactNode => {
+  const { color, profitLossColors, ...formatOptions } = options ?? {};
+  const displayColor =
+    color ?? (profitLossColors ? colorFromProfitLoss(value, profitLossColors) : undefined);
   return (
-    <span style={{ color: displayColor }}>{formatAmount(value, options, precision)}</span>
+    <span style={{ color: displayColor }}>{formatAmount(value, formatOptions)}</span>
   );
 };
 

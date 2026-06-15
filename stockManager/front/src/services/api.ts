@@ -24,7 +24,20 @@ const getRequest = <T>(endpoint: string, options?: RequestOptions) => {
 /**
  * 统一的POST请求封装
  */
-const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, options?: RequestOptions) => {
+function postRequest<T>(endpoint: string, options?: RequestOptions): Promise<T>;
+function postRequest<T>(
+  endpoint: string,
+  data: Record<string, unknown>,
+  options?: RequestOptions,
+): Promise<T>;
+function postRequest<T>(
+  endpoint: string,
+  arg2?: Record<string, unknown> | RequestOptions,
+  arg3?: RequestOptions,
+): Promise<T> {
+  const data = arg3 !== undefined ? (arg2 as Record<string, unknown>) : undefined;
+  const options = arg3 !== undefined ? arg3 : (arg2 as RequestOptions | undefined);
+
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: JSON_HEADERS,
@@ -32,7 +45,7 @@ const postRequest = <T>(endpoint: string, data?: Record<string, unknown>, option
     data,
     ...options,
   });
-};
+}
 
 /** 获取当前用户信息 GET /api/currentUser */
 export async function getCurrentUser(options?: RequestOptions) {
@@ -46,7 +59,7 @@ export async function login(params: API.LoginParams, options?: RequestOptions) {
 
 /** 用户登出 POST /api/logout */
 export async function logout(options?: RequestOptions) {
-  return postRequest<Record<string, unknown>>('/api/logout', undefined, options);
+  return postRequest<Record<string, unknown>>('/api/logout', options);
 }
 
 /** 获取操作列表 GET /api/operations */
@@ -66,12 +79,12 @@ export async function updateIncomeCash(incomeCash: number, options?: RequestOpti
 
 /** 更新分红 POST /api/dividend */
 export async function updateDividend(options?: RequestOptions) {
-  return postRequest<API.DividendResult>('/api/dividend', undefined, options);
+  return postRequest<API.DividendResult>('/api/dividend', options);
 }
 
 /** 清理 Redis 缓存 POST /api/clearCache */
 export async function clearCache(options?: RequestOptions) {
-  return postRequest<API.ClearCacheResult>('/api/clearCache', undefined, options);
+  return postRequest<API.ClearCacheResult>('/api/clearCache', options);
 }
 
 /** 获取关注列表 GET /api/watchlist */

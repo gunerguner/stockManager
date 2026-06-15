@@ -37,8 +37,8 @@ const SummaryItems: React.FC<{
 
   return (
     <>
-      <Text>获利：{renderAmount(profit, { currency }, profitColor)} </Text>
-      <Text>亏损：{renderAmount(loss, { currency }, lossColor)} </Text>
+      <Text>获利：{renderAmount(profit, { currency, color: profitColor })} </Text>
+      <Text>亏损：{renderAmount(loss, { currency, color: lossColor })} </Text>
       <Text>净盈亏：{renderAmount(netIncome, { currency })} </Text>
     </>
   );
@@ -114,9 +114,9 @@ export const useStockProfitModal = () => {
           dataIndex: 'netIncome',
           width: isMobile ? 100 : 150,
           render: (value: number, record: StockProfitData) =>
-            renderAmount(value, { code: record.code }, undefined, 2, {
-              profitColor,
-              lossColor,
+            renderAmount(value, {
+              code: record.code,
+              profitLossColors: { profitColor, lossColor },
             }),
         },
       ];

@@ -1,19 +1,3 @@
-// ==================== 颜色工具（A 股：红涨绿跌） ====================
-
-/** @deprecated 组件内请使用 useProfitLossColors */
-export const PROFIT_COLOR = '#ff4d4f';
-/** @deprecated 组件内请使用 useProfitLossColors */
-export const LOSS_COLOR = '#389e0d';
-
-export const colorFromValue = (
-  value: number,
-  colors?: { profitColor?: string; lossColor?: string },
-): string | undefined => {
-  const profit = colors?.profitColor ?? PROFIT_COLOR;
-  const loss = colors?.lossColor ?? LOSS_COLOR;
-  return value > 0 ? profit : value < 0 ? loss : undefined;
-};
-
 // ==================== 市场 / 货币 ====================
 export type MarketCurrency = 'cny' | 'hkd';
 
@@ -68,14 +52,11 @@ export type FormatAmountOptions = {
   code?: string;
   currency?: MarketCurrency;
   grouped?: boolean;
+  precision?: number;
 };
 
-export const formatAmount = (
-  value: number,
-  options?: FormatAmountOptions,
-  precision: number = 2,
-): string => {
-  const { grouped = false, code, currency = marketCurrency(code) } = options ?? {};
+export const formatAmount = (value: number, options?: FormatAmountOptions): string => {
+  const { grouped = false, code, currency = marketCurrency(code), precision = 2 } = options ?? {};
 
   if (currency === 'hkd') {
     return withHkdSymbol(formatNumber(value, precision));

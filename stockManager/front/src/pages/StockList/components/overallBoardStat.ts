@@ -28,7 +28,7 @@ const STAT_RESOLVERS: Partial<
     numeric: d.xirrAnnualized,
   }),
   hkdCnyRate: (d) => ({
-    value: formatAmount(d.hkdCnyRate ?? 0, undefined, 4),
+    value: formatAmount(d.hkdCnyRate ?? 0, { precision: 4 }),
   }),
 };
 

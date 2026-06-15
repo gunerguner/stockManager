@@ -44,7 +44,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
     toCnyByCurrency(categoryCurrency(record), value, hkdCnyRate || 1);
 
   const renderCategoryAmount = (value: number, color: string, record: AnalysisModel) =>
-    renderAmount(value, { currency: categoryCurrency(record) }, color);
+    renderAmount(value, { currency: categoryCurrency(record), color });
 
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
