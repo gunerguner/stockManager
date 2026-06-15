@@ -1,6 +1,7 @@
 import { notification } from 'antd';
 import { history, type RequestConfig } from '@umijs/max';
 import { getCsrfToken } from '@/utils/browser';
+import { isUnauthorized } from '@/utils/api';
 import { RESPONSE_STATUS, HTTP_CODE_MESSAGE } from '@/utils/constants';
 import { LOGIN_PATH } from './constants';
 
@@ -54,7 +55,7 @@ const requestInterceptor = (url: string, options: any) => {
 const responseInterceptor = (response: any) => {
   const data = response?.data || response;
 
-  if (data?.status === RESPONSE_STATUS.UNAUTHORIZED) {
+  if (isUnauthorized(data)) {
     redirectToLogin();
     return response;
   }

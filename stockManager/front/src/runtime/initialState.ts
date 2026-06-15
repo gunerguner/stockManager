@@ -2,7 +2,7 @@ import type { ProLayoutProps } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import defaultSettings from '../../config/defaultSettings';
 import { getCurrentUser as queryCurrentUser } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { isApiSuccess } from '@/utils/api';
 import { LOGIN_PATH } from './constants';
 
 export async function getInitialState(): Promise<{
@@ -13,7 +13,7 @@ export async function getInitialState(): Promise<{
   const fetchUserInfo = async () => {
     try {
       const result = await queryCurrentUser();
-      if (result.status === RESPONSE_STATUS.SUCCESS) return result.info;
+      if (isApiSuccess(result)) return result.info;
     } catch {
       if (history.location.pathname !== LOGIN_PATH) {
         history.push(LOGIN_PATH);

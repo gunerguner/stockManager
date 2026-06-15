@@ -1,16 +1,15 @@
 import { Space, Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import { HoldingStatus } from '@/components/Common/HoldingStatus';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
-import { isHkCode, MarketCurrency, toMarketCurrency } from '@/utils/format/stock';
-import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
+import { MarketCurrency, toMarketCurrency } from '@/utils/format/stock';
+import { renderAmount } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
 const { Text } = Typography;
-
-// ==================== 类型定义 ====================
 
 export interface StockProfitData {
   code: string;
@@ -28,9 +27,6 @@ export type ShowStockProfitParams = {
   isHkCategory?: boolean;
 };
 
-// ==================== 组件 ====================
-
-/** 汇总信息项 */
 const SummaryItems: React.FC<{
   profit: number;
   loss: number;
@@ -48,7 +44,6 @@ const SummaryItems: React.FC<{
   );
 };
 
-/** 汇总信息头部 */
 const SummaryHeader: React.FC<{
   categoryName: string;
   profit: number;
@@ -91,8 +86,6 @@ const SummaryHeader: React.FC<{
   );
 };
 
-// ==================== Hook ====================
-
 export const useStockProfitModal = () => {
   const { showSingleTable } = useCommonModal();
   const isMobile = useIsMobile();
@@ -114,23 +107,17 @@ export const useStockProfitModal = () => {
           title: '股票名称',
           dataIndex: 'name',
           width: isMobile ? 120 : 200,
-          render: (_name: string, record: StockProfitData) =>
-            renderHoldingStatus({
-              name: record.name,
-              code: record.code,
-              isProfit: record.netIncome > 0,
-              holding: (record.holdCount ?? 0) > 0,
-              isHk: isHkCode(record.code),
-              profitColor,
-              lossColor,
-            }),
+          render: (_name: string, record: StockProfitData) => <HoldingStatus {...record} />,
         },
         {
           title: '净盈亏',
           dataIndex: 'netIncome',
           width: isMobile ? 100 : 150,
           render: (value: number, record: StockProfitData) =>
-            renderAmount(value, { code: record.code }),
+            renderAmount(value, { code: record.code }, undefined, 2, {
+              profitColor,
+              lossColor,
+            }),
         },
       ];
 
@@ -156,4 +143,3 @@ export const useStockProfitModal = () => {
 
   return { showStockProfit };
 };
-

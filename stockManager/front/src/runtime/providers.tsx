@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ConfigProvider, App } from 'antd';
 import { useModel } from '@umijs/max';
-import { getThemeConfig } from '@/theme/themeConfig';
+import { getThemeConfig, providerComponentConfig } from '@/theme/themeConfig';
 
 function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
   const { actualTheme } = useModel('theme');
@@ -11,7 +11,11 @@ function ThemeConfigProvider({ children }: { children: React.ReactNode }) {
   }, [actualTheme]);
 
   return (
-    <ConfigProvider key={actualTheme} theme={getThemeConfig(actualTheme)}>
+    <ConfigProvider
+      key={actualTheme}
+      theme={getThemeConfig(actualTheme)}
+      {...providerComponentConfig}
+    >
       <App>{children}</App>
     </ConfigProvider>
   );

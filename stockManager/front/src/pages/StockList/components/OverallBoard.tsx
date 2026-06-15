@@ -6,11 +6,11 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   EXPANDED_STATISTICS,
   MAIN_STATISTICS,
-  resolveOverallStat,
+  resolveOverallBoardStat,
   STAT_ACTIONS,
   type OverallBoardActions,
   type OverallStatConfig,
-} from './overallStat';
+} from './overallBoardStat';
 import { useOverallBoardActions } from './useOverallBoardActions';
 import './index.less';
 
@@ -30,6 +30,40 @@ type StatisticItemProps = {
   primaryColor: string;
 };
 
+const getBoardStatisticStyles = (
+  isMobile: boolean,
+  options?: {
+    isMain?: boolean;
+    showColor?: boolean;
+    numericValue?: number;
+    colorFromValue?: (value: number) => string | undefined;
+    primaryColor?: string;
+    clickable?: boolean;
+  },
+) => {
+  const { isMain = false, showColor, numericValue, colorFromValue, primaryColor, clickable } =
+    options ?? {};
+
+  return {
+    title: {
+      fontSize: isMobile ? 12 : isMain ? 14 : 13,
+      marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
+    },
+    content: {
+      fontWeight: isMain ? 600 : ('normal' as const),
+      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 32 : 20,
+      lineHeight: 1.2,
+      fontVariantNumeric: 'tabular-nums' as const,
+      ...(showColor &&
+        numericValue !== undefined &&
+        colorFromValue && {
+          color: colorFromValue(numericValue),
+        }),
+      ...(clickable && primaryColor && { color: primaryColor }),
+    },
+  };
+};
+
 const StatisticItem: React.FC<StatisticItemProps> = ({
   title,
   value,
@@ -43,23 +77,14 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
   const isMobile = useIsMobile();
   const clickable = !!onClick;
 
-  const styles = {
-    title: {
-      fontSize: isMobile ? 12 : isMain ? 14 : 13,
-      marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
-    },
-    content: {
-      fontWeight: isMain ? 600 : 'normal',
-      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 32 : 20,
-      lineHeight: 1.2,
-      fontVariantNumeric: 'tabular-nums' as const,
-      ...(showColor &&
-        numericValue !== undefined && {
-          color: colorFromValue(numericValue),
-        }),
-      ...(clickable && { color: primaryColor }),
-    },
-  };
+  const styles = getBoardStatisticStyles(isMobile, {
+    isMain,
+    showColor,
+    numericValue,
+    colorFromValue,
+    primaryColor,
+    clickable,
+  });
 
   return (
     <Col span={isMobile ? 12 : 6} onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
@@ -79,7 +104,7 @@ const renderStatistics = (
   isMain = false,
 ) =>
   configs.map(({ key, title, showColor }) => {
-    const { value, numeric } = resolveOverallStat(key, data);
+    const { value, numeric } = resolveOverallBoardStat(key, data);
     const actionKey = STAT_ACTIONS[key];
     const onClick = actionKey ? actions[actionKey] : undefined;
 

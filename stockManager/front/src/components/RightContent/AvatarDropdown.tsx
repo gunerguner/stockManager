@@ -10,7 +10,7 @@ import {
 import { App, Avatar, Dropdown, Row } from 'antd';
 import { history, useModel } from '@umijs/max';
 import { clearCache, logout, updateDividend } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { hasApiData, isApiSuccess } from '@/utils/api';
 import styles from './index.less';
 
 // ==================== 组件 ====================
@@ -54,7 +54,7 @@ const AvatarDropdown: React.FC = () => {
             skipErrorHandler: true,
           });
 
-          if (response.status === RESPONSE_STATUS.SUCCESS && response.data) {
+          if (hasApiData(response)) {
             modal.info({
               title: response.data.length > 0 ? '有更新股票' : '无更新股票',
               content: (
@@ -94,7 +94,7 @@ const AvatarDropdown: React.FC = () => {
           setCacheLoading(true);
           const response = await clearCache();
 
-          if (response.status === RESPONSE_STATUS.SUCCESS) {
+          if (isApiSuccess(response)) {
             modal.success({
               title: '缓存已清理',
               content: `已删除 ${response.data?.deletedCount ?? 0} 个 key`,

@@ -2,8 +2,8 @@ import { FloatButton } from 'antd';
 import { useState } from 'react';
 import { ProCard } from '@ant-design/pro-components';
 import { OverallBoard } from './components/OverallBoard';
-import { OperationList } from './components/OperationList';
-import { FilterPanel } from './components/FilterPanel';
+import { HoldingsList } from './components/HoldingsList';
+import { StockListToolbar } from './components/StockListToolbar';
 import { useStocks } from '@/hooks/useStocks';
 
 const StockList: React.FC = () => {
@@ -17,14 +17,14 @@ const StockList: React.FC = () => {
       <div style={{ borderRadius: 8, padding: 16 }}>
         <ProCard>
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
-          <FilterPanel
+          <StockListToolbar
             showAll={showAll}
             showConv={showConv}
             onRefresh={fetchStockData}
             onShowAllChange={setShowAll}
             onShowConvChange={setShowConv}
           />
-          <OperationList
+          <HoldingsList
             showAll={showAll}
             showConv={showConv}
             data={stock}

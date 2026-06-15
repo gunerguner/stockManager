@@ -1,37 +1,25 @@
 import { Descriptions, Table, Tooltip, theme } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
-import { useCommonModal } from '@/components/Common/useCommonModal';
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { useCommonModal } from '@/components/Common/modal/useCommonModal';
+import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
+import { formatPercent } from '@/utils/format/stock';
+import { HoldingStatus } from '@/components/Common/HoldingStatus';
+import { renderDailyChange } from '@/utils/format/render';
 import {
-  formatMarketPrice,
-  formatPercent,
-  isHkCode,
-  toXueqiuStockUrl,
-} from '@/utils/format/stock';
-import { renderHoldingStatus } from '@/utils/format/render';
+  calcHistHighDropPct,
+  calcRoeFromPbPe,
+  formatDecimal,
+  formatMarketPriceOrDash,
+  isBuyPointTriggered,
+  isTrendPointTriggered,
+} from './watchHelpers';
 import '@/components/Common/index.less';
 
 type WatchTableProps = {
   data: API.WatchItem[];
   loading?: boolean;
-};
-
-const isBuyPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow <= point * 1.05;
-
-const isTrendPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow > point;
-
-const formatRatio = (value: number | null): string =>
-  value != null && !Number.isNaN(value) ? value.toFixed(2) : '—';
-
-const calcRoeFromPbPe = (pb: number | null, pe: number | null): number | null => {
-  if (pb == null || pe == null || Number.isNaN(pb) || Number.isNaN(pe) || pe === 0) {
-    return null;
-  }
-  return (pb / pe) * 100;
 };
 
 const renderMultilineText = (text: string) => {
@@ -42,12 +30,12 @@ const renderMultilineText = (text: string) => {
 export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false }) => {
   const isMobile = useIsMobile();
   const { showModal } = useCommonModal();
-  const { profitColor, lossColor, colorFromValue, highlightStyle } = useProfitLossColors();
+  const { colorFromValue, highlightStyle } = useProfitLossColors();
   const { token } = theme.useToken();
 
   const renderHistHighDropPct = (histHigh: number | null, priceNow: number | null): React.ReactNode => {
-    if (priceNow == null || histHigh == null || histHigh <= 0) return '—';
-    const dropPct = ((priceNow - histHigh) / histHigh) * 100;
+    const dropPct = calcHistHighDropPct(histHigh, priceNow);
+    if (dropPct == null) return '—';
     return (
       <span style={{ color: colorFromValue(dropPct) }}>{formatPercent(dropPct)}</span>
     );
@@ -59,7 +47,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
     }
     const hit = isBuyPointTriggered(record.priceNow, val);
     return (
-      <span style={hit ? highlightStyle : undefined}>{formatMarketPrice(val, record.code)}</span>
+      <span style={hit ? highlightStyle : undefined}>{formatMarketPriceOrDash(val, record.code)}</span>
     );
   };
 
@@ -69,7 +57,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
     }
     const hit = isTrendPointTriggered(record.priceNow, val);
     return (
-      <span style={hit ? highlightStyle : undefined}>{formatMarketPrice(val, record.code)}</span>
+      <span style={hit ? highlightStyle : undefined}>{formatMarketPriceOrDash(val, record.code)}</span>
     );
   };
 
@@ -82,22 +70,22 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
           <Descriptions.Item label="机会">{renderMultilineText(record.opportunity)}</Descriptions.Item>
           <Descriptions.Item label="左侧点">
-            {record.leftPoint != null ? formatMarketPrice(record.leftPoint, record.code) : '—'}
+            {formatMarketPriceOrDash(record.leftPoint, record.code)}
           </Descriptions.Item>
           <Descriptions.Item label="趋势点">
-            {record.trendPoint != null ? formatMarketPrice(record.trendPoint, record.code) : '—'}
+            {formatMarketPriceOrDash(record.trendPoint, record.code)}
           </Descriptions.Item>
           <Descriptions.Item label="血筹点">
-            {record.bloodPoint != null ? formatMarketPrice(record.bloodPoint, record.code) : '—'}
+            {formatMarketPriceOrDash(record.bloodPoint, record.code)}
           </Descriptions.Item>
           <Descriptions.Item label="现价">
-            {record.priceNow != null ? formatMarketPrice(record.priceNow, record.code) : '—'}
+            {formatMarketPriceOrDash(record.priceNow, record.code)}
           </Descriptions.Item>
           <Descriptions.Item label="6年内最高">
-            {record.histHigh != null ? formatMarketPrice(record.histHigh, record.code) : '—'}
+            {formatMarketPriceOrDash(record.histHigh, record.code)}
           </Descriptions.Item>
-          <Descriptions.Item label="PB">{formatRatio(record.pb)}</Descriptions.Item>
-          <Descriptions.Item label="PE(TTM)">{formatRatio(record.pe)}</Descriptions.Item>
+          <Descriptions.Item label="PB">{formatDecimal(record.pb)}</Descriptions.Item>
+          <Descriptions.Item label="PE(TTM)">{formatDecimal(record.pe)}</Descriptions.Item>
           <Descriptions.Item label="ROE">
             {formatPercent(calcRoeFromPbPe(record.pb, record.pe))}
           </Descriptions.Item>
@@ -112,36 +100,27 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         title: '名称',
         dataIndex: 'name',
         fixed: isMobile ? false : 'left',
-        render: (_, record) =>
-          renderHoldingStatus({
-            name: record.name,
-            code: record.code,
-            link: toXueqiuStockUrl(record.code),
-            isProfit: false,
-            holding: record.holding,
-            isHk: isHkCode(record.code),
-            nameClassName: 'stock-name-link',
-            profitColor,
-            lossColor,
-          }),
+        render: (_, record) => (
+          <HoldingStatus
+            {...record}
+            withLink
+            nameClassName="stock-name-link"
+            isProfit={false}
+          />
+        ),
       },
       {
         title: '现价',
         dataIndex: 'priceNow',
-        render: (value, record) =>
-          value != null ? formatMarketPrice(value, record.code) : '—',
+        render: (value, record) => formatMarketPriceOrDash(value, record.code),
       },
       {
         title: '涨跌',
         dataIndex: 'offsetTodayRatio',
         render: (_, record) =>
-          record.priceNow != null ? (
-            <div style={{ color: colorFromValue(record.offsetToday) }}>
-              {`${formatMarketPrice(record.offsetToday, record.code)} (${formatPercent(record.offsetTodayRatio * 100)})`}
-            </div>
-          ) : (
-            '—'
-          ),
+          renderDailyChange(record.offsetToday, record.offsetTodayRatio, record.code, colorFromValue, {
+            priceNow: record.priceNow,
+          }),
       },
       {
         title: (
@@ -150,8 +129,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           </Tooltip>
         ),
         dataIndex: 'histHigh',
-        render: (value, record) =>
-          value != null ? formatMarketPrice(value, record.code) : '—',
+        render: (value, record) => formatMarketPriceOrDash(value, record.code),
       },
       {
         title: (
@@ -165,12 +143,12 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       {
         title: 'PB',
         dataIndex: 'pb',
-        render: (value) => formatRatio(value),
+        render: (value) => formatDecimal(value),
       },
       {
         title: 'PE(TTM)',
         dataIndex: 'pe',
-        render: (value) => formatRatio(value),
+        render: (value) => formatDecimal(value),
       },
       {
         title: (
@@ -197,7 +175,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         render: (value, record) => renderBuyPoint(value, record),
       },
     ],
-    [isMobile, profitColor, lossColor, colorFromValue, highlightStyle, token.colorTextDisabled],
+    [isMobile, colorFromValue, highlightStyle, token.colorTextDisabled],
   );
 
   return (
@@ -211,9 +189,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         onClick: () => handleRowClick(record),
         style: { cursor: 'pointer' },
       })}
-      scroll={isMobile ? { x: 'max-content' } : undefined}
-      size={isMobile ? 'small' : 'middle'}
-      tableLayout="auto"
+      {...getResponsiveTableProps(isMobile)}
     />
   );
 };

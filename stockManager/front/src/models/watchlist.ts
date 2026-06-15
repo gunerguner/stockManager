@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { notification } from 'antd';
 import { getWatchlist } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { hasApiData, isUnauthorized } from '@/utils/api';
 
 export default () => {
   const [list, setList] = useState<API.WatchItem[]>([]);
@@ -13,13 +13,12 @@ export default () => {
     try {
       const res = await getWatchlist({
         timeout: 30000,
-        // 首次关注项会触发外部行情/估值请求，允许更长等待并避免全局与局部重复报错。
         skipErrorHandler: true,
       });
-      if (res.status === RESPONSE_STATUS.SUCCESS && res.data) {
+      if (hasApiData(res)) {
         setList(res.data);
       }
-      if (res.status === RESPONSE_STATUS.UNAUTHORIZED) {
+      if (isUnauthorized(res)) {
         return false;
       }
       setInitialized(true);

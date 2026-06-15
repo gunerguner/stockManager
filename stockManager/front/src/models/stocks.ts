@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { notification } from 'antd';
 import { getStocks, getOperations } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { hasApiData, isUnauthorized } from '@/utils/api';
 
 // ==================== 配置 ====================
 
@@ -33,21 +33,20 @@ export default () => {
   const fetchStockData = useCallback(async () => {
     setLoading(true);
     try {
-      // 并行请求两个接口
       const [stocksResponse, operationsResponse] = await Promise.all([
         getStocks(),
         getOperations(),
       ]);
 
-      if (stocksResponse.status === RESPONSE_STATUS.SUCCESS && stocksResponse.data) {
+      if (hasApiData(stocksResponse)) {
         setStock(stocksResponse.data);
       }
 
-      if (operationsResponse.status === RESPONSE_STATUS.SUCCESS && operationsResponse.data) {
+      if (hasApiData(operationsResponse)) {
         setOperations(operationsResponse.data);
       }
 
-      if (stocksResponse.status === RESPONSE_STATUS.UNAUTHORIZED) {
+      if (isUnauthorized(stocksResponse)) {
         return false;
       }
 

@@ -1,20 +1,21 @@
 import { Table, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
   formatAmount,
+  formatDecimalRatio,
   formatMarketPrice,
-  formatPercent,
-  isHkCode,
+  formatSharePercent,
   toCnyAmount,
 } from '@/utils/format/stock';
-import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
-import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
+import { HoldingStatus } from '@/components/Common/HoldingStatus';
+import { renderAmount, renderDailyChange } from '@/utils/format/render';
+import { useTradeDetailModal } from '@/components/Common/modal/TradeDetailModal';
 import './index.less';
 
-type OperationListProps = {
+type HoldingsListProps = {
   data: API.StockData;
   operations: Record<string, API.Operation[]>;
   showAll: boolean;
@@ -22,7 +23,7 @@ type OperationListProps = {
   loading?: boolean;
 };
 
-export const OperationList: React.FC<OperationListProps> = ({
+export const HoldingsList: React.FC<HoldingsListProps> = ({
   data,
   operations,
   showAll,
@@ -55,17 +56,7 @@ export const OperationList: React.FC<OperationListProps> = ({
         title: '名称',
         dataIndex: 'name',
         fixed: isMobile ? false : 'left',
-        render: (_, r) =>
-          renderHoldingStatus({
-            name: r.name,
-            code: r.code,
-            isProfit: r.offsetTotal > 0,
-            holding: r.holdCount > 0,
-            isHk: isHkCode(r.code),
-            nameClassName: 'stock-name-link',
-            profitColor,
-            lossColor,
-          }),
+        render: (_, r) => <HoldingStatus {...r} nameClassName="stock-name-link" />,
       },
       {
         title: '现价',
@@ -77,11 +68,8 @@ export const OperationList: React.FC<OperationListProps> = ({
         title: '涨跌',
         dataIndex: 'offsetTodayRatio',
         className: 'cell-number',
-        render: (_, r) => (
-          <div className="cell-number" style={{ color: colorFromValue(r.offsetToday) }}>
-            {`${formatMarketPrice(r.offsetToday, r.code)} (${formatPercent(r.offsetTodayRatio * 100)})`}
-          </div>
-        ),
+        render: (_, r) =>
+          renderDailyChange(r.offsetToday, r.offsetTodayRatio, r.code, colorFromValue),
       },
       {
         title: '市值',
@@ -92,7 +80,7 @@ export const OperationList: React.FC<OperationListProps> = ({
         render: (_, r) => {
           const valueCny = toCnyAmount(r.code, r.totalValue, hkdCnyRate);
           const total = data.overall.totalValue;
-          const percentage = formatPercent(total ? (valueCny / total) * 100 : 0);
+          const percentage = formatSharePercent(valueCny, total);
           return (
             <Tooltip title={percentage}>
               <div className="cell-number">{formatAmount(r.totalValue, { code: r.code })}</div>
@@ -150,7 +138,7 @@ export const OperationList: React.FC<OperationListProps> = ({
           toCnyAmount(b.code, b.offsetTotal, hkdCnyRate),
         render: (_, r) => (
           <div className="cell-number" style={{ color: colorFromValue(r.offsetTotal) }}>
-            {`${formatAmount(r.offsetTotal, { code: r.code })} (${formatPercent(r.moneyWeightedReturn * 100)})`}
+            {`${formatAmount(r.offsetTotal, { code: r.code })} (${formatDecimalRatio(r.moneyWeightedReturn)})`}
           </div>
         ),
       },
@@ -165,7 +153,7 @@ export const OperationList: React.FC<OperationListProps> = ({
   ]);
 
   return (
-    <div className="operation-list-wrapper">
+    <div className="holdings-list-wrapper">
       <Table
         rowKey="code"
         columns={columns}
@@ -173,9 +161,7 @@ export const OperationList: React.FC<OperationListProps> = ({
         loading={loading}
         pagination={false}
         onRow={(r) => ({ onClick: () => handleRowClick(r), style: { cursor: 'pointer' } })}
-        scroll={isMobile ? { x: 'max-content' } : undefined}
-        size={isMobile ? 'small' : 'middle'}
-        tableLayout="auto"
+        {...getResponsiveTableProps(isMobile)}
       />
     </div>
   );

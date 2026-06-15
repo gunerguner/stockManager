@@ -87,3 +87,14 @@ export const formatAmount = (
 /** 数值（已是百分数）→ "x.xx%"，null/NaN → "—" */
 export const formatPercent = (value: number | null, precision: number = 2): string =>
   value != null && !Number.isNaN(value) ? `${value.toFixed(precision)}%` : '—';
+
+/** 小数比率（0~1）→ "x.xx%"，null/NaN → "—" */
+export const formatDecimalRatio = (ratio: number | null, precision: number = 2): string =>
+  formatPercent(ratio != null ? ratio * 100 : null, precision);
+
+/** 占比 part/total → "x.xx%"，total 为 0 时返回 "0.00%" */
+export const formatSharePercent = (
+  part: number,
+  total: number,
+  precision: number = 2,
+): string => formatPercent(total ? (part / total) * 100 : 0, precision);

@@ -1,7 +1,7 @@
 import { Button, Row, Col, Checkbox, Space } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 
-type FilterPanelProps = {
+type StockListToolbarProps = {
   showAll: boolean;
   showConv: boolean;
   onRefresh: () => void;
@@ -9,7 +9,7 @@ type FilterPanelProps = {
   onShowConvChange: (checked: boolean) => void;
 };
 
-export const FilterPanel: React.FC<FilterPanelProps> = ({
+export const StockListToolbar: React.FC<StockListToolbarProps> = ({
   showAll,
   showConv,
   onRefresh,

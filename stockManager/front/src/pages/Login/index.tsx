@@ -6,7 +6,7 @@ import { Link, history, useModel } from '@umijs/max';
 
 import Footer from '@/components/Footer';
 import { login } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
+import { isApiSuccess } from '@/utils/api';
 import styles from './index.less';
 
 const redirectTo = (delay = 10) => {
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
     try {
       const result = await login(values);
 
-      if (result.status === RESPONSE_STATUS.SUCCESS) {
+      if (isApiSuccess(result)) {
         message.success('登录成功！');
         resetStockData();
 

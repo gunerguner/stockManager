@@ -1,22 +1,19 @@
 import { Typography, Space, Divider } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
+import { HoldingStatus } from '@/components/Common/HoldingStatus';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
   formatAmount,
+  formatDecimalRatio,
   formatMarketPrice,
-  formatPercent,
-  isHkCode,
-  toXueqiuStockUrl,
 } from '@/utils/format/stock';
-import { renderAmount, renderHoldingStatus } from '@/utils/format/render';
+import { renderAmount } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
 const { Text } = Typography;
-
-// ==================== 类型定义 ====================
 
 export type TradeDetailDisplayType = 'stockInfo' | 'tradeList';
 
@@ -26,17 +23,12 @@ export type ShowTradeDetailParams = {
   displayType: TradeDetailDisplayType;
 };
 
-// ==================== 常量 ====================
-
 const OPERATION_TYPE_MAP: Record<string, string> = {
   BUY: '买入',
   SELL: '卖出',
   DV: '除权除息',
 };
 
-// ==================== 组件 ====================
-
-/** 股票信息（通用） */
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
   const { colorFromValue } = useProfitLossColors();
 
@@ -52,7 +44,7 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
             color: colorFromValue(stock.moneyWeightedReturn),
           }}
         >
-          {formatPercent(stock.moneyWeightedReturn * 100)}
+          {formatDecimalRatio(stock.moneyWeightedReturn)}
         </span>
       </Text>
     </>
@@ -72,30 +64,19 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
   );
 };
 
-/** 股票头部组件 */
 const StockHeader: React.FC<{
   stock: API.Stock;
   operationsCount: number;
   showStockInfo: boolean;
 }> = ({ stock, operationsCount, showStockInfo }) => {
   const isMobile = useIsMobile();
-  const { profitColor, lossColor } = useProfitLossColors();
   const stockInfo = showStockInfo ? <StockInfo stock={stock} isMobile={isMobile} /> : null;
 
   return (
     <div className="stock-header-wrapper">
       <div className="stock-header-left">
         <Space wrap={isMobile} className={isMobile && showStockInfo ? 'stock-header-space' : ''}>
-          {renderHoldingStatus({
-            name: stock.name,
-            code: stock.code,
-            link: toXueqiuStockUrl(stock.code),
-            isProfit: stock.offsetTotal > 0,
-            holding: stock.holdCount > 0,
-            isHk: isHkCode(stock.code),
-            profitColor,
-            lossColor,
-          })}
+          <HoldingStatus {...stock} withLink />
           <Text type="secondary">({stock.code})</Text>
           {!isMobile && stockInfo}
         </Space>
@@ -107,8 +88,6 @@ const StockHeader: React.FC<{
     </div>
   );
 };
-
-// ==================== Hook ====================
 
 export const useTradeDetailModal = () => {
   const { showMultiTable } = useCommonModal();
@@ -173,7 +152,7 @@ export const useTradeDetailModal = () => {
       showMultiTable({
         title,
         tables,
-        width: 1200
+        width: 1200,
       });
     },
     [showMultiTable, isMobile],

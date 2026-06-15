@@ -96,3 +96,12 @@ export type ActualTheme = 'light' | 'dark';
 export function getThemeConfig(actualTheme: ActualTheme): ThemeConfig {
   return actualTheme === 'dark' ? darkThemeConfig : lightThemeConfig;
 }
+
+/** antd 6.3+ 默认关闭 mask blur，此处恢复 antd 6.0~6.2 的模糊遮罩 */
+const maskBlur = { blur: true } as const;
+
+/** ConfigProvider 组件级配置（非 theme token，与主题一并维护） */
+export const providerComponentConfig = {
+  modal: { mask: maskBlur },
+  drawer: { mask: maskBlur },
+};

@@ -1,27 +1,14 @@
 import { Table, Statistic, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import { useTradeDetailModal } from '@/components/Common/TradeDetailModal';
-import { formatAmount, toCnyAmount } from '@/utils/format/stock';
+import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
+import { useTradeDetailModal } from '@/components/Common/modal/TradeDetailModal';
+import { buildCostListByPeriod, parseYearMonth, type CostListModel } from './costStat';
 import { getHeaderStatisticStyles } from './statisticStyles';
+import { formatAmount } from '@/utils/format/stock';
 import './index.less';
 
 const { Link } = Typography;
-
-// ==================== 类型定义 ====================
-
-type CostPeriodType = 'year' | 'month';
-
-interface CostListModel {
-  id: string;
-  type: CostPeriodType;
-  normalTradeCount: number;
-  convTradeCount: number;
-  dividendCount: number;
-  fee: number;
-  subList?: CostListModel[];
-}
 
 export type CostListProps = {
   data: API.Stock[];
@@ -30,8 +17,6 @@ export type CostListProps = {
   hkdCnyRate?: number;
   loading?: boolean;
 };
-
-// ==================== 配置 ====================
 
 /** 交易类型列配置：[dataIndex, 完整标题, 移动端标题] */
 const TRADE_COLUMNS: Array<[keyof CostListModel, string, string]> = [
@@ -47,70 +32,6 @@ const TRADE_FILTERS: Record<string, (stock: API.Stock, op: API.Operation) => boo
   dividendCount: (_, op) => op.type === 'DV',
 };
 
-// ==================== 工具函数 ====================
-
-/** 创建空的统计记录 */
-const createEmptyRecord = (id: string, type: CostPeriodType): CostListModel => ({
-  id,
-  type,
-  normalTradeCount: 0,
-  convTradeCount: 0,
-  dividendCount: 0,
-  fee: 0,
-  subList: type === 'year' ? [] : undefined,
-});
-
-/** 统计交易数据（港股通 fee 按汇率折算为 CNY） */
-const buildCostList = (
-  data: API.Stock[],
-  operations: Record<string, API.Operation[]>,
-  hkdCnyRate: number,
-): CostListModel[] => {
-  const yearMap = new Map<string, CostListModel>();
-
-  for (const stock of data) {
-    const stockOperations = operations[stock.code] || [];
-    for (const op of stockOperations) {
-      const [year, month] = [op.date.substring(0, 4), op.date.substring(5, 7)];
-
-      // 获取或创建年份记录
-      if (!yearMap.has(year)) yearMap.set(year, createEmptyRecord(year, 'year'));
-      const yearRecord = yearMap.get(year)!;
-
-      // 获取或创建月份记录
-      let monthRecord = yearRecord.subList!.find((m) => m.id === month);
-      if (!monthRecord) {
-        monthRecord = createEmptyRecord(month, 'month');
-        yearRecord.subList!.push(monthRecord);
-      }
-
-      // 统计数据
-      if (op.type === 'DV') {
-        yearRecord.dividendCount++;
-        monthRecord.dividendCount++;
-      } else {
-        const feeCny = toCnyAmount(stock.code, op.fee, hkdCnyRate);
-        if (stock.stockType === 'CONV') {
-          yearRecord.convTradeCount++;
-          monthRecord.convTradeCount++;
-        } else {
-          yearRecord.normalTradeCount++;
-          monthRecord.normalTradeCount++;
-        }
-        yearRecord.fee += feeCny;
-        monthRecord.fee += feeCny;
-      }
-    }
-  }
-
-  // 排序并返回
-  const result = [...yearMap.values()].sort((a, b) => Number(a.id) - Number(b.id));
-  result.forEach((year) => year.subList?.sort((a, b) => Number(a.id) - Number(b.id)));
-  return result;
-};
-
-// ==================== 组件 ====================
-
 export const CostList: React.FC<CostListProps> = ({
   data,
   operations,
@@ -121,13 +42,11 @@ export const CostList: React.FC<CostListProps> = ({
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
-  /** 统计数据 */
   const costList = useMemo(
-    () => buildCostList(data, operations, hkdCnyRate),
+    () => buildCostListByPeriod(data, operations, hkdCnyRate),
     [data, operations, hkdCnyRate],
   );
 
-  /** 筛选交易记录并打开详情弹窗 */
   const handleCellClick = (record: CostListModel, dataIndex: keyof CostListModel, parentYear?: string) => {
     const isYearRow = record.type === 'year';
     const year = isYearRow ? record.id : parentYear;
@@ -137,12 +56,11 @@ export const CostList: React.FC<CostListProps> = ({
     const filter = TRADE_FILTERS[dataIndex];
     if (!filter) return;
 
-    // 筛选符合条件的交易
     const filteredData = data
       .map((stock) => ({
         stock,
         operations: (operations[stock.code] || []).filter((op) => {
-          const [opYear, opMonth] = [op.date.substring(0, 4), op.date.substring(5, 7)];
+          const { year: opYear, month: opMonth } = parseYearMonth(op.date);
           return opYear === year && (!month || opMonth === month) && filter(stock, op);
         }),
       }))
@@ -154,11 +72,10 @@ export const CostList: React.FC<CostListProps> = ({
     showTradeDetail({
       data: filteredData,
       title: `${year}年${month ? `${month}月` : ''}交易明细 - ${label}`,
-      displayType: 'tradeList'
+      displayType: 'tradeList',
     });
   };
 
-  /** 生成表格列配置 */
   const getColumns = (parentYear?: string): ColumnsType<CostListModel> => [
     {
       title: '年份',
@@ -182,7 +99,6 @@ export const CostList: React.FC<CostListProps> = ({
     },
   ];
 
-  /** 展开行渲染 */
   const expandedRowRender = (record: CostListModel) => (
     <Table
       className="expanded-row-table"
@@ -209,9 +125,7 @@ export const CostList: React.FC<CostListProps> = ({
         loading={loading}
         pagination={false}
         expandable={{ expandedRowRender }}
-        scroll={isMobile ? { x: 'max-content' } : undefined}
-        size={isMobile ? 'small' : 'middle'}
-        tableLayout="auto"
+        {...getResponsiveTableProps(isMobile)}
       />
     </div>
   );

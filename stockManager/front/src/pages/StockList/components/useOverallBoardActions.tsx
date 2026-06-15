@@ -1,8 +1,8 @@
 import { Form, InputNumber, App } from 'antd';
 import { updateIncomeCash } from '@/services/api';
-import { RESPONSE_STATUS } from '@/utils/constants';
-import { useCashFlowModal } from '@/components/Common/CashFlowModal';
-import type { OverallBoardActions } from './overallStat';
+import { isApiSuccess } from '@/utils/api';
+import { useCashFlowModal } from '@/components/Common/modal/CashFlowModal';
+import type { OverallBoardActions } from './overallBoardStat';
 
 type UseOverallBoardActionsOptions = {
   data: API.Overall;
@@ -62,7 +62,7 @@ export const useOverallBoardActions = ({
       onOk: async () => {
         const { incomeCash: nextIncomeCash } = await form.validateFields();
         const response = await updateIncomeCash(nextIncomeCash);
-        if (response.status === RESPONSE_STATUS.SUCCESS) onModifySuccess?.();
+        if (isApiSuccess(response)) onModifySuccess?.();
       },
     });
   };

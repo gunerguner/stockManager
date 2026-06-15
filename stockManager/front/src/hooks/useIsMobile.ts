@@ -5,3 +5,9 @@ export const useIsMobile = (): boolean => {
   const { isMobile } = useModel('responsive');
   return isMobile;
 };
+
+export const getResponsiveTableProps = (isMobile: boolean) => ({
+  scroll: isMobile ? ({ x: 'max-content' } as const) : undefined,
+  size: (isMobile ? 'small' : 'middle') as 'small' | 'middle',
+  tableLayout: 'auto' as const,
+});

@@ -7,14 +7,10 @@ import { useCommonModal } from './useCommonModal';
 
 const { Text } = Typography;
 
-// ==================== 类型定义 ====================
-
 export type ShowCashFlowParams = {
   totalCashIn: number;
   cashFlowList: API.CashFlowRecord[];
 };
-
-// ==================== Hook ====================
 
 export const useCashFlowModal = () => {
   const { showSingleTable } = useCommonModal();
@@ -57,4 +53,3 @@ export const useCashFlowModal = () => {
 
   return { showCashFlow };
 };
-
