@@ -12,16 +12,16 @@
     component: './StockList',
   },
   {
-    path: '/data',
-    name: '数据分析',
-    icon: 'database',
-    component: './Data',
-  },
-  {
     path: '/watch',
     name: '关注列表',
     icon: 'star',
     component: './Watch',
+  },
+  {
+    path: '/data',
+    name: '数据分析',
+    icon: 'database',
+    component: './Data',
   },
   {
     path: '/account',
