@@ -24,28 +24,22 @@ const getRequest = <T>(endpoint: string, options?: RequestOptions) => {
 /**
  * 统一的POST请求封装
  */
-function postRequest<T>(endpoint: string, options?: RequestOptions): Promise<T>;
-function postRequest<T>(
+const postRequest = <T>(
   endpoint: string,
-  data: Record<string, unknown>,
+  data?: Record<string, unknown>,
   options?: RequestOptions,
-): Promise<T>;
-function postRequest<T>(
-  endpoint: string,
-  arg2?: Record<string, unknown> | RequestOptions,
-  arg3?: RequestOptions,
-): Promise<T> {
-  const data = arg3 !== undefined ? (arg2 as Record<string, unknown>) : undefined;
-  const options = arg3 !== undefined ? arg3 : (arg2 as RequestOptions | undefined);
-
+): Promise<T> => {
   return request<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
-    headers: JSON_HEADERS,
-    credentials: 'include', // 确保发送 Cookie（包括 CSRF token）
+    credentials: 'include',
     data,
     ...options,
+    headers: {
+      ...(options?.headers ?? {}),
+      ...JSON_HEADERS,
+    },
   });
-}
+};
 
 /** 获取当前用户信息 GET /api/currentUser */
 export async function getCurrentUser(options?: RequestOptions) {
@@ -79,12 +73,12 @@ export async function updateIncomeCash(incomeCash: number, options?: RequestOpti
 
 /** 更新分红 POST /api/dividend */
 export async function updateDividend(options?: RequestOptions) {
-  return postRequest<API.DividendResult>('/api/dividend', options);
+  return postRequest<API.DividendResult>('/api/dividend', {}, options);
 }
 
 /** 清理 Redis 缓存 POST /api/clearCache */
 export async function clearCache(options?: RequestOptions) {
-  return postRequest<API.ClearCacheResult>('/api/clearCache', options);
+  return postRequest<API.ClearCacheResult>('/api/clearCache', {}, options);
 }
 
 /** 获取关注列表 GET /api/watchlist */
