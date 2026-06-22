@@ -1,7 +1,7 @@
 """近 6 年历史最高价（腾讯 gtimg 周线）
 
 返回的 K 线行格式为 [日期, 开, 收, 高, 低, 量]，最高价位于索引 3。
-- 港股：前复权（qfq），港币
+- 港股：前复权（qfq），港币，走专用 endpoint `hkfqkline/get`（`fqkline/get` 对港股 qfq 静默忽略）
 - A 股：前复权（qfq），对齐原 baostock adjustflag=2 口径
 """
 from datetime import datetime, timedelta
@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from backend.common import logger
 from backend.services.market.http_client import get_json
 
-_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+_CN_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+_HK_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get"
 _MONTHS = 72  # 6 年
 _HIGH_INDEX = 3
 _PERIOD = "week"
@@ -30,12 +31,12 @@ def _extract_kline(node: dict) -> list[list]:
     return []
 
 
-def _fetch_gtimg_hist_high(code: str, adjust: str, *, timeout: int) -> float | None:
-    """通用 gtimg 6 年周线最高价；code 为 gtimg 代码（hkXXXXX / shXXXXXX / szXXXXXX）。"""
+def _fetch_gtimg_hist_high(code: str, url: str, *, timeout: int) -> float | None:
+    """通用 gtimg 6 年周线前复权最高价；code 为 gtimg 代码（hkXXXXX / shXXXXXX / szXXXXXX）。"""
     start_str, end_str = _date_range()
-    param = f"{code},{_PERIOD},{start_str},{end_str},{_COUNT},{adjust}"
+    param = f"{code},{_PERIOD},{start_str},{end_str},{_COUNT},qfq"
     try:
-        data = get_json(_KLINE_URL, params={"param": param}, timeout=timeout)
+        data = get_json(url, params={"param": param}, timeout=timeout)
         payload = data.get("data") or {}
         if not payload:
             return None
@@ -50,9 +51,9 @@ def _fetch_gtimg_hist_high(code: str, adjust: str, *, timeout: int) -> float | N
 
 def fetch_hk_hist_high(code: str, *, timeout: int = 10) -> float | None:
     """港股 hkXXXXX 近 6 年周线最高价（前复权，港币）；失败返回 None。"""
-    return _fetch_gtimg_hist_high(code, "qfq", timeout=timeout)
+    return _fetch_gtimg_hist_high(code, _HK_KLINE_URL, timeout=timeout)
 
 
 def fetch_cn_hist_high(code: str, *, timeout: int = 10) -> float | None:
     """A 股 shXXXXXX/szXXXXXX 近 6 年周线最高价（前复权）；失败返回 None。"""
-    return _fetch_gtimg_hist_high(code, "qfq", timeout=timeout)
+    return _fetch_gtimg_hist_high(code, _CN_KLINE_URL, timeout=timeout)

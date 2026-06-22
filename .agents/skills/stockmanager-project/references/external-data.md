@@ -84,9 +84,9 @@ flowchart LR
 ### 腾讯 gtimg（A 股 + 港股历史高）
 
 - **文件**：`market/historicalHigh.py`
-- **A 股**：`fetch_cn_hist_high(shXXXXXX/szXXXXXX)` — 6 年周线前复权（`qfq`）。
-- **港股**：`fetch_hk_hist_high(hkXXXXX)` — 6 年周线前复权（`qfq`）。
-- **store**：`hist_high_store` 按市场选择 qfq/qfq（港股已随 A 股统一为前复权），有界并发（8）。
+- **A 股**：`fetch_cn_hist_high(shXXXXXX/szXXXXXX)` — 6 年周线前复权（`qfq`），endpoint `fqkline/get`。
+- **港股**：`fetch_hk_hist_high(hkXXXXX)` — 6 年周线前复权（`qfq`），**专用 endpoint `hkfqkline/get`**（注意：`fqkline/get` 对港股 `qfq` 静默忽略，仍返回不复权数据，故港股必须走 `hkfqkline/get`）。
+- **store**：`hist_high_store` 按市场分派 endpoint，统一前复权，有界并发（8）。
 - **HTTP**：经 `market/http_client.get_json` 线程本地 Session。
 
 ### sina 外汇（HKD/CNY）
