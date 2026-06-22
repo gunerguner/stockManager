@@ -25,6 +25,7 @@ def _build_price(stock_data: dict, price_key: str, close_key: str) -> RealtimePr
         "priceOffset": offset,
         "offsetRatio": offset / close if close else 0.0,
         "yesterdayClose": close,
+        "yearHigh": None,
     })
 
 

@@ -1,7 +1,7 @@
 """近 6 年历史最高价（腾讯 gtimg 周线）
 
 返回的 K 线行格式为 [日期, 开, 收, 高, 低, 量]，最高价位于索引 3。
-- 港股：不复权（bfq），港币
+- 港股：前复权（qfq），港币
 - A 股：前复权（qfq），对齐原 baostock adjustflag=2 口径
 """
 from datetime import datetime, timedelta
@@ -49,8 +49,8 @@ def _fetch_gtimg_hist_high(code: str, adjust: str, *, timeout: int) -> float | N
 
 
 def fetch_hk_hist_high(code: str, *, timeout: int = 10) -> float | None:
-    """港股 hkXXXXX 近 6 年周线最高价（不复权，港币）；失败返回 None。"""
-    return _fetch_gtimg_hist_high(code, "bfq", timeout=timeout)
+    """港股 hkXXXXX 近 6 年周线最高价（前复权，港币）；失败返回 None。"""
+    return _fetch_gtimg_hist_high(code, "qfq", timeout=timeout)
 
 
 def fetch_cn_hist_high(code: str, *, timeout: int = 10) -> float | None:

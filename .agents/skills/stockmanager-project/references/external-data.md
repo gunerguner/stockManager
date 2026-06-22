@@ -14,7 +14,7 @@
 |---------|------|------|-------------|----------|-----|
 | 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
-| 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线不复权（bfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
+| 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
 | HKD/CNY 汇率 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
 
@@ -54,7 +54,7 @@ flowchart LR
 |---------|------|------|-------------|----------|-----|
 | 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
-| 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线不复权（bfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
+| 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
 | HKD/CNY 汇率 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
 
@@ -85,8 +85,8 @@ flowchart LR
 
 - **文件**：`market/historicalHigh.py`
 - **A 股**：`fetch_cn_hist_high(shXXXXXX/szXXXXXX)` — 6 年周线前复权（`qfq`）。
-- **港股**：`fetch_hk_hist_high(hkXXXXX)` — 6 年周线不复权（`bfq`）。
-- **store**：`hist_high_store` 按市场选择 qfq/bfq，有界并发（8）。
+- **港股**：`fetch_hk_hist_high(hkXXXXX)` — 6 年周线前复权（`qfq`）。
+- **store**：`hist_high_store` 按市场选择 qfq/qfq（港股已随 A 股统一为前复权），有界并发（8）。
 - **HTTP**：经 `market/http_client.get_json` 线程本地 Session。
 
 ### sina 外汇（HKD/CNY）

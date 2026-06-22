@@ -31,6 +31,7 @@ def _default_realtime_price() -> RealtimePriceData:
         "priceOffset": 0.0,
         "offsetRatio": 0.0,
         "yesterdayClose": 0.0,
+        "yearHigh": None,
     })
 
 

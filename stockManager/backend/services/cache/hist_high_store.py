@@ -1,4 +1,4 @@
-"""近 6 年历史最高价缓存（全部走腾讯 gtimg 周线：A 股 qfq / 港股 bfq）"""
+"""近 6 年历史最高价缓存（全部走腾讯 gtimg 周线：A 股 qfq / 港股 qfq）"""
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from django.core.cache import cache

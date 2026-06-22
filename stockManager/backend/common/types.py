@@ -1,5 +1,5 @@
 """类型定义模块"""
-from typing import NotRequired, TypedDict
+from typing import TypedDict
 
 from backend.models import Operation
 
@@ -11,7 +11,7 @@ class RealtimePriceData(TypedDict):
     priceOffset: float
     offsetRatio: float  # 原始比率，如 0.0123 表示 1.23%
     yesterdayClose: float
-    yearHigh: NotRequired[float | None]
+    yearHigh: float | None
 
 
 class CashFlowData(TypedDict):
