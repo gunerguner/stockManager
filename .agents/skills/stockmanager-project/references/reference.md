@@ -2,10 +2,11 @@
 
 SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 
-## 缓存与外部数据（深度文档）
+## 深度文档
 
 - 缓存机制全文：[cache.md](cache.md)
 - 外部数据全文：[external-data.md](external-data.md)
+- 前端主题系统：[theme.md](theme.md)
 
 ## 关键文件索引
 
