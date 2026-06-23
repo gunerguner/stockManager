@@ -105,7 +105,7 @@ class WatchItemDict(TypedDict):
     bloodPoint: float | None
 
 
-class WatchResultItem(TypedDict):
+class WatchResultItem(TypedDict, total=False):
     """关注列表 API 返回项"""
     code: str
     name: str
@@ -121,6 +121,7 @@ class WatchResultItem(TypedDict):
     leftPoint: float | None
     trendPoint: float | None
     bloodPoint: float | None
+    offsetTotal: float  # 累计盈亏（仅持仓股票），用于  HoldingStatus 图标颜色
 
 
 class ValuationData(TypedDict):

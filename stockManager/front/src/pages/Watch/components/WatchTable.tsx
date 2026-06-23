@@ -105,7 +105,6 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
             {...record}
             withLink
             nameClassName="stock-name-link"
-            isProfit={false}
           />
         ),
       },

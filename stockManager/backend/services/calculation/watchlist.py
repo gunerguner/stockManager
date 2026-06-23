@@ -20,6 +20,7 @@ def build_watchlist(
     valuations: dict[str, ValuationData],
     hist_highs: dict[str, float | None],
     holding_set: set[str],
+    holding_offset: dict[str, float] | None = None,
 ) -> list[WatchResultItem]:
     result: list[WatchResultItem] = []
     for item in items:
@@ -28,22 +29,23 @@ def build_watchlist(
         valuation = valuations.get(code, {})
         price_now = price_data.get("currentPrice") if price_data else None
         offset_today, offset_today_ratio = extract_offset_today(price_now, price_data)
-        result.append(
-            WatchResultItem(
-                code=code,
-                name=(price_data.get("name") if price_data else None) or code,
-                holding=code in holding_set,
-                priceNow=price_now,
-                offsetToday=offset_today,
-                offsetTodayRatio=offset_today_ratio,
-                histHigh=hist_highs.get(code),
-                pe=_ratio(price_now, valuation.get("epsTtm")),
-                pb=_ratio(price_now, valuation.get("bvps")),
-                risk=item["risk"] or "",
-                opportunity=item["opportunity"] or "",
-                leftPoint=item["leftPoint"],
-                trendPoint=item["trendPoint"],
-                bloodPoint=item["bloodPoint"],
-            )
+        entry = WatchResultItem(
+            code=code,
+            name=(price_data.get("name") if price_data else None) or code,
+            holding=code in holding_set,
+            priceNow=price_now,
+            offsetToday=offset_today,
+            offsetTodayRatio=offset_today_ratio,
+            histHigh=hist_highs.get(code),
+            pe=_ratio(price_now, valuation.get("epsTtm")),
+            pb=_ratio(price_now, valuation.get("bvps")),
+            risk=item["risk"] or "",
+            opportunity=item["opportunity"] or "",
+            leftPoint=item["leftPoint"],
+            trendPoint=item["trendPoint"],
+            bloodPoint=item["bloodPoint"],
         )
+        if holding_offset and code in holding_offset:
+            entry["offsetTotal"] = holding_offset[code]
+        result.append(entry)
     return result

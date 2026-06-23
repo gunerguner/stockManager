@@ -16,25 +16,22 @@ import { useStockProfitModal } from '@/components/Common/modal/StockProfitModal'
 import './index.less';
 
 export type AnalysisListProps = {
-  data: API.Stock[];
-  incomeCash?: number;
-  hkdCnyRate?: number;
+  data: API.StockData;
   loading?: boolean;
 };
 
 export const AnalysisList: React.FC<AnalysisListProps> = ({
   data,
-  incomeCash = 0,
-  hkdCnyRate = 0,
   loading = false,
 }) => {
+  const { incomeCash = 0, hkdCnyRate = 0 } = data.overall;
   const isMobile = useIsMobile();
   const { showStockProfit } = useStockProfitModal();
   const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
 
   const { analysisList, totalProfit, totalLoss } = useMemo(
-    () => buildAnalysisByStockType(data, { incomeCash, hkdCnyRate }),
-    [data, incomeCash, hkdCnyRate],
+    () => buildAnalysisByStockType(data.stocks, { incomeCash, hkdCnyRate }),
+    [data.stocks, incomeCash, hkdCnyRate],
   );
 
   const categoryCurrency = (record: AnalysisModel): MarketCurrency =>

@@ -133,6 +133,7 @@ declare namespace API {
     leftPoint: number | null;
     trendPoint: number | null;
     bloodPoint: number | null;
+    offsetTotal?: number;
   };
 
   type WatchlistResult = BaseResult & {

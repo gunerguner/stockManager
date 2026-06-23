@@ -11,10 +11,8 @@ import './index.less';
 const { Link } = Typography;
 
 export type CostListProps = {
-  data: API.Stock[];
+  data: API.StockData;
   operations: Record<string, API.Operation[]>;
-  totalCost: number;
-  hkdCnyRate?: number;
   loading?: boolean;
 };
 
@@ -35,16 +33,15 @@ const TRADE_FILTERS: Record<string, (stock: API.Stock, op: API.Operation) => boo
 export const CostList: React.FC<CostListProps> = ({
   data,
   operations,
-  totalCost,
-  hkdCnyRate = 0,
   loading = false,
 }) => {
+  const { totalCost = 0, hkdCnyRate = 0 } = data.overall;
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
   const costList = useMemo(
-    () => buildCostListByPeriod(data, operations, hkdCnyRate),
-    [data, operations, hkdCnyRate],
+    () => buildCostListByPeriod(data.stocks, operations, hkdCnyRate),
+    [data.stocks, operations, hkdCnyRate],
   );
 
   const handleCellClick = (record: CostListModel, dataIndex: keyof CostListModel, parentYear?: string) => {
@@ -56,7 +53,7 @@ export const CostList: React.FC<CostListProps> = ({
     const filter = TRADE_FILTERS[dataIndex];
     if (!filter) return;
 
-    const filteredData = data
+    const filteredData = data.stocks
       .map((stock) => ({
         stock,
         operations: (operations[stock.code] || []).filter((op) => {

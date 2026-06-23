@@ -72,6 +72,16 @@ class Integrate:
         codes = [item["code"] for item in items]
         operation_list = CacheRepository.get_user_operations(user)
         holding_set = set(StockHold.get_holding_stocks(operation_list))
+
+        # 尝试从持股页缓存中提取已持有股票的累计盈亏，用于  HoldingStatus 图标颜色
+        holding_offset: dict[str, float] = {}
+        user_codes = list(operation_list.keys())
+        cached = CacheRepository.get_calculated_target(user, user_codes)
+        if cached is not None:
+            for stock in cached.get("stocks", []):
+                if stock["code"] in holding_set:
+                    holding_offset[stock["code"]] = stock["offsetTotal"]
+
         market_data = CacheRepository.load_watchlist_market_data(codes)
 
         return build_watchlist(
@@ -80,4 +90,5 @@ class Integrate:
             market_data.valuations,
             market_data.hist_highs,
             holding_set,
+            holding_offset,
         )
