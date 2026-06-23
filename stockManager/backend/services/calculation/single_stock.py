@@ -5,7 +5,7 @@
 from backend.common import logger
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
-from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD, MIN_PRICE_THRESHOLD, MIN_VALUE_THRESHOLD
+from backend.services.calculation.constants import MIN_PRICE_THRESHOLD
 from backend.services.calculation.money_weighted import calculate_money_weighted_return
 from backend.services.calculation.single_metrics import SingleStockMetrics, compute_single_metrics
 
@@ -40,19 +40,18 @@ def attach_price_fields(
     single_real_time: RealtimePriceData,
     stock_meta: StockMetaModel | None,
 ) -> dict:
-    fields: dict = {"code": code}
-    if stock_meta:
-        fields["stockType"] = stock_meta.stockType
-        fields["isNew"] = stock_meta.isNew
-    fields["name"] = _resolve_stock_name(code, single_real_time, stock_meta)
-    fields["priceNow"] = single_real_time["currentPrice"]
-    if fields["priceNow"] < MIN_PRICE_THRESHOLD:
-        fields["offsetToday"] = 0.0
-        fields["offsetTodayRatio"] = 0.0
-    else:
-        fields["offsetToday"] = single_real_time["priceOffset"]
-        fields["offsetTodayRatio"] = single_real_time["offsetRatio"]
-    return fields
+    price_now = single_real_time["currentPrice"]
+    return {
+        "code": code,
+        **({"stockType": stock_meta.stockType, "isNew": stock_meta.isNew} if stock_meta else {}),
+        "name": _resolve_stock_name(code, single_real_time, stock_meta),
+        "priceNow": price_now,
+        **(
+            {"offsetToday": 0.0, "offsetTodayRatio": 0.0}
+            if price_now < MIN_PRICE_THRESHOLD
+            else {"offsetToday": single_real_time["priceOffset"], "offsetTodayRatio": single_real_time["offsetRatio"]}
+        ),
+    }
 
 
 def attach_hold_fields(
@@ -60,33 +59,13 @@ def attach_hold_fields(
     metrics: SingleStockMetrics,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
-    hold_count = metrics.current_hold_count
     return {
-        "holdCount": hold_count,
+        "holdCount": metrics.current_hold_count,
         "holdCost": metrics.current_hold_cost,
-        "overallCost": (
-            metrics.current_overall / hold_count
-            if abs(hold_count) >= MIN_HOLD_COUNT_THRESHOLD
-            else 0.0
-        ),
-        "totalValue": current_price * hold_count,
+        "overallCost": metrics.overall_cost_per_share(),
+        "totalValue": current_price * metrics.current_hold_count,
         "totalValueYesterday": single_real_time["yesterdayClose"] * metrics.yesterday_hold_count,
     }
-
-
-def _compute_total_offset_today(
-    single_real_time: RealtimePriceData,
-    metrics: SingleStockMetrics,
-    current_offset: float,
-    total_value_yesterday: float,
-) -> float:
-    if total_value_yesterday < MIN_VALUE_THRESHOLD:
-        return current_offset
-    return (
-        single_real_time["currentPrice"] * metrics.current_hold_count
-        - single_real_time["yesterdayClose"] * metrics.yesterday_hold_count
-        - metrics.today_input
-    )
 
 
 def attach_pnl_fields(
@@ -96,25 +75,18 @@ def attach_pnl_fields(
     total_value_yesterday: float,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
-    hold_count = metrics.current_hold_count
-    hold_cost = metrics.current_hold_cost
-
-    current_offset = (current_price - hold_cost) * hold_count
-    current_offset_ratio = (
-        (current_price - hold_cost) / hold_cost
-        if abs(hold_cost) >= MIN_PRICE_THRESHOLD
-        else 0.0
-    )
-    offset_total = current_price * hold_count - metrics.current_overall
+    offset_total = metrics.offset_total(current_price)
 
     return {
-        "offsetCurrent": current_offset,
-        "offsetCurrentRatio": current_offset_ratio,
+        "offsetCurrent": metrics.offset_current(current_price),
+        "offsetCurrentRatio": metrics.offset_current_ratio(current_price),
         "offsetTotal": offset_total,
         "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total),
         "totalCost": metrics.total_fee,
-        "totalOffsetToday": _compute_total_offset_today(
-            single_real_time, metrics, current_offset, total_value_yesterday
+        "totalOffsetToday": metrics.offset_today(
+            current_price,
+            single_real_time["yesterdayClose"],
+            total_value_yesterday,
         ),
         "holdingDuration": metrics.holding_duration,
     }

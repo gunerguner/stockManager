@@ -6,7 +6,7 @@ from backend.common.types import CalculatedResult, DividendUpdateData, Operation
 from backend.models import Info
 from backend.services.cache import CacheRepository
 from backend.services.calculation import Calculator, StockHold
-from backend.services.calculation.watchlist import build_watchlist
+from backend.services.calculation.watchlist import build_holding_offset, build_watchlist
 from backend.services.dividend import Dividend
 
 
@@ -72,17 +72,11 @@ class Integrate:
         codes = [item["code"] for item in items]
         operation_list = CacheRepository.get_user_operations(user)
         holding_set = set(StockHold.get_holding_stocks(operation_list))
-
-        # 尝试从持股页缓存中提取已持有股票的累计盈亏，用于  HoldingStatus 图标颜色
-        holding_offset: dict[str, float] = {}
-        user_codes = list(operation_list.keys())
-        cached = CacheRepository.get_calculated_target(user, user_codes)
-        if cached is not None:
-            for stock in cached.get("stocks", []):
-                if stock["code"] in holding_set:
-                    holding_offset[stock["code"]] = stock["offsetTotal"]
-
         market_data = CacheRepository.load_watchlist_market_data(codes)
+
+        # 用最新现价 + 用户账本计算已持有股票的累计盈亏，
+        # 避免 HoldingStatus 图标颜色与持仓页不一致（计算细节见 watchlist.build_holding_offset）
+        holding_offset = build_holding_offset(holding_set, operation_list, market_data.prices)
 
         return build_watchlist(
             items,

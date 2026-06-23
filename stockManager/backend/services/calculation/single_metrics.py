@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from backend.common.constants import OperationType
 from backend.common.operations import apply_operation_to_hold, dividend_multiplier
 from backend.models import Operation
-from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD
+from backend.services.calculation.constants import (
+    MIN_HOLD_COUNT_THRESHOLD,
+    MIN_PRICE_THRESHOLD,
+    MIN_VALUE_THRESHOLD,
+)
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,49 @@ class SingleStockMetrics:
     today_input: float
     total_fee: float
     holding_duration: int
+
+    def is_holding(self) -> bool:
+        """当前是否仍持有该股（持仓数绝对值超过最小阈值）。"""
+        return abs(self.current_hold_count) >= MIN_HOLD_COUNT_THRESHOLD
+
+    def overall_cost_per_share(self) -> float:
+        """累计投入 / 当前持股；不持有时返回 0.0。"""
+        if not self.is_holding():
+            return 0.0
+        return self.current_overall / self.current_hold_count
+
+    def offset_current(self, price_now: float) -> float:
+        """给定最新价，返回浮动盈亏：(现价 - 持仓成本) × 持仓。"""
+        return (price_now - self.current_hold_cost) * self.current_hold_count
+
+    def offset_current_ratio(self, price_now: float) -> float:
+        """给定最新价，返回浮动盈亏率：(现价 - 持仓成本) / 持仓成本。"""
+        if abs(self.current_hold_cost) < MIN_PRICE_THRESHOLD:
+            return 0.0
+        return (price_now - self.current_hold_cost) / self.current_hold_cost
+
+    def offset_total(self, price_now: float) -> float:
+        """给定最新价，返回累计盈亏：现价 × 持仓 - 累计投入净额。"""
+        return price_now * self.current_hold_count - self.current_overall
+
+    def offset_today(
+        self,
+        price_now: float,
+        yesterday_close: float,
+        total_value_yesterday: float,
+    ) -> float:
+        """给定今收、昨收、昨市值，返回今日总盈亏（含今日新增投入的扣减）。
+
+        - 昨日市值过小（刚建仓等）时退化为 current_offset（不扣 today_input）。
+        - 否则 = 现价 × 持仓 - 昨收 × 昨持仓 - 今日投入。
+        """
+        if total_value_yesterday < MIN_VALUE_THRESHOLD:
+            return self.offset_current(price_now)
+        return (
+            price_now * self.current_hold_count
+            - yesterday_close * self.yesterday_hold_count
+            - self.today_input
+        )
 
 
 def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
