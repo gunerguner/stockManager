@@ -8,6 +8,7 @@ export type ProfitLossColors = {
   lossColor: string;
   colorFromValue: (value: number) => string | undefined;
   highlightStyle: CSSProperties;
+  warningStyle: CSSProperties;
 };
 
 export function getProfitLossColors(token: GlobalToken): ProfitLossColors {
@@ -20,6 +21,13 @@ export function getProfitLossColors(token: GlobalToken): ProfitLossColors {
       color: token.colorError,
       fontWeight: 600,
       background: token.colorErrorBg,
+      padding: '2px 6px',
+      borderRadius: token.borderRadius,
+    },
+    warningStyle: {
+      color: token.colorWarning,
+      fontWeight: 600,
+      background: token.colorWarningBg,
       padding: '2px 6px',
       borderRadius: token.borderRadius,
     },

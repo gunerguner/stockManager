@@ -77,7 +77,7 @@ export const HoldingStatus: React.FC<HoldingStatusProps> = ({
       {name}
     </Link>
   ) : (
-    <span className={nameClassName}>{name}</span>
+    <span className={nameClassName} style={{ fontWeight: 'bold' }}>{name}</span>
   );
 
   const content = (

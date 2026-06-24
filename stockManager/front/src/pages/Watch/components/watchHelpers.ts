@@ -1,10 +1,16 @@
 import { formatMarketPrice } from '@/utils/format/stock';
 
 export const isBuyPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow <= point * 1.05;
+  priceNow != null && point != null && point > 0 && priceNow <= point;
+
+export const isBuyPointWarning = (priceNow: number | null, point: number | null): boolean =>
+  priceNow != null && point != null && point > 0 && priceNow > point && priceNow <= point * 1.05;
 
 export const isTrendPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow > point;
+  priceNow != null && point != null && point > 0 && priceNow >= point;
+
+export const isTrendPointWarning = (priceNow: number | null, point: number | null): boolean =>
+  priceNow != null && point != null && point > 0 && priceNow < point && priceNow >= point * 0.95;
 
 export const calcRoeFromPbPe = (pb: number | null, pe: number | null): number | null => {
   if (pb == null || pe == null || Number.isNaN(pb) || Number.isNaN(pe) || pe === 0) {

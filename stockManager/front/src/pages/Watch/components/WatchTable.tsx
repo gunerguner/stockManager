@@ -13,7 +13,9 @@ import {
   formatDecimal,
   formatMarketPriceOrDash,
   isBuyPointTriggered,
+  isBuyPointWarning,
   isTrendPointTriggered,
+  isTrendPointWarning,
 } from './watchHelpers';
 import '@/components/Common/index.less';
 
@@ -30,7 +32,7 @@ const renderMultilineText = (text: string) => {
 export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false }) => {
   const isMobile = useIsMobile();
   const { showModal } = useCommonModal();
-  const { colorFromValue, highlightStyle } = useProfitLossColors();
+  const { colorFromValue, highlightStyle, warningStyle } = useProfitLossColors();
   const { token } = theme.useToken();
 
   const renderHistHighDropPct = (histHigh: number | null, priceNow: number | null): React.ReactNode => {
@@ -46,8 +48,11 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       return <span style={{ color: token.colorTextDisabled }}>—</span>;
     }
     const hit = isBuyPointTriggered(record.priceNow, val);
+    const warning = isBuyPointWarning(record.priceNow, val);
     return (
-      <span style={hit ? highlightStyle : undefined}>{formatMarketPriceOrDash(val, record.code)}</span>
+      <span style={hit ? highlightStyle : warning ? warningStyle : undefined}>
+        {formatMarketPriceOrDash(val, record.code)}
+      </span>
     );
   };
 
@@ -56,8 +61,11 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       return <span style={{ color: token.colorTextDisabled }}>—</span>;
     }
     const hit = isTrendPointTriggered(record.priceNow, val);
+    const warning = isTrendPointWarning(record.priceNow, val);
     return (
-      <span style={hit ? highlightStyle : undefined}>{formatMarketPriceOrDash(val, record.code)}</span>
+      <span style={hit ? highlightStyle : warning ? warningStyle : undefined}>
+        {formatMarketPriceOrDash(val, record.code)}
+      </span>
     );
   };
 
@@ -100,13 +108,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         title: '名称',
         dataIndex: 'name',
         fixed: isMobile ? false : 'left',
-        render: (_, record) => (
-          <HoldingStatus
-            {...record}
-            withLink
-            nameClassName="stock-name-link"
-          />
-        ),
+        render: (_, record) => <HoldingStatus {...record} />,
       },
       {
         title: '现价',
