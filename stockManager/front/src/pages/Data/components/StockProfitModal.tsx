@@ -6,8 +6,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { MarketCurrency, toMarketCurrency } from '@/utils/format/stock';
 import { renderAmount } from '@/utils/format/render';
-import { useCommonModal } from './useCommonModal';
-import './index.less';
+import { useCommonModal } from '@/components/Common/modal/useCommonModal';
 
 const { Text } = Typography;
 

@@ -1,7 +1,7 @@
 import { Form, InputNumber, App } from 'antd';
 import { updateIncomeCash } from '@/services/api';
 import { isApiSuccess } from '@/utils/api';
-import { useCashFlowModal } from '@/components/Common/modal/CashFlowModal';
+import { useCashFlowModal } from './CashFlowModal';
 import type { OverallBoardActions } from './overallBoardStat';
 
 type UseOverallBoardActionsOptions = {

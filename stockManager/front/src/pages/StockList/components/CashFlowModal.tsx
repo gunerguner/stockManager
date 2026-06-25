@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { renderAmount } from '@/utils/format/render';
-import { useCommonModal } from './useCommonModal';
+import { useCommonModal } from '@/components/Common/modal/useCommonModal';
 
 const { Text } = Typography;
 

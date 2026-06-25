@@ -12,7 +12,7 @@ import {
   toMarketCurrency,
 } from '@/utils/format/stock';
 import { renderAmount } from '@/utils/format/render';
-import { useStockProfitModal } from '@/components/Common/modal/StockProfitModal';
+import { useStockProfitModal } from './StockProfitModal';
 import './index.less';
 
 export type AnalysisListProps = {
