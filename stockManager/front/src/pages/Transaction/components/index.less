@@ -1,0 +1,21 @@
+// 交易数据图表容器
+.cost-list-wrapper {
+  .year-segmented {
+    margin-bottom: 16px;
+  }
+
+  .ant-spin-nested-loading {
+    width: 100%;
+  }
+
+  // 让点击柱体时呈现可点击手势
+  canvas {
+    cursor: pointer;
+  }
+
+  @media (max-width: @screen-md) {
+    .year-segmented {
+      margin-bottom: 12px;
+    }
+  }
+}

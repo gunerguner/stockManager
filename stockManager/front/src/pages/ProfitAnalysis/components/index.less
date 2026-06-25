@@ -1,0 +1,16 @@
+// 盈亏归因表格容器
+.analysis-list-wrapper {
+  @media (max-width: @screen-md) {
+    .ant-table {
+      &-thead > tr > th,
+      &-tbody > tr > td {
+        &:nth-child(2),
+        &:nth-child(3),
+        &:nth-child(4),
+        &:nth-child(5) {
+          min-width: 70px;
+        }
+      }
+    }
+  }
+}

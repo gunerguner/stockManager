@@ -4,8 +4,9 @@ import type { ColumnsType } from 'antd/lib/table';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useTradeDetailModal } from '@/components/Common/modal/TradeDetailModal';
 import { buildCostListByPeriod, parseYearMonth, type CostListModel } from './costStat';
-import { getHeaderStatisticStyles } from './statisticStyles';
+import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import { formatAmount } from '@/utils/format/stock';
+import '@/components/Common/index.less';
 import './index.less';
 
 const { Link } = Typography;

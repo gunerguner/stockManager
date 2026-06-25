@@ -1,4 +1,4 @@
-/** Data 页头部 Statistic 移动端样式 */
+/** 顶部 Statistic 卡片（标题/数值）的移动端自适应样式 */
 export const getHeaderStatisticStyles = (isMobile: boolean, color?: string) => ({
   title: {
     fontSize: isMobile ? 12 : undefined,

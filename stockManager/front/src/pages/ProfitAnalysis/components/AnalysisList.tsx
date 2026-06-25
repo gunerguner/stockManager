@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/lib/table';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { buildAnalysisByStockType, HK_CATEGORY, type AnalysisModel } from './analysisStat';
-import { getHeaderStatisticStyles } from './statisticStyles';
+import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import {
   formatSharePercent,
   MarketCurrency,
@@ -13,6 +13,7 @@ import {
 } from '@/utils/format/stock';
 import { renderAmount } from '@/utils/format/render';
 import { useStockProfitModal } from './StockProfitModal';
+import '@/components/Common/index.less';
 import './index.less';
 
 export type AnalysisListProps = {
@@ -75,6 +76,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
           <Tooltip
             title={formatSharePercent(toCnyForPct(record, value), totalProfit)}
             color={profitColor}
+            styles={{ container: { color: '#fff' } }}
           >
             {renderCategoryAmount(value, profitColor, record)}
           </Tooltip>
@@ -88,6 +90,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
           <Tooltip
             title={formatSharePercent(toCnyForPct(record, value), totalLoss)}
             color={lossColor}
+            styles={{ container: { color: '#fff' } }}
           >
             {renderCategoryAmount(value, lossColor, record)}
           </Tooltip>

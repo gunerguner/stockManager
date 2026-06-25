@@ -1,4 +1,4 @@
-﻿export default [
+export default [
    
   {
     path: '/login',
@@ -18,10 +18,16 @@
     component: './Watch',
   },
   {
-    path: '/data',
-    name: '数据分析',
+    path: '/profit-analysis',
+    name: '盈亏归因',
+    icon: 'fileSearch',
+    component: './ProfitAnalysis',
+  },
+  {
+    path: '/transaction',
+    name: '交易数据',
     icon: 'database',
-    component: './Data',
+    component: './Transaction',
   },
   {
     path: '/account',

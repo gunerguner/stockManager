@@ -81,7 +81,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 
 1. `docker compose -f docker/docker-compose.yml --env-file docker/.env ps` 三服务 healthy
 2. 浏览器打开 `http://localhost:${FRONTEND_PUBLISH_PORT}`（默认 8080）
-3. 登录后 `/list`、`/data` 有数据
+3. 登录后 `/list`、`/profit-analysis`、`/transaction` 有数据
 4. 改前端后：`docker compose build frontend && docker compose up -d frontend`
 
 ## 常用排障命令（按场景）
