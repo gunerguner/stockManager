@@ -1,21 +1,157 @@
-// 交易数据图表容器
 .cost-list-wrapper {
-  .year-segmented {
-    margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  // —— 顶部 Statistic 与下方卡片间距缩小 ——
+  .table-list-header {
+    margin-bottom: 12px;
   }
 
-  .ant-spin-nested-loading {
-    width: 100%;
+  // —— 年份卡片 ——
+  .year-card {
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 12px 16px;
+
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    &__title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    &__expand-btn {
+      font-size: 14px;
+      user-select: none;
+    }
   }
 
-  // 让点击柱体时呈现可点击手势
-  canvas {
-    cursor: pointer;
+  // —— 指标行（年份卡片 7 个指标一排） ——
+  .metric-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
 
+  // —— 单个指标卡片 ——
+  .metric-card {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 4px;
+    border-radius: 6px;
+    text-align: center;
+    transition: background 0.2s;
+
+    &__value {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &__label {
+      font-size: 11px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &--zero {
+      .metric-card__value {
+        color: var(--ant-color-text-tertiary, rgba(0, 0, 0, 0.25));
+      }
+    }
+
+    &--clickable {
+      cursor: pointer;
+
+      .metric-card__value {
+        color: @primary-color;
+      }
+
+      &:hover {
+        background: var(--ant-color-fill-tertiary, #f0f0f0);
+      }
+    }
+  }
+
+  // —— 月份卡片行 ——
+  .month-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed;
+  }
+
+  .month-card {
+    width: 148px;
+    padding: 10px;
+    border-radius: 6px;
+
+    &__title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    &__section {
+      &:not(:first-child) {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed;
+      }
+    }
+
+    &__row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      line-height: 1.8;
+
+      &--clickable {
+        cursor: pointer;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+
+  // —— 移动端：年份卡片指标换行，月份卡片纵向堆叠 ——
   @media (max-width: @screen-md) {
-    .year-segmented {
-      margin-bottom: 12px;
+    gap: 12px;
+
+    .year-card {
+      padding: 12px;
+    }
+
+    .metric-row {
+      flex-wrap: wrap;
+    }
+
+    .metric-card {
+      flex: 1 1 calc(25% - 6px);
+      min-width: 72px;
+      padding: 8px 4px;
+    }
+
+    .month-row {
+      flex-direction: column;
+    }
+
+    .month-card {
+      width: 100%;
     }
   }
 }

@@ -5,14 +5,19 @@ export type CostPeriodType = 'year' | 'month';
 export interface CostListModel {
   id: string;
   type: CostPeriodType;
-  normalTradeCount: number;
-  convTradeCount: number;
-  dividendCount: number;
-  fee: number;
-  subList?: CostListModel[];
+  // ── 交易活跃（次数） ──
+  normalTradeCount: number; // 普通交易 BUY+SELL 笔数（非 CONV、非 DV）
+  convTradeCount: number; // 可转债 BUY+SELL 笔数（CONV、非 DV）
+  dividendCount: number; // 除权除息 DV 笔数
+  // ── 资金动向（金额，均为已折算 CNY）──
+  buyAmount: number; // 所有 BUY 的 price*count 合计
+  sellAmount: number; // 所有 SELL 的 price*count 合计
+  cashFlow: number; // cashFlowList.amount 合计（正入负出）
+  fee: number; // fee 合计（港股已折算 CNY）
+  subList?: CostListModel[]; // year 持有月份明细；month 为 undefined
 }
 
-const parseYearMonth = (date: string): { year: string; month: string } => ({
+export const parseYearMonth = (date: string): { year: string; month: string } => ({
   year: date.substring(0, 4),
   month: date.substring(5, 7),
 });
@@ -23,53 +28,75 @@ const createEmptyRecord = (id: string, type: CostPeriodType): CostListModel => (
   normalTradeCount: 0,
   convTradeCount: 0,
   dividendCount: 0,
+  buyAmount: 0,
+  sellAmount: 0,
+  cashFlow: 0,
   fee: 0,
   subList: type === 'year' ? [] : undefined,
 });
 
-/** 统计交易数据（港股通 fee 按汇率折算为 CNY） */
+/** 取或建年份记录 */
+const getOrCreateYear = (yearMap: Map<string, CostListModel>, year: string) => {
+  let record = yearMap.get(year);
+  if (!record) {
+    record = createEmptyRecord(year, 'year');
+    yearMap.set(year, record);
+  }
+  return record;
+};
+
+/** 取或建月份记录 */
+const getOrCreateMonth = (yearRecord: CostListModel, month: string) => {
+  let record = yearRecord.subList!.find((m) => m.id === month);
+  if (!record) {
+    record = createEmptyRecord(month, 'month');
+    yearRecord.subList!.push(record);
+  }
+  return record;
+};
+
+/** 统计交易数据（港股通 fee 按汇率折算为 CNY；买卖金额按原值不折算） */
 export const buildCostListByPeriod = (
   data: API.Stock[],
   operations: Record<string, API.Operation[]>,
   hkdCnyRate: number,
+  cashFlowList?: API.CashFlowRecord[],
 ): CostListModel[] => {
   const yearMap = new Map<string, CostListModel>();
 
   for (const stock of data) {
-    const stockOperations = operations[stock.code] || [];
-    for (const op of stockOperations) {
+    for (const op of operations[stock.code] || []) {
       const { year, month } = parseYearMonth(op.date);
-
-      if (!yearMap.has(year)) yearMap.set(year, createEmptyRecord(year, 'year'));
-      const yearRecord = yearMap.get(year)!;
-
-      let monthRecord = yearRecord.subList!.find((m) => m.id === month);
-      if (!monthRecord) {
-        monthRecord = createEmptyRecord(month, 'month');
-        yearRecord.subList!.push(monthRecord);
-      }
+      const yearRecord = getOrCreateYear(yearMap, year);
+      const records = [yearRecord, getOrCreateMonth(yearRecord, month)];
 
       if (op.type === 'DV') {
-        yearRecord.dividendCount++;
-        monthRecord.dividendCount++;
-      } else {
-        const feeCny = toCnyAmount(stock.code, op.fee, hkdCnyRate);
-        if (stock.stockType === 'CONV') {
-          yearRecord.convTradeCount++;
-          monthRecord.convTradeCount++;
-        } else {
-          yearRecord.normalTradeCount++;
-          monthRecord.normalTradeCount++;
-        }
-        yearRecord.fee += feeCny;
-        monthRecord.fee += feeCny;
+        records.forEach((r) => r.dividendCount++);
+        continue;
       }
+
+      const amount = op.price * op.count;
+      const feeCny = toCnyAmount(stock.code, op.fee, hkdCnyRate);
+      const countKey = stock.stockType === 'CONV' ? 'convTradeCount' : 'normalTradeCount';
+      records.forEach((r) => {
+        if (op.type === 'BUY') r.buyAmount += amount;
+        else if (op.type === 'SELL') r.sellAmount += amount;
+        r[countKey]++;
+        r.fee += feeCny;
+      });
     }
   }
 
-  const result = [...yearMap.values()].sort((a, b) => Number(a.id) - Number(b.id));
-  result.forEach((year) => year.subList?.sort((a, b) => Number(a.id) - Number(b.id)));
+  // 出入金按年月合并（与交易同口径）
+  for (const cf of cashFlowList ?? []) {
+    const { year, month } = parseYearMonth(cf.date);
+    if (!year) continue;
+    const yearRecord = getOrCreateYear(yearMap, year);
+    yearRecord.cashFlow += cf.amount;
+    getOrCreateMonth(yearRecord, month).cashFlow += cf.amount;
+  }
+
+  const result = [...yearMap.values()].sort((a, b) => Number(b.id) - Number(a.id));
+  result.forEach((year) => year.subList?.sort((a, b) => Number(b.id) - Number(a.id)));
   return result;
 };
-
-export { parseYearMonth };

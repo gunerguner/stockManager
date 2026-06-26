@@ -142,7 +142,13 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Divider className="expand-divider" styles={{ root: { margin: 0 }, content: { margin: '0 8px' } }}>
+        <Divider
+          className="expand-divider"
+          styles={{
+            root: { margin: 0, borderColor: token.colorBorderSecondary },
+            content: { margin: '0 8px' },
+          }}
+        >
           {isExpanded ? <UpOutlined className="expand-icon" /> : <DownOutlined className="expand-icon" />}
         </Divider>
       </div>
