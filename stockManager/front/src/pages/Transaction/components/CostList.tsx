@@ -37,6 +37,9 @@ const MetricCard: React.FC<{
   onClick?: () => void;
 }> = ({ label, value, clickable, onClick }) => {
   const { token } = theme.useToken();
+  const valueColor = !clickable
+    ? token.colorText
+    : token.colorPrimary;
   return (
     <div
       className={`metric-card ${clickable ? 'metric-card--clickable' : 'metric-card--zero'}`}
@@ -45,10 +48,10 @@ const MetricCard: React.FC<{
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
     >
-      <div className="metric-card__value" style={{ color: token.colorText }}>
+      <div className="metric-card__value" style={{ color: valueColor }}>
         {value}
       </div>
-      <div className="metric-card__label" style={{ color: token.colorTextSecondary }}>
+      <div className="metric-card__label" style={{ color: token.colorText }}>
         {label}
       </div>
     </div>
