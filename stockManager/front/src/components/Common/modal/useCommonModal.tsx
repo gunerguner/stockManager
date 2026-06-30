@@ -106,11 +106,17 @@ export const useCommonModal = () => {
     ({ title, content, width = 600 }: ShowModalParams) => {
       const styles: ModalFuncProps['styles'] = isMobile
         ? {
-            body: { maxHeight: 'none', padding: '12px', flex: 1, overflowY: 'auto' },
-            header: { padding: '8px 16px 12px 16px', borderBottom: '1px solid rgba(0, 0, 0, 0.06)' },
+            // 移动端：container 内边距置 0，由 body 统一控制；避免 antd 默认 contentPadding 叠加
+            container: { padding: 0 },
+            body: { maxHeight: 'none', padding: '12px 8px', flex: 1, overflowY: 'auto' },
+            header: { padding: '8px 12px', borderBottom: '1px solid rgba(0, 0, 0, 0.06)' },
             wrapper: { margin: 0, maxWidth: '100vw', top: 0, paddingBottom: 0 },
           }
-        : { body: { maxHeight: 'none' } };
+        : {
+            // 桌面端：container 水平内边距从默认 24px 收至 12px，body 不再额外加 padding
+            container: { padding: '16px 12px' },
+            body: { maxHeight: 'none', padding: 0 },
+          };
 
       modal.info({
         title,
