@@ -130,28 +130,59 @@
 
   // —— 移动端：年份卡片指标换行，月份卡片纵向堆叠 ——
   @media (max-width: @screen-md) {
-    gap: 12px;
+    gap: 10px;
 
     .year-card {
-      padding: 12px;
+      padding: 10px 12px;
+
+      &__header {
+        margin-bottom: 8px;
+      }
+
+      &__title {
+        font-size: 15px;
+      }
     }
 
     .metric-row {
       flex-wrap: wrap;
+      gap: 6px;
     }
 
     .metric-card {
-      flex: 1 1 calc(25% - 6px);
-      min-width: 72px;
-      padding: 8px 4px;
+      flex: 1 1 calc(33.333% - 4px);
+      min-width: 0;
+      padding: 6px 2px;
+
+      &__value {
+        font-size: 13px;
+      }
+
+      &__label {
+        font-size: 10px;
+      }
     }
 
     .month-row {
       flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
     }
 
     .month-card {
       width: 100%;
+      padding: 8px 10px;
+
+      &__title {
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      &__row {
+        font-size: 11px;
+        line-height: 1.7;
+      }
     }
   }
 }

@@ -55,19 +55,22 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
       {
         title: '名称',
         dataIndex: 'name',
-        fixed: isMobile ? false : 'left',
+        width: isMobile ? 100 : undefined,
+        fixed: 'left',
         render: (_, r) => <HoldingStatus {...r} nameClassName="stock-name-link" />,
       },
       {
         title: '现价',
         dataIndex: 'priceNow',
         className: 'cell-number',
+        width: isMobile ? 70 : undefined,
         render: (v, r) => <div className="cell-number">{formatMarketPrice(v, r.code)}</div>,
       },
       {
         title: '涨跌',
         dataIndex: 'offsetTodayRatio',
         className: 'cell-number',
+        width: isMobile ? 90 : undefined,
         render: (_, r) =>
           renderDailyChange(r.offsetToday, r.offsetTodayRatio, r.code, colorFromValue),
       },
@@ -75,6 +78,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         title: '市值',
         dataIndex: 'totalValue',
         className: 'cell-number',
+        width: isMobile ? 80 : undefined,
         defaultSortOrder: 'descend',
         sorter: (a, b) => a.totalValue - b.totalValue,
         render: (_, r) => {
@@ -92,6 +96,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         title: '持仓',
         dataIndex: 'holdCount',
         className: 'cell-number',
+        width: isMobile ? 60 : undefined,
         render: (_, r) => (
           <Tooltip title={`持股 ${r.holdingDuration} 天`}>
             <div className="cell-number">{r.holdCount}</div>
@@ -102,6 +107,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         title: '摊薄/持仓成本',
         dataIndex: 'overallCost',
         className: 'cell-number',
+        width: isMobile ? 120 : undefined,
         render: (_, r) => (
           <div className="cell-number">
             {`${formatAmount(r.overallCost, { code: r.code })}/${formatAmount(r.holdCost, { code: r.code })}`}
@@ -112,6 +118,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         title: '浮动盈亏',
         dataIndex: 'offsetCurrent',
         className: 'cell-number',
+        width: isMobile ? 80 : undefined,
         sorter: (a, b) =>
           toCnyAmount(a.code, a.offsetCurrent, hkdCnyRate) -
           toCnyAmount(b.code, b.offsetCurrent, hkdCnyRate),
@@ -137,6 +144,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         title: '累计盈亏',
         dataIndex: 'offsetTotal',
         className: 'cell-number',
+        width: isMobile ? 110 : undefined,
         sorter: (a, b) =>
           toCnyAmount(a.code, a.offsetTotal, hkdCnyRate) -
           toCnyAmount(b.code, b.offsetTotal, hkdCnyRate),

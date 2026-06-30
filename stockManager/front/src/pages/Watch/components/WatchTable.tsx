@@ -72,7 +72,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
   const handleRowClick = (record: API.WatchItem) => {
     showModal({
       title: `${record.name}（${record.code}）`,
-      width: 768,
+      width: isMobile ? undefined : 768,
       content: (
         <Descriptions column={1} size="small" className="watch-detail-descriptions">
           <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
@@ -107,17 +107,20 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
       {
         title: '名称',
         dataIndex: 'name',
-        fixed: isMobile ? false : 'left',
+        width: isMobile ? 100 : 140,
+        fixed: 'left',
         render: (_, record) => <HoldingStatus {...record} />,
       },
       {
         title: '现价',
         dataIndex: 'priceNow',
+        width: isMobile ? 70 : 90,
         render: (value, record) => formatMarketPriceOrDash(value, record.code),
       },
       {
         title: '涨跌',
         dataIndex: 'offsetTodayRatio',
+        width: isMobile ? 90 : 110,
         render: (_, record) =>
           renderDailyChange(record.offsetToday, record.offsetTodayRatio, record.code, colorFromValue, {
             priceNow: record.priceNow,
@@ -130,6 +133,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           </Tooltip>
         ),
         dataIndex: 'histHigh',
+        width: isMobile ? 70 : 90,
         render: (value, record) => formatMarketPriceOrDash(value, record.code),
       },
       {
@@ -139,16 +143,19 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           </Tooltip>
         ),
         key: 'histHighDrop',
+        width: isMobile ? 60 : 80,
         render: (_, record) => renderHistHighDropPct(record.histHigh, record.priceNow),
       },
       {
         title: 'PB',
         dataIndex: 'pb',
+        width: isMobile ? 55 : 70,
         render: (value) => formatDecimal(value),
       },
       {
         title: 'PE(TTM)',
         dataIndex: 'pe',
+        width: isMobile ? 60 : 80,
         render: (value) => formatDecimal(value),
       },
       {
@@ -158,21 +165,25 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
           </Tooltip>
         ),
         key: 'roe',
+        width: isMobile ? 60 : 80,
         render: (_, record) => formatPercent(calcRoeFromPbPe(record.pb, record.pe)),
       },
       {
         title: '左侧点',
         dataIndex: 'leftPoint',
+        width: isMobile ? 65 : 80,
         render: (value, record) => renderBuyPoint(value, record),
       },
       {
         title: '趋势点',
         dataIndex: 'trendPoint',
+        width: isMobile ? 65 : 80,
         render: (value, record) => renderTrendPoint(value, record),
       },
       {
         title: '血筹点',
         dataIndex: 'bloodPoint',
+        width: isMobile ? 65 : 80,
         render: (value, record) => renderBuyPoint(value, record),
       },
     ],

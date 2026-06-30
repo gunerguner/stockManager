@@ -109,8 +109,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
 
   return (
     <div className="table-list-wrapper analysis-list-wrapper">
-      <Row gutter={[16, 16]} className="table-list-header">
-        <Col span={isMobile ? 12 : 6}>
+      <Row gutter={[isMobile ? 8 : 16, 8]} className="table-list-header">
+        <Col span={isMobile ? 8 : 6}>
           <Statistic
             title="总获利"
             value={totalProfit}
@@ -118,7 +118,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             styles={getHeaderStatisticStyles(isMobile, profitColor)}
           />
         </Col>
-        <Col span={isMobile ? 12 : 6}>
+        <Col span={isMobile ? 8 : 6}>
           <Statistic
             title="总亏损"
             value={totalLoss}
@@ -126,7 +126,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             styles={getHeaderStatisticStyles(isMobile, lossColor)}
           />
         </Col>
-        <Col span={isMobile ? 12 : 6}>
+        <Col span={isMobile ? 8 : 6}>
           <Statistic
             title="净收益"
             value={totalProfit + totalLoss}

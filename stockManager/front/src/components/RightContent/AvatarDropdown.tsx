@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   DeleteOutlined,
   LoadingOutlined,
@@ -11,6 +11,7 @@ import { App, Avatar, Dropdown, Row } from 'antd';
 import { history, useModel } from '@umijs/max';
 import { clearCache, logout, updateDividend } from '@/services/api';
 import { hasApiData, isApiSuccess } from '@/utils/api';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './index.less';
 
 // ==================== 组件 ====================
@@ -24,6 +25,7 @@ const AvatarDropdown: React.FC = () => {
 
   const currentUser = initialState?.currentUser;
   const canAdmin = currentUser?.access === 'admin';
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -83,6 +85,20 @@ const AvatarDropdown: React.FC = () => {
   const handleOpenAdmin = useCallback(() => {
     window.open('/sys/admin/', '_blank');
   }, []);
+
+  // 全局快捷键: Ctrl/⌘ + K 打开管理后台（仅管理员）
+  useEffect(() => {
+    if (!canAdmin) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isMod = event.metaKey || event.ctrlKey;
+      if (isMod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        handleOpenAdmin();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [canAdmin, handleOpenAdmin]);
 
   const handleClearCache = useCallback(() => {
     modal.confirm({
@@ -148,7 +164,7 @@ const AvatarDropdown: React.FC = () => {
     <Dropdown menu={{ items: menuItems, className: styles.menu }}>
       <span className={`${styles.action} ${styles.account}`}>
         <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt={currentUser.name} />
-        <span>{currentUser.name}</span>
+        {!isMobile && <span>{currentUser.name}</span>}
       </span>
     </Dropdown>
   );

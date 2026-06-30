@@ -5,6 +5,7 @@ import { OverallBoard } from './components/OverallBoard';
 import { HoldingsList } from './components/HoldingsList';
 import { StockListToolbar } from './components/StockListToolbar';
 import { useStocks } from '@/hooks/useStocks';
+import '@/components/Common/index.less';
 
 const StockList: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
@@ -14,7 +15,7 @@ const StockList: React.FC = () => {
   return (
     <>
       <FloatButton.BackTop />
-      <div style={{ borderRadius: 8, padding: 16 }}>
+      <div className="page-container">
         <ProCard>
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
           <StockListToolbar

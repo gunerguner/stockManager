@@ -15,6 +15,15 @@
   }
 }
 
+// ==================== 通用：页面容器 ====================
+.page-container {
+  padding: 16px;
+
+  @media (max-width: @screen-md) {
+    padding: 8px;
+  }
+}
+
 // ==================== 通用：带顶部 Statistic 卡片 + 主体的列表/图表容器 ====================
 
 .table-list-wrapper {
@@ -24,4 +33,8 @@
 
 .table-list-header {
   margin-bottom: 20px;
+
+  @media (max-width: @screen-md) {
+    margin-bottom: 12px;
+  }
 }

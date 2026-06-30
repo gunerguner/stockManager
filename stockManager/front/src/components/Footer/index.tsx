@@ -13,6 +13,8 @@ const FOOTER_LINKS = [
   { key: 'icp', title: '沪ICP备2020026170号', href: 'https://beian.miit.gov.cn/', blankTarget: true },
 ];
 
-const Footer: React.FC = () => <DefaultFooter copyright={COPYRIGHT} links={FOOTER_LINKS} />;
+const Footer: React.FC = () => (
+  <DefaultFooter copyright={COPYRIGHT} links={FOOTER_LINKS} />
+);
 
 export default Footer;

@@ -46,12 +46,12 @@ const getBoardStatisticStyles = (
 
   return {
     title: {
-      fontSize: isMobile ? 12 : isMain ? 14 : 13,
-      marginBottom: isMobile ? (isMain ? 6 : 4) : isMain ? 8 : 4,
+      fontSize: isMobile ? 11 : isMain ? 14 : 13,
+      marginBottom: isMobile ? (isMain ? 4 : 2) : isMain ? 8 : 4,
     },
     content: {
       fontWeight: isMain ? 600 : ('normal' as const),
-      fontSize: isMobile ? (isMain ? 24 : 18) : isMain ? 32 : 20,
+      fontSize: isMobile ? (isMain ? 20 : 15) : isMain ? 32 : 20,
       lineHeight: 1.2,
       fontVariantNumeric: 'tabular-nums' as const,
       ...(showColor &&
@@ -136,7 +136,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
 
   return (
     <div className="overall-board-wrapper">
-      <Row gutter={[16, 16]}>{renderStatistics(MAIN_STATISTICS, data, actions, colorProps, true)}</Row>
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
+        {renderStatistics(MAIN_STATISTICS, data, actions, colorProps, true)}
+      </Row>
 
       <div
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
@@ -160,7 +162,7 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
       </div>
 
       {isExpanded && (
-        <Row gutter={[16, 16]} style={{ marginTop: isMobile ? 16 : 24 }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginTop: isMobile ? 12 : 24 }}>
           {renderStatistics(EXPANDED_STATISTICS, data, actions, colorProps)}
         </Row>
       )}

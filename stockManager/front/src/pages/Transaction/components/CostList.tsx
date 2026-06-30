@@ -253,8 +253,8 @@ export const CostList: React.FC<CostListProps> = ({
   return (
     <Spin spinning={loading}>
       <div className="cost-list-wrapper">
-        <Row gutter={[16, 16]} className="table-list-header cost-list-header">
-          <Col span={isMobile ? 12 : 6}>
+        <Row gutter={[16, 8]} className="table-list-header cost-list-header">
+          <Col span={isMobile ? 24 : 6}>
             <Statistic
               title="总费用"
               value={totalCost}

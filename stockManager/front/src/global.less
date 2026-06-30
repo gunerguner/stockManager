@@ -33,30 +33,42 @@ ol {
   font-variant-numeric: tabular-nums;
 }
 
+// ==================== 移动端全局适配 ====================
 @media (max-width: @screen-md) {
+  // 页面内容内边距收紧
   .ant-layout .ant-layout-content,
   .ant-layout-content {
-    padding: @page-padding;
+    padding: @page-padding-mobile;
   }
 
+  // ProCard 去掉左右多余外边距，收紧内边距
   .ant-pro-card {
     margin-left: 0;
     margin-right: 0;
+
+    .ant-pro-card-body {
+      padding: 12px;
+    }
   }
 
+  // 表格紧凑化
   .ant-table {
     width: 100%;
     overflow-x: auto;
 
     &-thead > tr > th,
     &-tbody > tr > td {
-      padding: 8px 4px;
+      padding: 6px 4px;
       white-space: nowrap;
       font-size: 12px;
 
       > span {
         display: block;
       }
+    }
+
+    &-thead > tr > th {
+      background: var(--ant-color-fill-quaternary);
     }
   }
 
@@ -65,5 +77,34 @@ ol {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  // 页面容器统一内边距
+  .page-container {
+    padding: @page-padding-mobile;
+  }
+
+  // DefaultFooter 移动端紧凑
+  .ant-pro-global-footer {
+    .ant-pro-global-footer-links {
+      margin-bottom: 8px;
+    }
+
+    .ant-pro-global-footer-copyright {
+      padding: 0 8px;
+    }
+  }
+
+  // Modal 移动端全屏化
+  .ant-modal {
+    max-width: calc(100vw - 8px) !important;
+    margin: 4px auto !important;
+    top: 4px !important;
+    padding-bottom: 0 !important;
+  }
+
+  // Tooltip 在移动端禁用 hover（避免触屏长按残留）
+  .ant-tooltip {
+    max-width: 240px;
   }
 }
