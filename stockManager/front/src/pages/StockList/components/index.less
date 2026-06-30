@@ -37,20 +37,27 @@
     }
 
     .expand-divider {
-      transition: all 0.3s ease;
+      // 用 useToken 注入的 CSS 变量（实际颜色值），主题切换时随 React 重渲染更新，
+      // 不受 antd CSS-in-JS 重注入时序影响（var(--ant-color-*) 会有瞬时缺失回退偏黑）
+      border-block-start-color: var(--divider-color);
 
-      &:hover {
-        border-color: @primary-color;
-
-        .expand-icon {
-          color: @primary-color;
-        }
+      .ant-divider-rail {
+        border-block-start-color: inherit;
+        transition: border-block-start-color 0.3s ease;
       }
 
       .expand-icon {
         font-size: 14px;
-        color: @color-text-secondary;
-        transition: inherit;
+        color: var(--ant-color-text-secondary);
+        transition: color 0.3s ease;
+      }
+    }
+
+    &:hover .expand-divider {
+      border-block-start-color: var(--divider-hover-color);
+
+      .expand-icon {
+        color: var(--divider-hover-color);
       }
     }
   }
