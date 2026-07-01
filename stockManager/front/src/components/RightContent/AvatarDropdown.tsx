@@ -14,6 +14,9 @@ import { hasApiData, isApiSuccess } from '@/utils/api';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './index.less';
 
+const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
+const modKey = isMac ? '⌘' : 'Ctrl';
+
 // ==================== 组件 ====================
 
 const AvatarDropdown: React.FC = () => {
@@ -86,20 +89,6 @@ const AvatarDropdown: React.FC = () => {
     window.open('/sys/admin/', '_blank');
   }, []);
 
-  // 全局快捷键: Ctrl/⌘ + K 打开管理后台（仅管理员）
-  useEffect(() => {
-    if (!canAdmin) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      const isMod = event.metaKey || event.ctrlKey;
-      if (isMod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        handleOpenAdmin();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canAdmin, handleOpenAdmin]);
-
   const handleClearCache = useCallback(() => {
     modal.confirm({
       title: '确定清理全部 Redis 缓存？',
@@ -128,6 +117,26 @@ const AvatarDropdown: React.FC = () => {
     });
   }, [modal]);
 
+  // 全局快捷键: Ctrl/⌘ + K 打开管理后台，Ctrl/⌘ + N 清理缓存（仅管理员）
+  useEffect(() => {
+    if (!canAdmin) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isMod = event.metaKey || event.ctrlKey;
+      if (isMod && !event.shiftKey && !event.altKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'j') {
+          event.preventDefault();
+          handleOpenAdmin();
+        } else if (key === 'k') {
+          event.preventDefault();
+          handleClearCache();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [canAdmin, handleOpenAdmin, handleClearCache]);
+
   if (!currentUser?.name) return null;
 
   const menuItems = [
@@ -145,6 +154,7 @@ const AvatarDropdown: React.FC = () => {
             key: 'admin',
             label: '管理',
             icon: <SafetyCertificateOutlined />,
+            extra: <span className={styles.shortcutKey}>{modKey} + J</span>,
             onClick: handleOpenAdmin,
           },
           {
@@ -153,6 +163,7 @@ const AvatarDropdown: React.FC = () => {
             icon: cacheLoading ? <LoadingOutlined /> : <DeleteOutlined />,
             disabled: cacheLoading,
             danger: true,
+            extra: <span className={styles.shortcutKey}>{modKey} + K</span>,
             onClick: handleClearCache,
           },
         ]

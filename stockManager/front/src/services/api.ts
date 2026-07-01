@@ -85,3 +85,8 @@ export async function clearCache(options?: RequestOptions) {
 export async function getWatchlist(options?: RequestOptions) {
   return getRequest<API.WatchlistResult>('/api/watchlist', options);
 }
+
+/** 获取交易状态 Tag 数据 GET /api/tradingStatus */
+export async function getTradingStatus(options?: RequestOptions) {
+  return getRequest<API.TradingStatusResult>('/api/tradingStatus', options);
+}

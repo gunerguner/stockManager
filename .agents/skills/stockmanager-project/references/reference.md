@@ -33,7 +33,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | API 客户端 | `stockManager/front/src/services/api.ts` |
 | 布局/鉴权 | `stockManager/front/src/app.tsx`、`access.ts` |
 | 主页面 | `front/src/pages/StockList/`、`Data/`、`Watch/`、`Account/`、`Login/` |
-| 交易时间 UI | `front/src/components/RightContent/TradingTime.tsx`（逻辑 `front/src/utils/tradingTime.ts`） |
+| 交易状态 UI | `front/src/components/RightContent/TradingTime.tsx`（仅渲染，数据 `GET /api/tradingStatus`；后端逻辑 `common/tradingCalendar.py:get_trading_time_statuses`） |
 | 环境模板 | `stockManager/stockManager/.env.example`、`docker/.env.example` |
 
 ## 数据库与迁移
@@ -100,7 +100,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | `models.py` | 迁移文件、Admin 展示、缓存失效信号（`cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py`） |
 | `calculator.py` / `overall.py` / `single_*.py` | `common/types.py`、`/api/stocks` 输出、`/list`/`/data` 前端展示 |
 | `market/realtimePrice.py` | `price_store`/`refresh_policy` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
-| `common/tradingCalendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`；改交易时段或日历逻辑须同步前端 `tradingTime.ts` |
+| `common/tradingCalendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
 | `common/market.py`（CN/HK 抽象） | `price_store`/`fx_store`/`valuation_store`、估值与汇率换算口径 |
 | `WatchItem` / `watch_store.py` | `/api/watchlist`、前端 `pages/Watch/`、`valuation_store`/`hist_high_store` |
 | `front/config/routes.ts` | 权限 `access.ts`、菜单展示、默认重定向 |

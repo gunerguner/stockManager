@@ -13,6 +13,7 @@ from backend.common import (
     handle_exception,
     parse_json_body,
 )
+from backend.common.tradingCalendar import get_trading_time_statuses
 
 
 @require_authentication
@@ -84,3 +85,11 @@ def clear_cache(request: HttpRequest) -> JsonResponse:
         message="缓存已清理",
         data={"deletedCount": deleted_count},
     )
+
+
+@require_authentication
+@handle_exception
+def trading_status(request: HttpRequest) -> JsonResponse:
+    """获取交易状态 Tag 数据 - GET /api/tradingStatus"""
+    data = get_trading_time_statuses()
+    return json_response(status=ResponseStatus.SUCCESS, data=data)

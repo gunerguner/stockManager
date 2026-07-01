@@ -20,7 +20,7 @@ const Watch: React.FC = () => {
             gutter={[16, 8]}
             style={{ marginTop: isMobile ? 0 : 16, marginBottom: isMobile ? 12 : 16 }}
           >
-            <Col xs={24} sm={6} md={4}>
+            <Col xs={24} sm={4} md={2}>
               <Button
                 type="primary"
                 ghost

@@ -9,6 +9,7 @@ urlpatterns = [
     path('clearCache', stock.clear_cache, name='clearCache'),
     path('updateIncomeCash', stock.update_income_cash, name='updateIncomeCash'),
     path('watchlist', stock.watchlist, name='watchlist'),
+    path('tradingStatus', stock.trading_status, name='tradingStatus'),
     
     # 用户相关接口
     path('currentUser', user.currentUser, name='currentUser'),

@@ -35,7 +35,7 @@ stockManager/                 # Git 根
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
 | 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（仅除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高）；sina 外汇（HKD/CNY） |
-| 日历 | `exchange_calendars` **XSHG / XHKG**（`common/tradingCalendar.py`，CN/HK 分市场；前端交易时间 UI 用 `chinese-days`） |
+| 日历 | `exchange_calendars` **XSHG / XHKG**（`common/tradingCalendar.py`，CN/HK 分市场；前端右上角交易状态 Tag 走 `/api/tradingStatus`，后端统一计算） |
 
 ## 架构要点
 

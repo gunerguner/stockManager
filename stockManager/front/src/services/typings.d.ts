@@ -139,4 +139,14 @@ declare namespace API {
   type WatchlistResult = BaseResult & {
     data?: WatchItem[];
   };
+
+  type TradingTimeStatus = {
+    market: 'cn' | 'hk';
+    isTrading: boolean;
+    message: string;
+  };
+
+  type TradingStatusResult = BaseResult & {
+    data?: TradingTimeStatus[];
+  };
 }
