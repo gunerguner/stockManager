@@ -3,3 +3,45 @@ known-first-party = ["backend", "stockManager"]
 
 [tool.ruff.lint]
 select = ["I"]
+
+# ---------------------------------------------------------------------------
+# Basedpyright（CodeBuddy 内置语言服务器）静态类型检查配置
+# ---------------------------------------------------------------------------
+# 关键点：
+#  - 本文件位于仓库外层根，因此所有路径都是相对外层根解析
+#  - Django 真实的 Python 根是内层 stockManager/（含 manage.py 和 backend 包）
+#  - extraPaths 必须指向内层 stockManager/，basedpyright 才能把
+#    `from backend.xxx` 解析为合法绝对导入，而不是误判为隐式相对导入
+# ---------------------------------------------------------------------------
+[tool.basedpyright]
+include = ["stockManager/backend", "stockManager/stockManager"]
+exclude = [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/staticfiles",
+    "**/backup",
+    "**/front",
+    "**/migrations",
+    "**/dist",
+    "**/build",
+]
+extraPaths = ["stockManager"]
+pythonVersion = "3.13"
+pythonPlatform = "All"
+djangoSettingsModule = "stockManager.settings"
+
+# —— 报告级别 ——
+# 关键原则：基于 Pyright/basedpyright 的默认级别（typeCheckingMode=standard）
+# 默认不报告的规则**不要手动加**，否则 Pyright 会用更激进的判断策略，
+# 反而在普通类型别名等场景产生大量误报。
+# 以下只调整默认级别**不充分**的关键规则。
+typeCheckingMode = "standard"
+
+# standard 模式默认就是 error，保留
+reportImplicitRelativeImport = "error"
+
+# standard 模式默认 off，升级到 error（缺模块必须报）
+reportMissingImports = "error"
+
+# 配合 django-stubs 才能精确工作；不装时会有 Django 字段类型误报
+reportOperatorIssue = "error"
