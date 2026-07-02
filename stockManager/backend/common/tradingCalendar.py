@@ -97,14 +97,11 @@ class TradingCalendar:
 
     @classmethod
     def next_open_at(cls, after: datetime, market: Market = Market.CN) -> datetime:
-        """返回严格晚于 after 的最早一个交易时段开盘时刻（上海时区）。
-
-        覆盖盘前、午休、盘后与非交易日情形，统一指向下一交易时段 start。
-        """
+        """返回严格晚于 after 的最早一个交易时段开盘时刻（上海时区）。覆盖盘前、午休、盘后与非交易日情形，统一指向下一交易时段 start。"""
         tz_now = _to_shanghai(after)
         check_date = tz_now.date()
-        # 防御性上限：连续非交易日（含长假）必然在 400 天内命中
-        for _ in range(400):
+        # 防御性上限：连续非交易日（含长假）必然在 100 天内命中
+        for _ in range(100):
             if cls.is_trading_day(check_date, market):
                 for start_min, _end_min in _MARKET_SESSION_MINUTES[market]:
                     session_start = TZ_SHANGHAI.localize(
@@ -116,7 +113,7 @@ class TradingCalendar:
                     if session_start > tz_now:
                         return session_start
             check_date += timedelta(days=1)
-        raise RuntimeError(f"未找到 {market} 在 400 天内的开盘时段")
+        raise RuntimeError(f"未找到 {market} 在 100 天内的开盘时段")
 
 
 # ==================== 交易状态 Tag 生成（供 /api/tradingStatus 使用） ====================

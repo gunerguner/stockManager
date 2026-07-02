@@ -4,10 +4,10 @@ import {
   LoadingOutlined,
   LogoutOutlined,
   SafetyCertificateOutlined,
-  SettingOutlined,
   SyncOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { App, Avatar, Dropdown, Row } from 'antd';
+import { App, Avatar, Dropdown, Row, theme } from 'antd';
 import { history, useModel } from '@umijs/max';
 import { clearCache, logout, updateDividend } from '@/services/api';
 import { hasApiData, isApiSuccess } from '@/utils/api';
@@ -25,6 +25,7 @@ const AvatarDropdown: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { resetStockData } = useModel('stocks');
   const { modal } = App.useApp();
+  const { token } = theme.useToken();
 
   const currentUser = initialState?.currentUser;
   const canAdmin = currentUser?.access === 'admin';
@@ -140,7 +141,7 @@ const AvatarDropdown: React.FC = () => {
   if (!currentUser?.name) return null;
 
   const menuItems = [
-    { key: 'settings', label: '设置', icon: <SettingOutlined />, onClick: () => history.push('/account') },
+    { key: 'account', label: '账户', icon: <UserOutlined />, onClick: () => history.push('/account') },
     ...(canAdmin
       ? [
           {
@@ -154,7 +155,7 @@ const AvatarDropdown: React.FC = () => {
             key: 'admin',
             label: '管理',
             icon: <SafetyCertificateOutlined />,
-            extra: <span className={styles.shortcutKey}>{modKey} + J</span>,
+            extra: <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>{modKey} + J</span>,
             onClick: handleOpenAdmin,
           },
           {
@@ -163,7 +164,7 @@ const AvatarDropdown: React.FC = () => {
             icon: cacheLoading ? <LoadingOutlined /> : <DeleteOutlined />,
             disabled: cacheLoading,
             danger: true,
-            extra: <span className={styles.shortcutKey}>{modKey} + K</span>,
+            extra: <span style={{ color: token.colorTextTertiary, fontSize: 12 }}>{modKey} + K</span>,
             onClick: handleClearCache,
           },
         ]
@@ -174,7 +175,13 @@ const AvatarDropdown: React.FC = () => {
   return (
     <Dropdown menu={{ items: menuItems, className: styles.menu }}>
       <span className={`${styles.action} ${styles.account}`}>
-        <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt={currentUser.name} />
+        <Avatar
+          size="small"
+          className={styles.avatar}
+          src={currentUser.avatar}
+          alt={currentUser.name}
+          style={{ background: token.colorFillSecondary }}
+        />
         {!isMobile && <span>{currentUser.name}</span>}
       </span>
     </Dropdown>

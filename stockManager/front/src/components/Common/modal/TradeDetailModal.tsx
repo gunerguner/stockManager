@@ -1,4 +1,4 @@
-import { Typography, Space, Divider } from 'antd';
+import { Typography, Space, Divider, theme } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
@@ -31,6 +31,12 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
   const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
+  const { token } = theme.useToken();
+
+  const infoRowStyle: React.CSSProperties = {
+    paddingTop: 8,
+    borderTop: `1px solid ${token.colorBorderSecondary}`,
+  };
 
   const infoItems = (
     <>
@@ -57,7 +63,7 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
   );
 
   return isMobile ? (
-    <div className="modal-info-row">
+    <div style={infoRowStyle}>
       <Space size="small" wrap>
         {infoItems}
       </Space>
@@ -76,6 +82,7 @@ const StockHeader: React.FC<{
   showStockInfo: boolean;
 }> = ({ stock, operationsCount, showStockInfo }) => {
   const isMobile = useIsMobile();
+  const { token } = theme.useToken();
   const stockInfo = showStockInfo ? <StockInfo stock={stock} isMobile={isMobile} /> : null;
 
   return (
@@ -88,7 +95,11 @@ const StockHeader: React.FC<{
         </Space>
         {isMobile && stockInfo}
       </div>
-      <Text type="secondary" className="trade-count">
+      <Text
+        type="secondary"
+        className="trade-count"
+        style={isMobile ? { borderTop: `1px solid ${token.colorBorderSecondary}` } : undefined}
+      >
         共 {operationsCount} 笔交易
       </Text>
     </div>

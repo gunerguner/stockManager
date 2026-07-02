@@ -1,4 +1,4 @@
-import { Space, Typography } from 'antd';
+import { Space, Typography, theme } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
@@ -51,6 +51,12 @@ const SummaryHeader: React.FC<{
   currency: MarketCurrency;
 }> = ({ categoryName, profit, loss, netIncome, currency }) => {
   const isMobile = useIsMobile();
+  const { token } = theme.useToken();
+
+  const infoRowStyle: React.CSSProperties = {
+    paddingTop: 8,
+    borderTop: `1px solid ${token.colorBorderSecondary}`,
+  };
 
   return (
     <>
@@ -59,7 +65,7 @@ const SummaryHeader: React.FC<{
           <div className="category-name">
             <strong>{categoryName}</strong>
           </div>
-          <div className="modal-info-row">
+          <div style={infoRowStyle}>
             <Space size="small" wrap>
               <SummaryItems
                 profit={profit}

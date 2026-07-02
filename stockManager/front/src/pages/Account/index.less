@@ -1,0 +1,58 @@
+.card {
+  max-width: 480px;
+  margin: 0 auto;
+  border-color: var(--ant-color-border-secondary);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.avatar {
+  background-color: var(--ant-color-primary);
+  color: #fff;
+}
+
+.name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+}
+
+.username {
+  color: var(--ant-color-text-secondary);
+}
+
+.table {
+  border-radius: var(--ant-border-radius);
+  overflow: hidden;
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.row {
+  display: flex;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.label {
+  width: 100px;
+  padding: 10px 16px;
+  white-space: nowrap;
+  color: var(--ant-color-text-secondary);
+  font-size: 14px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+}
+
+.value {
+  flex: 1;
+  padding: 10px 16px;
+  color: var(--ant-color-text);
+  font-size: 14px;
+}

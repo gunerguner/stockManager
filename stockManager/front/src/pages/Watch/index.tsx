@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { FloatButton, Button, Row, Col } from 'antd';
+import { FloatButton, Button, Row, Col, theme } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -9,12 +9,20 @@ import '@/components/Common/index.less';
 const Watch: React.FC = () => {
   const { list, fetchWatchlist, loading } = useWatchlist();
   const isMobile = useIsMobile();
+  const { token } = theme.useToken();
 
   return (
     <>
       <FloatButton.BackTop />
       <div className="page-container">
-        <ProCard>
+        <ProCard
+          styles={{
+            root: {
+              background: token.colorBgContainer,
+              borderColor: token.colorBorderSecondary,
+            },
+          }}
+        >
           <Row
             align="middle"
             gutter={[16, 8]}

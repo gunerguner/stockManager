@@ -1,4 +1,4 @@
-import { FloatButton } from 'antd';
+import { FloatButton, theme } from 'antd';
 import { useState } from 'react';
 import { ProCard } from '@ant-design/pro-components';
 import { OverallBoard } from './components/OverallBoard';
@@ -11,12 +11,20 @@ const StockList: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
   const [showConv, setShowConv] = useState(true);
   const { stock, operations, fetchStockData, loading } = useStocks();
+  const { token } = theme.useToken();
 
   return (
     <>
       <FloatButton.BackTop />
       <div className="page-container">
-        <ProCard>
+        <ProCard
+          styles={{
+            root: {
+              background: token.colorBgContainer,
+              borderColor: token.colorBorderSecondary,
+            },
+          }}
+        >
           <OverallBoard data={stock.overall} onModifySuccess={fetchStockData} />
           <StockListToolbar
             showAll={showAll}

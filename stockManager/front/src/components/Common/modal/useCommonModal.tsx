@@ -1,4 +1,4 @@
-import { App, Table } from 'antd';
+import { App, Empty, Table, theme } from 'antd';
 import type { ModalFuncProps } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
 import type { GetRowKey } from 'antd/es/table/interface';
@@ -50,6 +50,14 @@ const prefixedRowKey =
 export const useCommonModal = () => {
   const { modal } = App.useApp();
   const isMobile = useIsMobile();
+  const { token } = theme.useToken();
+
+  const commonTableHeaderStyle: React.CSSProperties = {
+    padding: '8px 12px',
+    background: token.colorFillQuaternary,
+    borderRadius: 4,
+    marginBottom: 12,
+  };
 
   const commonTableProps = React.useMemo(
     () =>
@@ -74,14 +82,14 @@ export const useCommonModal = () => {
     rowKey,
   }: RenderTableParams<T>) => (
     <div className="common-table-group-item">
-      {headerView && <div className="common-table-header">{headerView}</div>}
+      {headerView && <div style={commonTableHeaderStyle}>{headerView}</div>}
       <Table {...commonTableProps} columns={columns} dataSource={dataSource} rowKey={rowKey} />
     </div>
   );
 
   const renderTables = <T extends object>(tables: TableGroup<T>[], variant: 'single' | 'multi') =>
     !tables?.length || tables.every((t) => !t.dataSource?.length) ? (
-      <div className="common-empty-data">暂无数据</div>
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据" />
     ) : (
       <div className={variant === 'single' ? 'common-single-table-content' : 'common-multi-table-content'}>
         {tables.map((table, tableIndex) =>

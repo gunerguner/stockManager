@@ -92,7 +92,7 @@ const Login: React.FC = () => {
                     submitButtonProps: {
                       loading: submitting,
                       size: 'large',
-                      className: styles.submitButton,
+                      block: true,
                     },
                   }}
                   onFinish={handleSubmit}
