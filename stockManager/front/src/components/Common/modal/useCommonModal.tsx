@@ -121,8 +121,7 @@ export const useCommonModal = () => {
             wrapper: { margin: 0, maxWidth: '100vw', top: 0, paddingBottom: 0 },
           }
         : {
-            // 桌面端：container 水平内边距从默认 24px 收至 12px，body 不再额外加 padding
-            container: { padding: '16px 12px' },
+            // 桌面端：使用 antd 默认 container 内边距，body 不再额外加 padding
             body: { maxHeight: 'none', padding: 0 },
           };
 
