@@ -41,6 +41,7 @@ const getBoardStatisticStyles = (
     clickable?: boolean;
   },
 ) => {
+  const { token } = theme.useToken();
   const { isMain = false, showColor, numericValue, colorFromValue, primaryColor, clickable } =
     options ?? {};
 
@@ -48,6 +49,8 @@ const getBoardStatisticStyles = (
     title: {
       fontSize: isMobile ? 11 : isMain ? 14 : 13,
       marginBottom: isMobile ? (isMain ? 4 : 2) : isMain ? 8 : 4,
+      // 显式 title 颜色，避免 antd CSS-in-JS 在暗夜→白天切换时颜色残留（参考 theme.md §12）
+      color: token.colorTextSecondary,
     },
     content: {
       fontWeight: isMain ? 600 : ('normal' as const),
