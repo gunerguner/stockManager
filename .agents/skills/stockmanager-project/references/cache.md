@@ -300,10 +300,10 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 `price_store.query_prices(code_list)`：
 
-1. `_get_cached_prices` → 按市场调用 `refresh_policy.should_refresh_market` → `Cache.get_many`
-2. 缓存数据须包含完整 `_PRICE_FIELDS`（含 `yearHigh`），否则视为 miss
+1. `_get_cached_prices` → 按市场调用 `refresh_policy.should_refresh_market`；若需刷新则先 `_evict_market_prices`（清该市场全部 `stock:price:*`）再整批 miss
+2. 不需刷新时 `Cache.get_many`；缓存数据须包含完整 `_PRICE_FIELDS`（含 `yearHigh`），否则视为 miss
 3. 命中部分直接返回；`missing` 走 `market.fetch_prices`（easyquotation tencent/hkquote）
-4. `_set_prices_batch` 回写、刷新时间戳、清全用户 `calculated_target`，并触发 `sync_names_from_realtime`
+4. `_set_prices_batch` 回写价格；**仅当该市场本次 missing 全部回源成功**才推进 `stock:price:timestamp:{market}` 并清全用户 `calculated_target`；再触发 `sync_names_from_realtime`
 
 **批量读**：`Cache.get_many(逻辑 keys)` → `make_key` + Redis `MGET` + `client.decode`；未命中为 `None`；异常时降级为逐 key `cache.get`（`price_store` 记录 `logger.error`）。
 
