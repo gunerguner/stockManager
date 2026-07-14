@@ -1,31 +1,30 @@
 # Django 核心框架
-Django>=6.0
+Django>=6.0.7
 
 # 环境变量管理
-python-dotenv>=1.0.0
+python-dotenv>=1.2.2
 
 # 数据获取和处理
-baostock>=0.8.9
-numpy>=1.26.0
-pandas>=2.2.0
-exchange_calendars
-pytz
-pyxirr>=0.10.0
-easyquotation
-requests>=2.31.0
+baostock>=0.9.3
+numpy>=2.5.1
+pandas>=3.0.3
+exchange_calendars>=4.13.2
+pytz>=2026.2
+pyxirr>=0.10.8
+easyquotation>=0.7.7
+requests>=2.34.2
 
 # Django 扩展插件
-django-cors-headers
-django-extensions
-django-werkzeug-debugger-runserver
+django-cors-headers>=4.9.0
+django-extensions>=4.1
+django-werkzeug-debugger-runserver>=0.3.1
 
 # Redis 缓存
-django-redis>=5.4.0
+django-redis>=7.0.0
 
 # 静态文件服务
-whitenoise
+whitenoise>=6.12.0
 
 # 生产 WSGI（Docker / 部署）
-gunicorn>=23.0.0
-
+gunicorn>=26.0.0
 
