@@ -103,6 +103,7 @@ class WatchItemDict(TypedDict):
     leftPoint: float | None
     trendPoint: float | None
     bloodPoint: float | None
+    hidden: bool
 
 
 class WatchResultItem(TypedDict, total=False):
@@ -122,6 +123,7 @@ class WatchResultItem(TypedDict, total=False):
     trendPoint: float | None
     bloodPoint: float | None
     offsetTotal: float  # 累计盈亏（仅持仓股票），用最新现价即时计算，用于 HoldingStatus 图标颜色
+    hidden: bool
 
 
 class ValuationData(TypedDict):

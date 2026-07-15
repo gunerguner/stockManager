@@ -3,6 +3,7 @@
 个股指标为原币种（港股通为 HKD）；本模块汇总时通过 to_cny_amount 折算为人民币（CNY）。
 """
 import datetime
+from typing import cast
 
 from pyxirr import xirr
 
@@ -60,7 +61,7 @@ def compute_overall(
     hkd_cny_rate: float = 1.0,
 ) -> OverallData:
     """计算整体指标（港股金额按汇率折算为 CNY）"""
-    to_return: OverallData = {}
+    to_return = cast(OverallData, {})
 
     def cny(code: str, amount: float) -> float:
         return to_cny_amount(code, amount, hkd_cny_rate)

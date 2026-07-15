@@ -1,9 +1,17 @@
 """用户数据集成（外观模式）：协调缓存、计算、分红等服务。"""
+from typing import cast
+
 from django.contrib.auth.models import User
 
 from backend.common import logger
-from backend.common.types import CalculatedResult, DividendUpdateData, OperationDataDict, WatchResultItem
-from backend.models import Info
+from backend.common.types import (
+    CalculatedResult,
+    DividendUpdateData,
+    OperationData,
+    OperationDataDict,
+    WatchResultItem,
+)
+from backend.models import Info, WatchItem
 from backend.services.cache import CacheRepository
 from backend.services.calculation import Calculator, StockHold
 from backend.services.calculation.watchlist import build_holding_offset, build_watchlist
@@ -15,7 +23,7 @@ class Integrate:
     def get_operations(cls, user: User) -> OperationDataDict:
         operation_list = CacheRepository.get_user_operations(user)
         return {
-            code: [op.to_dict() for op in reversed(ops)]
+            code: [cast(OperationData, op.to_dict()) for op in reversed(ops)]
             for code, ops in operation_list.items()
         }
 
@@ -46,7 +54,7 @@ class Integrate:
             "overall": overall,
             "markets": inputs.markets,
         }
-        CacheRepository.set_calculated_target(user.id, result, user_codes)
+        CacheRepository.set_calculated_target(user.pk, result, user_codes)
         return result
 
     @classmethod
@@ -62,6 +70,16 @@ class Integrate:
             defaults={"value": str(income_cash)},
         )
         logger.info(f"用户 {user.username} 更新收益现金: {income_cash}")
+
+    @classmethod
+    def set_watch_hidden(cls, user: User, code: str, hidden: bool) -> None:
+        try:
+            item = WatchItem.objects.get(user=user, code=code)
+        except WatchItem.DoesNotExist as exc:
+            raise WatchItem.DoesNotExist(f"关注项不存在: {code}") from exc
+        item.hidden = hidden
+        item.save(update_fields=["hidden"])
+        logger.info(f"用户 {user.username} 设置关注隐藏: {code}={hidden}")
 
     @classmethod
     def get_watchlist(cls, user: User) -> list[WatchResultItem]:

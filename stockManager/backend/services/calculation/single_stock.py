@@ -2,6 +2,8 @@
 
 港股通个股金额与价格为港币（HKD），不做汇率换算；组合汇总见 overall.py。
 """
+from typing import cast
+
 from backend.common import logger
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
@@ -105,7 +107,7 @@ def build_single_stock(
 
     metrics = compute_single_metrics(operations)
 
-    result: StockData = {}
+    result = cast(StockData, {})
     result.update(attach_price_fields(code, single_real_time, stock_meta))
     result.update(attach_hold_fields(single_real_time, metrics))
     result.update(attach_pnl_fields(

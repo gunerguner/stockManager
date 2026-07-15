@@ -1,14 +1,11 @@
-import { ReloadOutlined } from '@ant-design/icons';
-import { FloatButton, Button, Row, Col, theme } from 'antd';
+import { FloatButton, theme } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
 import { useWatchlist } from '@/hooks/useWatchlist';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import { WatchTable } from './components/WatchTable';
+import { WatchBoard } from './components/WatchBoard';
 import '@/components/Common/index.less';
 
 const Watch: React.FC = () => {
-  const { list, fetchWatchlist, loading } = useWatchlist();
-  const isMobile = useIsMobile();
+  const { list, fetchWatchlist, setItemHidden, loading } = useWatchlist();
   const { token } = theme.useToken();
 
   return (
@@ -23,25 +20,12 @@ const Watch: React.FC = () => {
             },
           }}
         >
-          <Row
-            align="middle"
-            gutter={[16, 8]}
-            style={{ marginTop: isMobile ? 0 : 16, marginBottom: isMobile ? 12 : 16 }}
-          >
-            <Col xs={24} sm={4} md={2}>
-              <Button
-                type="primary"
-                ghost
-                icon={<ReloadOutlined />}
-                onClick={fetchWatchlist}
-                loading={loading}
-                block
-              >
-                刷新
-              </Button>
-            </Col>
-          </Row>
-          <WatchTable data={list} loading={loading} />
+          <WatchBoard
+            list={list}
+            loading={loading}
+            onRefresh={fetchWatchlist}
+            onSetHidden={setItemHidden}
+          />
         </ProCard>
       </div>
     </>

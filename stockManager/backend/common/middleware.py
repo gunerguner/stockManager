@@ -6,7 +6,7 @@ from backend.common.constants import ResponseStatus
 
 def json_response(status: ResponseStatus, message: str | None = None, data: Any | None = None, **kwargs) -> JsonResponse:
     """统一的JSON响应格式"""
-    response_data = {"status": status}
+    response_data: dict[str, Any] = {"status": int(status)}
 
     if message is not None:
         response_data["message"] = message

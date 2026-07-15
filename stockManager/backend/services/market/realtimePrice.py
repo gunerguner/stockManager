@@ -1,4 +1,6 @@
 """股票实时价格外部数据源（easyquotation tencent / hkquote）"""
+from typing import Protocol, cast
+
 from easyquotation import use as eq_use
 
 from backend.common import logger
@@ -6,12 +8,17 @@ from backend.common.market import hk_api_code, split_codes_by_market
 from backend.common.types import RealtimePriceData, RealtimePriceDict
 from backend.common.utils import safe_float
 
-_quotations: dict[str, object] = {}
+
+class _EasyQuotation(Protocol):
+    def real(self, code_list: list[str], prefix: bool = False) -> dict[str, dict]: ...
 
 
-def _quotation(name: str):
+_quotations: dict[str, _EasyQuotation] = {}
+
+
+def _quotation(name: str) -> _EasyQuotation:
     if name not in _quotations:
-        _quotations[name] = eq_use(name)
+        _quotations[name] = cast(_EasyQuotation, eq_use(name))
     return _quotations[name]
 
 

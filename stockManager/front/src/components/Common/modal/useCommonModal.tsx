@@ -125,7 +125,7 @@ export const useCommonModal = () => {
             body: { maxHeight: 'none', padding: 0 },
           };
 
-      modal.info({
+      const instance = modal.info({
         title,
         content,
         width: isMobile ? '95%' : width,
@@ -135,6 +135,7 @@ export const useCommonModal = () => {
         mask: { closable: true },
         styles,
       });
+      return { destroy: instance.destroy };
     },
     [modal, isMobile],
   );

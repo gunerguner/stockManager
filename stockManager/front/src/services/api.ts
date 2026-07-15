@@ -86,6 +86,15 @@ export async function getWatchlist(options?: RequestOptions) {
   return getRequest<API.WatchlistResult>('/api/watchlist', options);
 }
 
+/** 设置关注项隐藏状态 POST /api/watchlist/hidden */
+export async function updateWatchHidden(
+  code: string,
+  hidden: boolean,
+  options?: RequestOptions,
+) {
+  return postRequest<API.BaseResult>('/api/watchlist/hidden', { code, hidden }, options);
+}
+
 /** 获取交易状态 Tag 数据 GET /api/tradingStatus */
 export async function getTradingStatus(options?: RequestOptions) {
   return getRequest<API.TradingStatusResult>('/api/tradingStatus', options);

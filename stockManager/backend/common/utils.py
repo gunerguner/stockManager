@@ -1,5 +1,6 @@
 """公共工具函数模块"""
 from collections import defaultdict
+from collections.abc import Iterable
 
 from backend.common.types import RealtimePriceData
 from backend.models import Operation
@@ -18,7 +19,7 @@ def extract_offset_today(
 
 def operation_sort_key(op: Operation) -> tuple:
     """Operation 统一排序键：(date, sortOrder, id)"""
-    return (op.date, op.sortOrder, op.id)
+    return (op.date, op.sortOrder, op.pk)
 
 
 def format_percent(value: float, precision: int = 2) -> str:
@@ -26,7 +27,7 @@ def format_percent(value: float, precision: int = 2) -> str:
     return f"{value * 100:.{precision}f}%"
 
 
-def format_operations(operation_list: list[Operation]) -> dict[str, list[Operation]]:
+def format_operations(operation_list: Iterable[Operation]) -> dict[str, list[Operation]]:
     """按股票代码分组操作记录"""
     grouped: defaultdict[str, list[Operation]] = defaultdict(list)
     for operation in operation_list:

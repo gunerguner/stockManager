@@ -1,5 +1,5 @@
 """底层缓存工具类"""
-from typing import Any
+from typing import Any, cast
 
 from django.core.cache import cache
 from django_redis import get_redis_connection
@@ -9,12 +9,12 @@ class Cache:
     """底层缓存工具类，提供批量操作和模式删除"""
 
     @staticmethod
-    def make_key(key: str, version: int = None) -> str:
+    def make_key(key: str, version: int | None = None) -> str:
         """逻辑 key -> Redis 完整 key（与 cache.get/set 一致的前缀与版本）"""
         return cache.make_key(key, version=version)
 
     @staticmethod
-    def make_pattern(pattern: str, version: int = None) -> str:
+    def make_pattern(pattern: str, version: int | None = None) -> str:
         """逻辑通配 pattern -> Redis 完整 pattern"""
         return cache.make_key('', version=version) + pattern
 
@@ -28,7 +28,7 @@ class Cache:
 
         try:
             redis_client = get_redis_connection("default")
-            client = cache.client
+            client = cast(Any, cache).client
             values = redis_client.mget(full_keys)
 
             return {
@@ -39,14 +39,14 @@ class Cache:
             return {key: cache.get(key) for key in keys}
 
     @staticmethod
-    def set_many(mapping: dict[str, Any], timeout: int = None) -> None:
+    def set_many(mapping: dict[str, Any], timeout: int | None = None) -> None:
         """批量设置缓存；mapping 的 key 为逻辑 key，序列化/前缀与 cache.set 一致"""
         if not mapping:
             return
 
         try:
             redis_client = get_redis_connection("default")
-            client = cache.client
+            client = cast(Any, cache).client
             pipe = redis_client.pipeline()
             for logical_key, value in mapping.items():
                 if value is not None:

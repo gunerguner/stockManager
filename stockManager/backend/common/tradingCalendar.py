@@ -7,7 +7,7 @@
 
 A 股调休上班日（补班）仍不开盘，亦不在 sessions 内。
 """
-from typing import ClassVar
+from typing import ClassVar, cast
 from datetime import datetime, timedelta
 import math
 import pytz
@@ -50,7 +50,10 @@ class TradingCalendar:
     @classmethod
     def is_trading_day(cls, day, market: Market = Market.CN) -> bool:
         """是否为该市场的交易日（非法定假日、非周末、非交易所休市日）。"""
-        return bool(cls.get_calendar(market).is_session(pd.Timestamp(day)))
+        ts = pd.Timestamp(day)
+        if pd.isna(ts):
+            return False
+        return bool(cls.get_calendar(market).is_session(cast(pd.Timestamp, ts)))
 
     @classmethod
     def is_trading_time_passed(

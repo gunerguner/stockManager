@@ -1,5 +1,5 @@
-import { Descriptions, Table, Tooltip, theme } from 'antd';
-import { useMemo } from 'react';
+import { Button, Descriptions, Table, Tooltip, theme } from 'antd';
+import { useMemo, useState } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useCommonModal } from '@/components/Common/modal/useCommonModal';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
@@ -22,6 +22,7 @@ import '@/components/Common/index.less';
 type WatchTableProps = {
   data: API.WatchItem[];
   loading?: boolean;
+  onToggleHidden?: (record: API.WatchItem, nextHidden: boolean) => Promise<boolean>;
 };
 
 const renderMultilineText = (text: string) => {
@@ -29,7 +30,66 @@ const renderMultilineText = (text: string) => {
   return <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>;
 };
 
-export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false }) => {
+const WatchDetailContent: React.FC<{
+  record: API.WatchItem;
+  onToggleHidden?: (record: API.WatchItem, nextHidden: boolean) => Promise<boolean>;
+  onClose: () => void;
+}> = ({ record, onToggleHidden, onClose }) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleToggle = async () => {
+    if (!onToggleHidden) return;
+    setSubmitting(true);
+    try {
+      const ok = await onToggleHidden(record, !record.hidden);
+      if (ok) onClose();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <Descriptions column={1} size="small" className="watch-detail-descriptions">
+        <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
+        <Descriptions.Item label="机会">{renderMultilineText(record.opportunity)}</Descriptions.Item>
+        <Descriptions.Item label="左侧点">
+          {formatMarketPriceOrDash(record.leftPoint, record.code)}
+        </Descriptions.Item>
+        <Descriptions.Item label="趋势点">
+          {formatMarketPriceOrDash(record.trendPoint, record.code)}
+        </Descriptions.Item>
+        <Descriptions.Item label="血筹点">
+          {formatMarketPriceOrDash(record.bloodPoint, record.code)}
+        </Descriptions.Item>
+        <Descriptions.Item label="现价">
+          {formatMarketPriceOrDash(record.priceNow, record.code)}
+        </Descriptions.Item>
+        <Descriptions.Item label="6年内最高">
+          {formatMarketPriceOrDash(record.histHigh, record.code)}
+        </Descriptions.Item>
+        <Descriptions.Item label="PB">{formatDecimal(record.pb)}</Descriptions.Item>
+        <Descriptions.Item label="PE(TTM)">{formatDecimal(record.pe)}</Descriptions.Item>
+        <Descriptions.Item label="ROE">
+          {formatPercent(calcRoeFromPbPe(record.pb, record.pe))}
+        </Descriptions.Item>
+      </Descriptions>
+      {onToggleHidden && (
+        <div style={{ marginTop: 16, textAlign: 'right' }}>
+          <Button type="primary" ghost loading={submitting} onClick={handleToggle}>
+            {record.hidden ? '显示' : '隐藏'}
+          </Button>
+        </div>
+      )}
+    </>
+  );
+};
+
+export const WatchTable: React.FC<WatchTableProps> = ({
+  data,
+  loading = false,
+  onToggleHidden,
+}) => {
   const isMobile = useIsMobile();
   const { showModal } = useCommonModal();
   const { colorFromValue, highlightStyle, warningStyle } = useProfitLossColors();
@@ -70,36 +130,19 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
   };
 
   const handleRowClick = (record: API.WatchItem) => {
-    showModal({
+    const closeRef = { current: () => {} };
+    const { destroy } = showModal({
       title: `${record.name}（${record.code}）`,
       width: isMobile ? undefined : 768,
       content: (
-        <Descriptions column={1} size="small" className="watch-detail-descriptions">
-          <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
-          <Descriptions.Item label="机会">{renderMultilineText(record.opportunity)}</Descriptions.Item>
-          <Descriptions.Item label="左侧点">
-            {formatMarketPriceOrDash(record.leftPoint, record.code)}
-          </Descriptions.Item>
-          <Descriptions.Item label="趋势点">
-            {formatMarketPriceOrDash(record.trendPoint, record.code)}
-          </Descriptions.Item>
-          <Descriptions.Item label="血筹点">
-            {formatMarketPriceOrDash(record.bloodPoint, record.code)}
-          </Descriptions.Item>
-          <Descriptions.Item label="现价">
-            {formatMarketPriceOrDash(record.priceNow, record.code)}
-          </Descriptions.Item>
-          <Descriptions.Item label="6年内最高">
-            {formatMarketPriceOrDash(record.histHigh, record.code)}
-          </Descriptions.Item>
-          <Descriptions.Item label="PB">{formatDecimal(record.pb)}</Descriptions.Item>
-          <Descriptions.Item label="PE(TTM)">{formatDecimal(record.pe)}</Descriptions.Item>
-          <Descriptions.Item label="ROE">
-            {formatPercent(calcRoeFromPbPe(record.pb, record.pe))}
-          </Descriptions.Item>
-        </Descriptions>
+        <WatchDetailContent
+          record={record}
+          onToggleHidden={onToggleHidden}
+          onClose={() => closeRef.current()}
+        />
       ),
     });
+    closeRef.current = destroy;
   };
 
   const columns: ColumnsType<API.WatchItem> = useMemo(
@@ -187,7 +230,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({ data, loading = false })
         render: (value, record) => renderBuyPoint(value, record),
       },
     ],
-    [isMobile, colorFromValue, highlightStyle, token.colorTextDisabled],
+    [isMobile, colorFromValue, highlightStyle, warningStyle, token.colorTextDisabled],
   );
 
   return (

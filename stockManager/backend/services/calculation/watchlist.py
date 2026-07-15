@@ -69,6 +69,7 @@ def build_watchlist(
             leftPoint=item["leftPoint"],
             trendPoint=item["trendPoint"],
             bloodPoint=item["bloodPoint"],
+            hidden=bool(item.get("hidden", False)),
         )
         if holding_offset and code in holding_offset:
             entry["offsetTotal"] = holding_offset[code]

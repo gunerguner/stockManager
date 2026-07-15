@@ -1,5 +1,5 @@
 """缓存仓库门面：对外统一入口，聚合多 store 的编排调用"""
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -98,7 +98,7 @@ class CacheRepository:
         valuations = dict(cached_vals)
         hist_highs = dict(cached_hist)
 
-        futures: list[tuple[str, object]] = []
+        futures: list[tuple[str, Future]] = []
         with ThreadPoolExecutor(max_workers=2) as executor:
             if missing_vals:
                 futures.append((

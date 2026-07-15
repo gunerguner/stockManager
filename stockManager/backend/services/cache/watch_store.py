@@ -1,4 +1,6 @@
 """用户关注列表缓存"""
+from typing import cast
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
@@ -10,19 +12,23 @@ from backend.services.cache import keys
 
 
 def get_user_watchlist(user: User) -> list[WatchItemDict]:
-    key = keys.KEY_USER_WATCHLIST.format(user_id=user.id)
+    key = keys.KEY_USER_WATCHLIST.format(user_id=user.pk)
     cached = cache.get(key)
     if cached is not None:
         return cached
-    items: list[WatchItemDict] = list(
-        WatchItem.objects.filter(user=user).values(
-            "code",
-            "risk",
-            "opportunity",
-            "leftPoint",
-            "trendPoint",
-            "bloodPoint",
-        )
+    items = cast(
+        list[WatchItemDict],
+        list(
+            WatchItem.objects.filter(user=user).values(
+                "code",
+                "risk",
+                "opportunity",
+                "leftPoint",
+                "trendPoint",
+                "bloodPoint",
+                "hidden",
+            )
+        ),
     )
     cache.set(key, items, keys.TTL_USER_DATA)
     return items

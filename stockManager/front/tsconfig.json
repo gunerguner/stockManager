@@ -23,6 +23,7 @@
     "types": [],
     "isolatedModules": true,
     "incremental": true,
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./src/*"],
       "@@/*": ["./src/.umi/*"]

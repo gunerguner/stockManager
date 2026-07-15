@@ -43,7 +43,7 @@ def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
     state.db = "default"
 
     op._state = state
-    op.user_id = user_id
+    setattr(op, "user_id", user_id)
     op.code = code
     op.date = datetime.strptime(op_data["date"], "%Y-%m-%d").date()
     for field in _OPERATION_FIELDS:
@@ -56,7 +56,7 @@ def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
 
 def deserialize_operations(data: str, user: User) -> OperationDict:
     operations_dict = json.loads(data)
-    user_id = user.id
+    user_id = int(user.pk)
     return {
         code: [operation_from_cache(code, op_data, user_id) for op_data in op_list]
         for code, op_list in operations_dict.items()

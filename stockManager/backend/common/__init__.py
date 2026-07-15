@@ -13,6 +13,7 @@ from backend.common.decorators import (
 )
 from backend.common.middleware import json_response, get_client_ip
 from backend.common.cache import Cache
+from backend.common.auth_user import authenticated_user
 
 # 配置logger
 import logging
@@ -31,5 +32,6 @@ __all__ = [
     'json_response',
     'get_client_ip',
     'Cache',
+    'authenticated_user',
 ]
 

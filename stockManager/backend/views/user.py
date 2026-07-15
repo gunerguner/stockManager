@@ -11,6 +11,7 @@ from backend.common import (
     handle_exception,
     parse_json_body,
     validate_required_fields,
+    authenticated_user,
 )
 
 
@@ -41,7 +42,7 @@ def login(request: HttpRequest, data: dict) -> JsonResponse:
 @handle_exception
 def logout(request: HttpRequest) -> JsonResponse:
     """用户登出接口"""
-    username = request.user.username
+    username = authenticated_user(request).username
     request.session.flush()
     logger.info(f"用户 {username} 登出成功")
     return json_response(status=ResponseStatus.SUCCESS, message="登出成功")
@@ -52,7 +53,7 @@ def logout(request: HttpRequest) -> JsonResponse:
 @handle_exception
 def currentUser(request: HttpRequest) -> JsonResponse:
     """获取当前登录用户信息"""
-    user = request.user
+    user = authenticated_user(request)
     match (user.is_superuser, user.is_staff):
         case (True, _):
             access = "admin"

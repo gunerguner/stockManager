@@ -17,7 +17,7 @@ class Operation(models.Model):
     code = models.CharField(max_length=200, verbose_name="股票代码")
     date = models.DateField(verbose_name="交易日期")
     sortOrder = models.PositiveIntegerField(default=0, verbose_name="同日顺序")
-    operationType = models.CharField(
+    operationType = models.CharField(  # type: ignore[misc]
         max_length=4, 
         choices=operationType.choices, 
         default=operationType.BUY,
@@ -85,7 +85,7 @@ class Info(models.Model):
         unique_together = [['user', 'info_type']]
 
     def __str__(self) -> str:
-        return f"{self.user.username} - {self.get_info_type_display()}: {self.value}"
+        return f"{self.user.username} - {self.get_info_type_display()}: {self.value}"  # type: ignore[attr-defined]
 
 
 class CashFlow(models.Model):
@@ -135,7 +135,7 @@ class StockMeta(models.Model):
     code = models.CharField(max_length=200, verbose_name="股票代码")
     name = models.CharField(max_length=64, blank=True, default="", verbose_name="股票名称")
     isNew = models.BooleanField(default=False, verbose_name="是否新股")
-    stockType = models.CharField(
+    stockType = models.CharField(  # type: ignore[misc]
         max_length=6, 
         choices=stockType.choices, 
         default=stockType.OTHER,
@@ -148,7 +148,7 @@ class StockMeta(models.Model):
 
     def __str__(self) -> str:
         display_name = self.name or self.code
-        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"
+        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"  # type: ignore[attr-defined]
 
 
 class WatchItem(models.Model):
@@ -167,6 +167,7 @@ class WatchItem(models.Model):
     trendPoint = models.FloatField(null=True, blank=True, verbose_name="趋势点")
     bloodPoint = models.FloatField(null=True, blank=True, verbose_name="血筹点")
     comment = models.CharField(max_length=200, blank=True, default="", verbose_name="备注")
+    hidden = models.BooleanField(default=False, verbose_name="是否隐藏")
 
     class Meta:
         verbose_name = "关注股票列表"
