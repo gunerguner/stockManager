@@ -14,8 +14,16 @@ WORKDIR /app
 # 依赖层：仅 package.json / package-lock.json / .utoo.toml 变化时失效
 COPY stockManager/front/package.json stockManager/front/package-lock.json stockManager/front/.utoo.toml ./
 
-RUN --mount=type=cache,id=stockmanager-utoo-cache,target=/root/.cache/nm \
-    ut install
+# utoo 用 hardlink 从 cache 链到 node_modules；BuildKit cache mount 与镜像层是不同设备，
+# 若 cache 挂在 /root/.cache/nm 会对每个包刷 EXDEV WARN 并退化为 copy。
+# 把 cache 与 node_modules 放在同一 /deps mount，装完再物化进镜像层。
+RUN --mount=type=cache,id=stockmanager-utoo-deps,target=/deps \
+    mkdir -p /deps/cache /deps/node_modules \
+    && rm -rf /app/node_modules \
+    && ln -s /deps/node_modules /app/node_modules \
+    && ut install --cache-dir /deps/cache \
+    && rm /app/node_modules \
+    && cp -a /deps/node_modules /app/node_modules
 
 # 源码层：业务代码变化时复用上一层的 node_modules，只重跑 build
 COPY stockManager/front ./

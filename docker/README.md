@@ -285,7 +285,7 @@ curl -fsS -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:${BACKEND_PUBLISH_P
 | **`/static/umi.*.css` 等 404** | 生产 `publicPath` 为 `/static/`，但 Umi 产物在 `dist` 根目录。前端 Nginx 须用 `alias` 将 `/static/` 映射到 html 根（见 `docker/nginx.conf`）；改配置后需 `build` 并重建 `frontend` 容器。 |
 | `redis` 不健康导致 `backend` 不启动 | 检查 `redis` 日志与卷权限；确认 `REDIS_URL` 中主机名为 `redis`、端口 `6379`。 |
 | 数据库或日志丢失 | 勿随意 `docker volume rm`；`sqlite_data`、`log_data` 删除后需从备份恢复。 |
-| 构建很慢或镜像很大 | 确认仓库根 **`.dockerignore`** 已排除 `node_modules`、`__pycache__` 等。`Dockerfile.frontend` 已拆层（先 `ut install` 再 `COPY` 源码）并挂载 utoo 缓存：**仅改前端业务代码**时通常只重跑 `ut run build`（Utoopack），**改 `package-lock.json` 才会重装依赖**。查看各步耗时：`docker build --progress=plain -f docker/Dockerfile.frontend .`；勿滥用 `--no-cache`。 |
+| 构建很慢或镜像很大 | 确认仓库根 **`.dockerignore`** 已排除 `node_modules`、`__pycache__` 等。`Dockerfile.frontend` 已拆层（先 `ut install` 再 `COPY` 源码），并把 utoo cache 与 `node_modules` 放在同一 BuildKit mount（`/deps`），避免跨设备 hardlink 的 EXDEV WARN。**仅改前端业务代码**时通常只重跑 `ut run build`（Utoopack），**改 `package-lock.json` 才会重装依赖**。查看各步耗时：`docker build --progress=plain -f docker/Dockerfile.frontend .`；勿滥用 `--no-cache`。 |
 
 ## 安全提示
 
