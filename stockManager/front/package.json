@@ -49,7 +49,7 @@
     "@ant-design/pro-components": "3.1.12-0",
     "@umijs/max": "4.6.69",
     "antd": "^6.5.0",
-    "dayjs": "^1.11.19",
+    "dayjs": "^1.11.21",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
@@ -58,12 +58,12 @@
     "@types/react-dom": "^19.2.3",
     "@umijs/lint": "4.6.69",
     "cross-env": "^7.0.3",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.4",
     "gh-pages": "^6.3.0",
     "lint-staged": "^15.5.2",
-    "prettier": "^3.6.2",
+    "prettier": "^3.8.3",
     "rimraf": "^5.0.10",
-    "stylelint": "^16.25.0",
+    "stylelint": "^16.26.1",
     "typescript": "^5.9.3"
   },
   "engines": {
