@@ -74,7 +74,7 @@ class Integrate:
     @classmethod
     def set_watch_hidden(cls, user: User, code: str, hidden: bool) -> None:
         try:
-            item = WatchItem.objects.get(user=user, code=code)
+            item = WatchItem.objects.get(user=user, stock_meta__code=code)
         except WatchItem.DoesNotExist as exc:
             raise WatchItem.DoesNotExist(f"关注项不存在: {code}") from exc
         item.hidden = hidden

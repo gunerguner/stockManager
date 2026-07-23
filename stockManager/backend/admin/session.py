@@ -3,14 +3,13 @@ Session 管理
 """
 import logging
 
-from django.contrib import admin
 from django.contrib import messages
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 from django.utils.html import format_html
 from django.db import transaction
 
-from backend.admin.base import User
+from backend.admin.base import BaseModelAdmin, User, admin
 
 # 取消 Django 默认的 Session 注册（如果已注册）
 if Session in admin.site._registry:
@@ -20,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 @admin.register(Session)
-class SessionAdmin(admin.ModelAdmin):
+class SessionAdmin(BaseModelAdmin):
     """Session 管理 - 仅超级管理员可见"""
-    
+
     list_display = ['session_key', 'get_user', 'get_username', 'expire_date', 'is_expired']
     list_filter = ['expire_date']
     search_fields = ['session_key']

@@ -1,18 +1,17 @@
 """
 股票元数据管理
 """
-from django.contrib import admin
+from backend.admin.base import BaseModelAdmin, StockMeta, admin
 
-from backend.admin.base import StockMeta
 
 @admin.register(StockMeta)
-class StockMetaAdmin(admin.ModelAdmin):
+class StockMetaAdmin(BaseModelAdmin):
     """股票元数据管理（全局共享）"""
-    
+
     list_display = ['code', 'name', 'stockType', 'isNew']
     list_filter = ['stockType', 'isNew']
     search_fields = ['code', 'name']
-    
+
     fieldsets = (
         ('基本信息', {
             'fields': ('code', 'name', 'stockType', 'isNew')

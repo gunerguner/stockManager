@@ -4,6 +4,7 @@ Admin 基础配置模块
 """
 from django.contrib import admin
 from django.contrib import messages
+from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth import get_user_model
 
 from backend.models import Operation, Info, StockMeta, CashFlow
@@ -11,12 +12,37 @@ from backend.models import Operation, Info, StockMeta, CashFlow
 User = get_user_model()
 
 
-class UserScopedModelAdmin(admin.ModelAdmin):
+class BaseModelAdmin(admin.ModelAdmin):
+    """全局 Admin 默认行为"""
+
+    # 过滤器始终显示计数，去掉「显示计数 / 隐藏计数」切换
+    show_facets = admin.ShowFacets.ALWAYS
+
+
+class UserScopedModelAdmin(BaseModelAdmin):
     """按用户隔离数据的 ModelAdmin 基类"""
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs if request.user.is_superuser else qs.filter(user=request.user)
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield is None or not isinstance(formfield.widget, RelatedFieldWidgetWrapper):
+            return formfield
+
+        # user：去掉添加/修改/查看/删除快捷图标
+        if db_field.name == 'user':
+            formfield.widget.can_add_related = False
+            formfield.widget.can_change_related = False
+            formfield.widget.can_delete_related = False
+            formfield.widget.can_view_related = False
+        # stock_meta：保留「+」以便先建 meta，关闭其余快捷图标
+        elif db_field.name == 'stock_meta':
+            formfield.widget.can_change_related = False
+            formfield.widget.can_delete_related = False
+            formfield.widget.can_view_related = False
+        return formfield
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -58,4 +84,14 @@ class UserScopedModelAdmin(admin.ModelAdmin):
         return self._owns_object(request, obj) and super().has_delete_permission(request, obj)
 
 
-__all__ = ['admin', 'messages', 'User', 'Operation', 'Info', 'StockMeta', 'CashFlow', 'UserScopedModelAdmin']
+__all__ = [
+    'admin',
+    'messages',
+    'User',
+    'Operation',
+    'Info',
+    'StockMeta',
+    'CashFlow',
+    'BaseModelAdmin',
+    'UserScopedModelAdmin',
+]

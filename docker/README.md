@@ -114,6 +114,61 @@ stockManager 前端为 **Umi**，**不依赖** `VITE_*` / `_app.config.js`：接
 
 删除卷会丢失对应数据（`redis_data`、`log_data`）；sqlite 使用的是宿主机目录挂载，建议定期备份 `docker/sqlite-data/db.sqlite3`。
 
+## 重新上传 / 替换 SQLite 数据库
+
+你日常若是**直接用本机/备份的 `db.sqlite3` 覆盖服务器上的库**（不是靠容器里 `migrate` 从空库长出来），按下面做即可。默认 `RUN_MIGRATIONS_ON_START=false`，**换库不会自动 migrate**，也**不会**自动清 Redis。
+
+### 推荐步骤（仓库根目录）
+
+1. **备份线上现有库**（建议先做）
+
+   ```bash
+   cp docker/sqlite-data/db.sqlite3 "docker/sqlite-data/db.sqlite3.bak.$(date +%Y%m%d%H%M%S)"
+   ```
+
+2. **停 backend，避免拷贝时 SQLite 被写入**
+
+   ```bash
+   docker compose -f docker/docker-compose.yml --env-file docker/.env stop backend
+   ```
+
+3. **覆盖文件**（文件名必须是 `db.sqlite3`，路径与 `.env` 中 `SQLITE_HOST_DIR` 一致）
+
+   ```bash
+   # 示例：把本地上传的库拷到挂载目录
+   cp /path/to/uploaded/db.sqlite3 docker/sqlite-data/db.sqlite3
+   # 确认权限对容器可读（常见：当前用户可读写即可）
+   ls -l docker/sqlite-data/db.sqlite3
+   ```
+
+4. **启动 backend**
+
+   ```bash
+   docker compose -f docker/docker-compose.yml --env-file docker/.env start backend
+   # 或：up -d backend
+   ```
+
+5. **按需执行迁移**（上传的库 schema **落后于当前代码**时必做；若该库已在同版本代码上 migrate 过则可跳过）
+
+   ```bash
+   docker compose -f docker/docker-compose.yml --env-file docker/.env exec backend python manage.py migrate
+   docker compose -f docker/docker-compose.yml --env-file docker/.env exec backend python manage.py showmigrations backend
+   ```
+
+6. **清理 Redis 缓存**（换库后旧缓存可能仍是上一份库的数据，**建议每次换库都清**）
+
+   - 浏览器：用 superuser 登录后走 Admin「清理缓存」，或  
+   - API：`POST /api/clearCache`（需已登录且为 superuser）
+
+### 注意
+
+| 情况 | 处理 |
+|------|------|
+| 只换库、代码未变 | 覆盖文件 → 重启 backend → **清缓存**；一般不用 `build` |
+| 换库 + 已 `git pull` 到更新代码 | 先按「更新代码后重新部署」`build`/`up`，再按本节换库；若新代码有 migration，对上传的库执行 `migrate` |
+| 上传库比当前代码**更新**（库已跑过更新的 migration，镜像还是旧代码） | 先升级代码并重建 backend，再挂该库；不要用旧代码读新 schema |
+| `SQLITE_MUST_EXIST=true` 且文件路径/文件名不对 | backend 会直接退出；检查 `docker/sqlite-data/db.sqlite3` 与 `.env` |
+
 ## Redis 缓存键与清理
 
 本应用缓存经 django-redis 写入，键前缀为 **`stockmanager:1:`**（由 Django `KEY_PREFIX` + `VERSION` 组成，见 `stockManager/settings.py`）。示例：`stockmanager:1:user:1:operations`、`stockmanager:1:stock:price:sh600150`。
@@ -280,6 +335,7 @@ curl -fsS -o /dev/null -w "%{http_code}\n" "http://127.0.0.1:${BACKEND_PUBLISH_P
 |------|----------------|
 | `backend` 启动失败，日志提示缺少 `DJANGO_SECRET_KEY` | 在 `docker/.env` 中设置非空的 `DJANGO_SECRET_KEY` 后重新 `up`。 |
 | `backend` 启动失败，提示 `SQLITE_MUST_EXIST=true but sqlite file not found` | 先确认宿主机文件是否存在：`docker/sqlite-data/db.sqlite3`，并检查 `.env` 中 `SQLITE_HOST_DIR` 与 `SQLITE_PATH` 是否对应。 |
+| 直接上传/覆盖了 `db.sqlite3` 后数据或列表异常 | 见上文「重新上传 / 替换 SQLite 数据库」：停 backend → 覆盖 → 启动 → 按需 `migrate` → **清 Redis 缓存**。 |
 | 浏览器登录或表单报 **403 CSRF** | 检查访问 URL 是否与 **`CSRF_TRUSTED_ORIGINS_EXTRA`**、反向代理的 `X-Forwarded-Proto` / `Host` 一致；HTTPS 站点需写 `https://` 源。 |
 | 前端空白或接口 502 | 看 `frontend`、`backend` 日志；确认 `proxy_pass http://backend:8000` 与后端实际监听一致；确认 `depends_on` 后后端已就绪。 |
 | **`/static/umi.*.css` 等 404** | 生产 `publicPath` 为 `/static/`，但 Umi 产物在 `dist` 根目录。前端 Nginx 须用 `alias` 将 `/static/` 映射到 html 根（见 `docker/nginx.conf`）；改配置后需 `build` 并重建 `frontend` 容器。 |

@@ -5,21 +5,78 @@ from django.utils.translation import gettext_lazy as _
 from backend.common.constants import OperationType
 
 
-class Operation(models.Model):
+class StockMeta(models.Model):
+    """股票元数据模型（全局共享）"""
+
+    class stockType(models.TextChoices):
+        SH60 = "SH60", _("沪市")
+        SZ00 = "SZ00", _("深市")
+        SZ300 = "SZ300", _("创业板")
+        SH688 = "SH688", _("科创板")
+        BJ = "BJ", _("北交所")
+        CONV = "CONV", _("可转债")
+        FUNDIN = "FUNDIN", _("场内基金")
+        FUNDAB = "FUNDAB", _("分级基金")
+        HK = "HK", _("港股通")
+        OTHER = "OTHER", _("其它")
+
+    code = models.CharField(max_length=200, unique=True, verbose_name="股票代码")
+    name = models.CharField(max_length=64, blank=True, default="", verbose_name="股票名称")
+    isNew = models.BooleanField(default=False, verbose_name="是否新股")
+    stockType = models.CharField(  # type: ignore[misc]
+        max_length=6,
+        choices=stockType.choices,
+        default=stockType.OTHER,
+        verbose_name="股票类型"
+    )
+
+    class Meta:
+        verbose_name = "股票元数据"
+        verbose_name_plural = "股票元数据"
+
+    def __str__(self) -> str:
+        display_name = self.name or self.code
+        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"  # type: ignore[attr-defined]
+
+
+class _StockMetaCodeMixin:
+    """兼容层：对外仍用 .code 读写字符串股票代码。"""
+
+    @property
+    def code(self) -> str:
+        cached = getattr(self, "_code", None)
+        if cached is not None:
+            return cached
+        stock_meta = getattr(self, "stock_meta", None)
+        if stock_meta is not None:
+            return stock_meta.code
+        return ""
+
+    @code.setter
+    def code(self, value: str) -> None:
+        self._code = value
+
+
+class Operation(_StockMetaCodeMixin, models.Model):
     """股票操作记录模型"""
-    
+
     class operationType(models.TextChoices):
         BUY = "BUY", _("买入")
         SELL = "SELL", _("卖出")
         Dividend = "DV", _("除权除息")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operations', verbose_name="用户")
-    code = models.CharField(max_length=200, verbose_name="股票代码")
+    stock_meta = models.ForeignKey(
+        StockMeta,
+        on_delete=models.PROTECT,
+        related_name='operations',
+        verbose_name="股票",
+    )
     date = models.DateField(verbose_name="交易日期")
     sortOrder = models.PositiveIntegerField(default=0, verbose_name="同日顺序")
     operationType = models.CharField(  # type: ignore[misc]
-        max_length=4, 
-        choices=operationType.choices, 
+        max_length=4,
+        choices=operationType.choices,
         default=operationType.BUY,
         verbose_name="操作类型"
     )
@@ -70,7 +127,7 @@ class Operation(models.Model):
 
 class Info(models.Model):
     """用户资金信息模型"""
-    
+
     class InfoType(models.TextChoices):
         ORIGIN_CASH = "originCash", _("本金")
         INCOME_CASH = "incomeCash", _("收益现金")
@@ -90,20 +147,20 @@ class Info(models.Model):
 
 class CashFlow(models.Model):
     """出入金记录模型（金额正数为入金，负数为出金）"""
-    
+
     user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='cash_flows', 
+        User,
+        on_delete=models.CASCADE,
+        related_name='cash_flows',
         verbose_name="用户"
     )
     transaction_date = models.DateField(verbose_name="交易日期")
     amount = models.DecimalField(
-        max_digits=15, 
-        decimal_places=2, 
+        max_digits=15,
+        decimal_places=2,
         verbose_name="金额"
     )
-    
+
     class Meta:
         verbose_name = "出入金记录"
         verbose_name_plural = "出入金记录"
@@ -111,47 +168,14 @@ class CashFlow(models.Model):
         indexes = [
             models.Index(fields=['user', '-transaction_date']),
         ]
-    
+
     def __str__(self) -> str:
         transaction_type = "入金" if self.amount >= 0 else "出金"
-        return f"{self.user.username} - {transaction_type} {abs(self.amount)} ({self.transaction_date})"
+        amount_abs = abs(self.amount)
+        return f"{self.user.username} - {transaction_type} {amount_abs} ({self.transaction_date})"
 
 
-class StockMeta(models.Model):
-    """股票元数据模型（全局共享）"""
-    
-    class stockType(models.TextChoices):
-        SH60 = "SH60", _("沪市")
-        SZ00 = "SZ00", _("深市")
-        SZ300 = "SZ300", _("创业板")
-        SH688 = "SH688", _("科创板")
-        BJ = "BJ", _("北交所")
-        CONV = "CONV", _("可转债")
-        FUNDIN = "FUNDIN", _("场内基金")
-        FUNDAB = "FUNDAB", _("分级基金")
-        HK = "HK", _("港股通")
-        OTHER = "OTHER", _("其它")
-
-    code = models.CharField(max_length=200, verbose_name="股票代码")
-    name = models.CharField(max_length=64, blank=True, default="", verbose_name="股票名称")
-    isNew = models.BooleanField(default=False, verbose_name="是否新股")
-    stockType = models.CharField(  # type: ignore[misc]
-        max_length=6, 
-        choices=stockType.choices, 
-        default=stockType.OTHER,
-        verbose_name="股票类型"
-    )
-
-    class Meta:
-        verbose_name = "股票元数据"
-        verbose_name_plural = "股票元数据"
-
-    def __str__(self) -> str:
-        display_name = self.name or self.code
-        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"  # type: ignore[attr-defined]
-
-
-class WatchItem(models.Model):
+class WatchItem(_StockMetaCodeMixin, models.Model):
     """用户关注列表"""
 
     user = models.ForeignKey(
@@ -160,7 +184,12 @@ class WatchItem(models.Model):
         related_name='watch_items',
         verbose_name="用户",
     )
-    code = models.CharField(max_length=200, verbose_name="股票代码")
+    stock_meta = models.ForeignKey(
+        StockMeta,
+        on_delete=models.PROTECT,
+        related_name='watch_items',
+        verbose_name="股票",
+    )
     risk = models.TextField(blank=True, default="", verbose_name="风险")
     opportunity = models.TextField(blank=True, default="", verbose_name="机会")
     leftPoint = models.FloatField(null=True, blank=True, verbose_name="左侧点")
@@ -173,7 +202,9 @@ class WatchItem(models.Model):
         verbose_name = "关注股票列表"
         verbose_name_plural = "关注股票列表"
         ordering = ['id']
-        unique_together = [['user', 'code']]
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'stock_meta'], name='uniq_watchitem_user_stock_meta'),
+        ]
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.code}"

@@ -96,7 +96,9 @@ def get_user_operations(user: User) -> OperationDict:
     cached = get_user_operations_cache(user)
     if cached is not None:
         return cached
-    operations = format_operations(Operation.objects.filter(user=user).order_by('date', 'sortOrder', 'id'))
+    operations = format_operations(
+        Operation.objects.filter(user=user).select_related('stock_meta').order_by('date', 'sortOrder', 'id')
+    )
     set_user_operations_cache(user, operations)
     return operations
 

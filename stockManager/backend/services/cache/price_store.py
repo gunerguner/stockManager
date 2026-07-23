@@ -110,11 +110,14 @@ def _set_prices_batch(prices: RealtimePriceDict, markets_to_timestamp: set[Marke
 
 def query_prices(code_list: list[str]) -> RealtimePriceDict:
     cached, missing = _get_cached_prices(code_list)
-    if not missing:
-        return cached
+    if missing:
+        api_result = fetch_prices(missing)
+        if api_result:
+            _set_prices_batch(api_result, _markets_fully_fetched(missing, api_result))
+        result = {**cached, **api_result}
+    else:
+        result = cached
 
-    api_result = fetch_prices(missing)
-    if api_result:
-        _set_prices_batch(api_result, _markets_fully_fetched(missing, api_result))
-        meta_store.sync_names_from_realtime(api_result)
-    return {**cached, **api_result}
+    # 用本次可见行情回填/纠偏 StockMeta.name（空名称不受日级节流限制）
+    meta_store.sync_names_from_realtime(result)
+    return result

@@ -43,7 +43,7 @@ def get_stock_meta_dict() -> dict[str, StockMetaModel]:
 
 
 def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
-    if not prices or cache.get(keys.KEY_STOCK_NAME_SYNC_MARK) is not None:
+    if not prices:
         return 0
 
     name_map = {
@@ -54,14 +54,27 @@ def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
     if not name_map:
         return 0
 
+    metas = list(StockMetaModel.objects.filter(code__in=name_map.keys()))
+    if not metas:
+        return 0
+
+    # 全日只做一次「已有名称的纠偏」；空名称始终允许回填
+    throttle_updates = cache.get(keys.KEY_STOCK_NAME_SYNC_MARK) is not None
     changed_metas = []
-    for meta in StockMetaModel.objects.filter(code__in=name_map.keys()):
+    for meta in metas:
         latest_name = name_map.get(meta.code, "")
-        if latest_name and latest_name != meta.name:
+        if not latest_name:
+            continue
+        if not meta.name:
+            meta.name = latest_name
+            changed_metas.append(meta)
+        elif not throttle_updates and latest_name != meta.name:
             meta.name = latest_name
             changed_metas.append(meta)
 
-    cache.set(keys.KEY_STOCK_NAME_SYNC_MARK, True, keys.TTL_STOCK_NAME_SYNC)
+    if not throttle_updates:
+        cache.set(keys.KEY_STOCK_NAME_SYNC_MARK, True, keys.TTL_STOCK_NAME_SYNC)
+
     if not changed_metas:
         return 0
 

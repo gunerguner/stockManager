@@ -10,7 +10,7 @@ from backend.common import logger
 from backend.common.constants import OperationType
 from backend.common.types import OperationDict, DividendUpdateData
 from backend.common.utils import operation_sort_key
-from backend.models import Operation
+from backend.models import Operation, StockMeta
 from backend.services.cache import CacheRepository
 from backend.services.calculation import StockHold
 from backend.services.market import baostock_session, fetch_dividends
@@ -98,7 +98,7 @@ class Dividend:
                 Operation.objects.create(
                     user=user,
                     date=dividend_date,
-                    code=code,
+                    stock_meta=StockMeta.objects.get(code=code),
                     operationType=OperationType.DIVIDEND,
                     cash=row["cash"],
                     reserve=row["reserve"],
