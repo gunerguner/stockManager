@@ -20,6 +20,6 @@ class WatchItemAdmin(UserScopedModelAdmin):
     )
 
     @admin.display(description='股票', ordering='stock_meta__name')
-    def stock_name(self, obj):
+    def stock_name(self, obj: WatchItem) -> str:
         meta = obj.stock_meta
         return (meta.name or meta.code) if meta else '-'

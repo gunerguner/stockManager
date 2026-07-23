@@ -3,6 +3,7 @@
 """
 from django.db.models import Max
 
+from backend.common.auth_user import authenticated_user
 from backend.common.market import is_hk_code
 from backend.admin.base import Operation, UserScopedModelAdmin, admin, messages
 
@@ -33,13 +34,13 @@ class OperationAdmin(UserScopedModelAdmin):
     )
 
     @admin.display(description='股票', ordering='stock_meta__name')
-    def stock_name(self, obj):
+    def stock_name(self, obj: Operation) -> str:
         meta = obj.stock_meta
         return (meta.name or meta.code) if meta else '-'
 
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.user = request.user
+            obj.user = authenticated_user(request)
         if not change and obj.sortOrder == 0:
             max_sort = Operation.objects.filter(
                 user=obj.user,

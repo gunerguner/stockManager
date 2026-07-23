@@ -20,16 +20,16 @@ class CashFlowAdmin(UserScopedModelAdmin):
         }),
     )
 
-    def formatted_amount(self, obj):
+    @admin.display(description='金额')
+    def formatted_amount(self, obj: CashFlow | None) -> str:
         """格式化金额显示"""
         if obj is None:
             return '-'
         return f'+{obj.amount:.2f}' if obj.amount >= 0 else f'{obj.amount:.2f}'
-    formatted_amount.short_description = '金额'
 
-    def transaction_type_display(self, obj):
+    @admin.display(description='类型')
+    def transaction_type_display(self, obj: CashFlow | None) -> str:
         """交易类型显示"""
         if obj is None:
             return '-'
         return '入金' if obj.amount >= 0 else '出金'
-    transaction_type_display.short_description = '类型'

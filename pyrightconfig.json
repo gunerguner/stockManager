@@ -1,0 +1,20 @@
+{
+  "include": ["stockManager/backend", "stockManager/stockManager"],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/staticfiles",
+    "**/backup",
+    "**/front",
+    "**/migrations",
+    "**/dist",
+    "**/build"
+  ],
+  "extraPaths": ["stockManager"],
+  "pythonVersion": "3.13",
+  "pythonPlatform": "All",
+  "venvPath": ".",
+  "venv": ".venv",
+  "typeCheckingMode": "standard",
+  "reportMissingImports": "error"
+}

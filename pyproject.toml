@@ -5,12 +5,33 @@ known-first-party = ["backend", "stockManager"]
 select = ["I"]
 
 # ---------------------------------------------------------------------------
-# Basedpyright（IDE / CLI）静态类型检查配置
-# ---------------------------------------------------------------------------
+# Pyright / Pylance（Cursor 默认 Python 语言服务读 [tool.pyright] 与 pyrightconfig.json）
+# Basedpyright CLI / 扩展读 [tool.basedpyright]
 # 路径相对仓库外层根。Django 包根是内层 stockManager/（含 manage.py）。
 # django-stubs 主要为 mypy 插件设计：无插件时 Model 无 .id（用 .pk）、
-# Admin 动态属性大量误报，故排除 admin/。
+# Admin 动态属性大量误报，故 basedpyright 排除 admin/；Pylance 仍分析 admin，
+# 但须能解析 backend.* 导入（依赖 extraPaths）。
 # ---------------------------------------------------------------------------
+[tool.pyright]
+include = ["stockManager/backend", "stockManager/stockManager"]
+exclude = [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/staticfiles",
+    "**/backup",
+    "**/front",
+    "**/migrations",
+    "**/dist",
+    "**/build",
+]
+extraPaths = ["stockManager"]
+pythonVersion = "3.13"
+pythonPlatform = "All"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
+reportMissingImports = "error"
+
 [tool.basedpyright]
 include = ["stockManager/backend", "stockManager/stockManager"]
 exclude = [

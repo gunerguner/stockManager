@@ -5,11 +5,10 @@ Admin 基础配置模块
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 
+from backend.common.auth_user import authenticated_user
 from backend.models import Operation, Info, StockMeta, CashFlow
-
-User = get_user_model()
 
 
 class BaseModelAdmin(admin.ModelAdmin):
@@ -24,7 +23,8 @@ class UserScopedModelAdmin(BaseModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs if request.user.is_superuser else qs.filter(user=request.user)
+        user = authenticated_user(request)
+        return qs if user.is_superuser else qs.filter(user=user)
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
@@ -44,21 +44,22 @@ class UserScopedModelAdmin(BaseModelAdmin):
             formfield.widget.can_view_related = False
         return formfield
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if request.user.is_superuser and obj is None and 'user' in form.base_fields:
-            form.base_fields['user'].initial = request.user
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj, change=change, **kwargs)
+        user = authenticated_user(request)
+        if user.is_superuser and obj is None and 'user' in form.base_fields:
+            form.base_fields['user'].initial = user
         return form
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = list(super().get_readonly_fields(request, obj))
-        if not request.user.is_superuser:
+        if not authenticated_user(request).is_superuser:
             readonly_fields.append('user')
         return readonly_fields
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
-        if request.user.is_superuser or obj is not None:
+        if authenticated_user(request).is_superuser or obj is not None:
             return fieldsets
 
         modified_fieldsets = []
@@ -71,11 +72,12 @@ class UserScopedModelAdmin(BaseModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.user = request.user
+            obj.user = authenticated_user(request)
         super().save_model(request, obj, form, change)
 
     def _owns_object(self, request, obj) -> bool:
-        return obj is None or request.user.is_superuser or obj.user == request.user
+        user = authenticated_user(request)
+        return obj is None or user.is_superuser or obj.user == user
 
     def has_change_permission(self, request, obj=None):
         return self._owns_object(request, obj) and super().has_change_permission(request, obj)
