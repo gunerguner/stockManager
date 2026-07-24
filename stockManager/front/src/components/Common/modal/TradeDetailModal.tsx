@@ -1,4 +1,4 @@
-import { Typography, Space, Divider, theme } from 'antd';
+import { Typography, Space, Divider, theme, Tooltip } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
@@ -8,6 +8,9 @@ import {
   formatAmount,
   formatDecimalRatio,
   formatMarketPrice,
+  isHkCode,
+  operationComment,
+  tradeAmountCny,
 } from '@/utils/format/stock';
 import { renderAmount } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
@@ -45,7 +48,6 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
       <Text>
         累计盈亏：
         {renderAmount(stock.offsetTotal, {
-          code: stock.code,
           profitLossColors: { profitColor, lossColor },
         })}{' '}
       </Text>
@@ -137,15 +139,32 @@ export const useTradeDetailModal = () => {
           title: '佣金',
           dataIndex: 'fee',
           width: isMobile ? 60 : 80,
-          render: (v: number) => <div>{formatAmount(v, { code })}</div>,
+          render: (v: number) => <div>{formatAmount(v)}</div>,
         },
         {
           title: '成交金额',
-          dataIndex: 'sum',
+          dataIndex: 'price',
+          key: 'tradeAmount',
           width: isMobile ? 80 : 100,
-          render: (v: number) => <div>{formatAmount(v, { code })}</div>,
+          render: (_: number, record: API.Operation) => {
+            const amountCny = tradeAmountCny(code, record);
+            const cell = <div>{formatAmount(amountCny)}</div>;
+            if (!isHkCode(code)) {
+              return cell;
+            }
+            return (
+              <Tooltip title={formatAmount(record.price * record.count, { currency: 'hkd' })}>
+                {cell}
+              </Tooltip>
+            );
+          },
         },
-        { title: '说明', dataIndex: 'comment', width: isMobile ? 100 : 150 },
+        {
+          title: '说明',
+          dataIndex: 'comment',
+          width: isMobile ? 100 : 150,
+          render: (_: string, record: API.Operation) => operationComment(record),
+        },
       ];
 
       const tables = data.map((group, index) => {

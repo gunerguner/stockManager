@@ -152,7 +152,7 @@ export const WatchTable: React.FC<WatchTableProps> = ({
         dataIndex: 'name',
         width: isMobile ? 100 : 140,
         fixed: 'left',
-        render: (_, record) => <HoldingStatus {...record} />,
+        render: (_, record) => <HoldingStatus name={record.name} code={record.code} />,
       },
       {
         title: '现价',

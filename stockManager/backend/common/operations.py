@@ -1,6 +1,11 @@
 """Operation 类型相关的共享计算逻辑"""
 from backend.models import Operation
 from backend.common.constants import OperationType
+from backend.common.settlement import (
+    buy_outflow_cny,
+    dividend_cash_cny,
+    sell_inflow_cny,
+)
 
 
 def dividend_multiplier(operation: Operation) -> float:
@@ -26,13 +31,13 @@ def apply_net_invested(
     current_hold: float,
     operation: Operation,
 ) -> tuple[float, float]:
-    """按 overall_sum 规则更新净占用资金与持股数"""
+    """按人民币资金账本更新净占用资金与持股数（供资金加权 / XIRR 口径）。"""
     match operation.operationType:
         case OperationType.BUY:
-            net_invested += operation.count * operation.price + operation.fee
+            net_invested += buy_outflow_cny(operation)
         case OperationType.SELL:
-            net_invested -= operation.count * operation.price - operation.fee
+            net_invested -= sell_inflow_cny(operation)
         case OperationType.DIVIDEND:
-            net_invested -= current_hold * operation.cash
+            net_invested -= dividend_cash_cny(operation, current_hold)
     current_hold = apply_operation_to_hold(current_hold, operation)
     return net_invested, current_hold

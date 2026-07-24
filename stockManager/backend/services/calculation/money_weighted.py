@@ -1,8 +1,9 @@
-"""资金加权累计收益率计算"""
+"""资金加权累计收益率计算（人民币资金账本口径）。"""
 import datetime
 
 from backend.common.constants import OperationType
 from backend.common.operations import apply_net_invested
+from backend.common.settlement import buy_outflow_cny
 from backend.common.utils import operation_sort_key
 from backend.models import Operation
 from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD
@@ -12,7 +13,7 @@ def calculate_money_weighted_return(
     operations: list[Operation],
     offset_total: float,
 ) -> float:
-    """资金加权累计收益率：offsetTotal / 加权平均占用资金"""
+    """资金加权累计收益率：offsetTotal(CNY) / 加权平均占用资金(CNY)。"""
     sorted_ops = sorted(operations, key=operation_sort_key)
     if not sorted_ops:
         return 0.0
@@ -39,7 +40,7 @@ def calculate_money_weighted_return(
         )
         peak_net_invested = max(peak_net_invested, max(net_invested, 0.0))
         if operation.operationType == OperationType.BUY:
-            total_buy_amount += operation.count * operation.price + operation.fee
+            total_buy_amount += buy_outflow_cny(operation)
         seg_start = operation.date
 
     if current_hold >= MIN_HOLD_COUNT_THRESHOLD:

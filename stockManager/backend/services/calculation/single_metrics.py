@@ -1,9 +1,18 @@
-"""单股操作账本：一次遍历计算持股、成本、摊薄等指标"""
+"""单股操作账本：一次遍历计算持股、成本、摊薄等指标（双账本）。"""
 import datetime
 from dataclasses import dataclass
 
 from backend.common.constants import OperationType
 from backend.common.operations import apply_operation_to_hold, dividend_multiplier
+from backend.common.settlement import (
+    buy_cost_native,
+    buy_outflow_cny,
+    dividend_cash_cny,
+    dividend_cash_native,
+    sell_inflow_cny,
+    sell_proceeds_native,
+    trade_fee_cny,
+)
 from backend.models import Operation
 from backend.services.calculation.constants import (
     MIN_HOLD_COUNT_THRESHOLD,
@@ -17,69 +26,88 @@ class SingleStockMetrics:
     current_hold_count: float
     yesterday_hold_count: float
     current_hold_cost: float
-    current_overall: float
-    today_input: float
-    total_fee: float
+    current_overall_native: float
+    current_overall_cny: float
+    hold_cost_basis_cny: float
+    today_input_native: float
+    today_input_cny: float
+    total_fee_cny: float
     holding_duration: int
 
-    def is_holding(self) -> bool:
-        """当前是否仍持有该股（持仓数绝对值超过最小阈值）。"""
-        return abs(self.current_hold_count) >= MIN_HOLD_COUNT_THRESHOLD
-
     def overall_cost_per_share(self) -> float:
-        """累计投入 / 当前持股；不持有时返回 0.0。"""
-        if not self.is_holding():
+        """累计投入(原币) / 当前持股；不持有时返回 0.0。"""
+        if abs(self.current_hold_count) < MIN_HOLD_COUNT_THRESHOLD:
             return 0.0
-        return self.current_overall / self.current_hold_count
+        return self.current_overall_native / self.current_hold_count
 
-    def offset_current(self, price_now: float) -> float:
-        """给定最新价，返回浮动盈亏：(现价 - 持仓成本) × 持仓。"""
+    def offset_current_native(self, price_now: float) -> float:
+        """原币浮动盈亏：(现价 - 持仓成本) × 持仓。"""
         return (price_now - self.current_hold_cost) * self.current_hold_count
 
+    def offset_current_cny(self, market_value_cny: float) -> float:
+        """人民币浮动盈亏：市值(CNY) - 当前持仓成本基数(CNY)。"""
+        return market_value_cny - self.hold_cost_basis_cny
+
     def offset_current_ratio(self, price_now: float) -> float:
-        """给定最新价，返回浮动盈亏率：(现价 - 持仓成本) / 持仓成本。"""
+        """浮动盈亏率：(现价 - 持仓成本) / 持仓成本（原币口径）。"""
         if abs(self.current_hold_cost) < MIN_PRICE_THRESHOLD:
             return 0.0
         return (price_now - self.current_hold_cost) / self.current_hold_cost
 
-    def offset_total(self, price_now: float) -> float:
-        """给定最新价，返回累计盈亏：现价 × 持仓 - 累计投入净额。"""
-        return price_now * self.current_hold_count - self.current_overall
+    def offset_total_native(self, price_now: float) -> float:
+        """原币累计盈亏：现价 × 持仓 - 累计投入净额(原币)。"""
+        return price_now * self.current_hold_count - self.current_overall_native
 
-    def offset_today(
+    def offset_total_cny(self, market_value_cny: float) -> float:
+        """人民币累计盈亏：市值(CNY) - 累计投入净额(CNY)。"""
+        return market_value_cny - self.current_overall_cny
+
+    def offset_today_native(
         self,
         price_now: float,
         yesterday_close: float,
         total_value_yesterday: float,
     ) -> float:
-        """给定今收、昨收、昨市值，返回今日总盈亏（含今日新增投入的扣减）。
-
-        - 昨日市值过小（刚建仓等）时退化为 current_offset（不扣 today_input）。
-        - 否则 = 现价 × 持仓 - 昨收 × 昨持仓 - 今日投入。
-        """
+        """原币今日总盈亏（含今日新增投入的扣减）。"""
         if total_value_yesterday < MIN_VALUE_THRESHOLD:
-            return self.offset_current(price_now)
+            return self.offset_current_native(price_now)
         return (
             price_now * self.current_hold_count
             - yesterday_close * self.yesterday_hold_count
-            - self.today_input
+            - self.today_input_native
         )
 
+    def offset_today_cny(
+        self,
+        market_value_cny: float,
+        yesterday_value_cny: float,
+    ) -> float:
+        """人民币今日总盈亏。"""
+        if yesterday_value_cny < MIN_VALUE_THRESHOLD:
+            return self.offset_current_cny(market_value_cny)
+        return market_value_cny - yesterday_value_cny - self.today_input_cny
 
-def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
-    """一次遍历计算所有单股账本指标"""
+
+def compute_single_metrics(
+    operations: list[Operation],
+    hkd_cny_rate: float = 0.86,
+) -> SingleStockMetrics:
+    """一次遍历计算所有单股账本指标（原币展示账本 + 人民币资金账本）。"""
     today = datetime.date.today()
 
     current_hold = 0.0
     yesterday_hold = 0.0
 
-    hold_total_pay = 0.0
+    hold_total_pay_native = 0.0
+    hold_total_pay_cny = 0.0
     hold_total_count = 0.0
 
-    overall_sum = 0.0
+    overall_sum_native = 0.0
+    overall_sum_cny = 0.0
 
-    today_input = 0.0
-    total_fee = 0.0
+    today_input_native = 0.0
+    today_input_cny = 0.0
+    total_fee_cny = 0.0
 
     holding_start_date = None
     total_holding_days = 0
@@ -87,7 +115,7 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
     for operation in operations:
         op_type = operation.operationType
 
-        total_fee += operation.fee
+        total_fee_cny += trade_fee_cny(operation)
 
         is_today = operation.date == today
 
@@ -95,13 +123,19 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
             previous_hold = current_hold
             current_hold += operation.count
 
-            hold_total_pay += operation.count * operation.price + operation.fee
+            cost_native = buy_cost_native(operation)
+            cost_cny = buy_outflow_cny(operation)
+
+            hold_total_pay_native += cost_native
+            hold_total_pay_cny += cost_cny
             hold_total_count += operation.count
 
-            overall_sum += operation.count * operation.price + operation.fee
+            overall_sum_native += cost_native
+            overall_sum_cny += cost_cny
 
             if is_today:
-                today_input += operation.count * operation.price + operation.fee
+                today_input_native += cost_native
+                today_input_cny += cost_cny
 
             if previous_hold < 1 and current_hold >= 1:
                 holding_start_date = operation.date
@@ -110,10 +144,15 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
             previous_hold = current_hold
             current_hold -= operation.count
 
-            overall_sum -= operation.count * operation.price - operation.fee
+            proceeds_native = sell_proceeds_native(operation)
+            inflow_cny = sell_inflow_cny(operation)
+
+            overall_sum_native -= proceeds_native
+            overall_sum_cny -= inflow_cny
 
             if is_today:
-                today_input -= operation.count * operation.price + operation.fee
+                today_input_native -= proceeds_native
+                today_input_cny -= inflow_cny
 
             if previous_hold >= 1 and current_hold < 1:
                 if holding_start_date:
@@ -122,13 +161,17 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
                     holding_start_date = None
 
             if current_hold == 0:
-                hold_total_pay = 0.0
+                hold_total_pay_native = 0.0
+                hold_total_pay_cny = 0.0
                 hold_total_count = 0.0
 
         elif op_type == OperationType.DIVIDEND:
             multiplier = dividend_multiplier(operation)
             hold_total_count += hold_total_count * multiplier
-            overall_sum -= current_hold * operation.cash
+            overall_sum_native -= dividend_cash_native(
+                operation, current_hold, hkd_cny_rate
+            )
+            overall_sum_cny -= dividend_cash_cny(operation, current_hold)
             current_hold = apply_operation_to_hold(current_hold, operation)
 
         if not is_today:
@@ -139,7 +182,7 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
         total_holding_days += duration
 
     current_hold_cost = (
-        hold_total_pay / hold_total_count
+        hold_total_pay_native / hold_total_count
         if abs(hold_total_count) >= MIN_HOLD_COUNT_THRESHOLD
         else 0.0
     )
@@ -148,8 +191,11 @@ def compute_single_metrics(operations: list[Operation]) -> SingleStockMetrics:
         current_hold_count=current_hold,
         yesterday_hold_count=yesterday_hold,
         current_hold_cost=current_hold_cost,
-        current_overall=overall_sum,
-        today_input=today_input,
-        total_fee=total_fee,
+        current_overall_native=overall_sum_native,
+        current_overall_cny=overall_sum_cny,
+        hold_cost_basis_cny=hold_total_pay_cny,
+        today_input_native=today_input_native,
+        today_input_cny=today_input_cny,
+        total_fee_cny=total_fee_cny,
         holding_duration=total_holding_days,
     )

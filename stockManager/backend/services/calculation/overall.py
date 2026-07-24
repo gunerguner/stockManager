@@ -1,6 +1,6 @@
 """组合整体指标与 XIRR 计算
 
-个股指标为原币种（港股通为 HKD）；本模块汇总时通过 to_cny_amount 折算为人民币（CNY）。
+个股金额类字段已统一为人民币（CNY）；本模块直接汇总，不再对港股二次乘汇率。
 """
 import datetime
 from typing import cast
@@ -8,14 +8,7 @@ from typing import cast
 from pyxirr import xirr
 
 from backend.common import logger
-from backend.common.market import Market, code_to_market
 from backend.common.types import CashFlowList, OverallData, StockData
-
-
-def to_cny_amount(code: str, amount: float, hkd_cny_rate: float) -> float:
-    if code_to_market(code) == Market.HK:
-        return amount * hkd_cny_rate
-    return amount
 
 
 def calculate_xirr(cash_flow_list: CashFlowList, total_asset: float) -> float:
@@ -58,19 +51,16 @@ def compute_overall(
     stock_list: list[StockData],
     income_cash: float,
     cash_flow_list: CashFlowList,
-    hkd_cny_rate: float = 1.0,
+    hkd_cny_rate: float = 0.86,
 ) -> OverallData:
-    """计算整体指标（港股金额按汇率折算为 CNY）"""
+    """计算整体指标（个股金额已为 CNY，直接相加）。"""
     to_return = cast(OverallData, {})
 
-    def cny(code: str, amount: float) -> float:
-        return to_cny_amount(code, amount, hkd_cny_rate)
-
-    current_offset = sum(cny(t["code"], t["offsetCurrent"]) for t in stock_list)
-    total_offset = sum(cny(t["code"], t["offsetTotal"]) for t in stock_list)
-    total_value = sum(cny(t["code"], t["totalValue"]) for t in stock_list)
-    total_offset_today = sum(cny(t["code"], t["totalOffsetToday"]) for t in stock_list)
-    total_cost = sum(cny(t["code"], t["totalCost"]) for t in stock_list)
+    current_offset = sum(t.get("offsetCurrent", 0.0) for t in stock_list)
+    total_offset = sum(t.get("offsetTotal", 0.0) for t in stock_list)
+    total_value = sum(t.get("totalValue", 0.0) for t in stock_list)
+    total_offset_today = sum(t.get("totalOffsetToday", 0.0) for t in stock_list)
+    total_cost = sum(t.get("totalCost", 0.0) for t in stock_list)
 
     origin_cash = sum(flow['amount'] for flow in cash_flow_list)
 

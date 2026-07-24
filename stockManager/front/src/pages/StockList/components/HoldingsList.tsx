@@ -7,8 +7,8 @@ import {
   formatAmount,
   formatDecimalRatio,
   formatMarketPrice,
-  formatSharePercent,
-  toCnyAmount,
+  hkNative,
+  isHkCode,
 } from '@/utils/format/stock';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
 import { renderAmount, renderDailyChange } from '@/utils/format/render';
@@ -49,8 +49,6 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
   }, [data.stocks, showAll, showConv]);
 
   const columns: ColumnsType<API.Stock> = useMemo(() => {
-    const hkdCnyRate = data.overall.hkdCnyRate ?? 0;
-
     return [
       {
         title: '名称',
@@ -67,12 +65,31 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         render: (v, r) => <div className="cell-number">{formatMarketPrice(v, r.code)}</div>,
       },
       {
-        title: '涨跌',
+        title: '当日涨跌',
         dataIndex: 'offsetTodayRatio',
         className: 'cell-number',
         width: isMobile ? 90 : undefined,
-        render: (_, r) =>
-          renderDailyChange(r.offsetToday, r.offsetTodayRatio, r.code, colorFromValue),
+        render: (_, r) => {
+          const cell = renderDailyChange(
+            r.offsetToday,
+            r.offsetTodayRatio,
+            r.code,
+            colorFromValue,
+          );
+          const cny = formatAmount(r.totalOffsetToday);
+          const title = isHkCode(r.code)
+            ? `${cny}/${formatAmount(hkNative.offsetToday(r), { currency: 'hkd' })}`
+            : cny;
+          return (
+            <Tooltip
+              title={title}
+              color={colorFromValue(r.totalOffsetToday)}
+              styles={{ container: { color: '#fff' } }}
+            >
+              {cell}
+            </Tooltip>
+          );
+        },
       },
       {
         title: '市值',
@@ -82,13 +99,10 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         defaultSortOrder: 'descend',
         sorter: (a, b) => a.totalValue - b.totalValue,
         render: (_, r) => {
-          const valueCny = toCnyAmount(r.code, r.totalValue, hkdCnyRate);
-          const total = data.overall.totalValue;
-          const percentage = formatSharePercent(valueCny, total);
+          const cell = <div className="cell-number">{formatAmount(r.totalValue)}</div>;
+          if (!isHkCode(r.code)) return cell;
           return (
-            <Tooltip title={percentage}>
-              <div className="cell-number">{formatAmount(r.totalValue, { code: r.code })}</div>
-            </Tooltip>
+            <Tooltip title={formatAmount(hkNative.totalValue(r), { currency: 'hkd' })}>{cell}</Tooltip>
           );
         },
       },
@@ -110,7 +124,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         width: isMobile ? 120 : undefined,
         render: (_, r) => (
           <div className="cell-number">
-            {`${formatAmount(r.overallCost, { code: r.code })}/${formatAmount(r.holdCost, { code: r.code })}`}
+            {`${formatMarketPrice(r.overallCost, r.code)}/${formatMarketPrice(r.holdCost, r.code)}`}
           </div>
         ),
       },
@@ -119,23 +133,24 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         dataIndex: 'offsetCurrent',
         className: 'cell-number',
         width: isMobile ? 80 : undefined,
-        sorter: (a, b) =>
-          toCnyAmount(a.code, a.offsetCurrent, hkdCnyRate) -
-          toCnyAmount(b.code, b.offsetCurrent, hkdCnyRate),
+        sorter: (a, b) => a.offsetCurrent - b.offsetCurrent,
         render: (_, r) => {
-          const todayTotal = r.offsetToday * r.holdCount;
+          const cell = (
+            <div className="cell-number">
+              {renderAmount(r.offsetCurrent, {
+                profitLossColors: { profitColor, lossColor },
+              })}
+            </div>
+          );
+          if (!isHkCode(r.code)) return cell;
+          const hkd = hkNative.offsetCurrent(r);
           return (
             <Tooltip
-              title={formatAmount(todayTotal, { code: r.code })}
-              color={colorFromValue(todayTotal)}
+              title={formatAmount(hkd, { currency: 'hkd' })}
+              color={colorFromValue(hkd)}
               styles={{ container: { color: '#fff' } }}
             >
-              <div className="cell-number">
-                {renderAmount(r.offsetCurrent, {
-                  code: r.code,
-                  profitLossColors: { profitColor, lossColor },
-                })}
-              </div>
+              {cell}
             </Tooltip>
           );
         },
@@ -145,24 +160,29 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         dataIndex: 'offsetTotal',
         className: 'cell-number',
         width: isMobile ? 110 : undefined,
-        sorter: (a, b) =>
-          toCnyAmount(a.code, a.offsetTotal, hkdCnyRate) -
-          toCnyAmount(b.code, b.offsetTotal, hkdCnyRate),
-        render: (_, r) => (
-          <div className="cell-number" style={{ color: colorFromValue(r.offsetTotal) }}>
-            {`${formatAmount(r.offsetTotal, { code: r.code })} (${formatDecimalRatio(r.moneyWeightedReturn)})`}
-          </div>
-        ),
+        sorter: (a, b) => a.offsetTotal - b.offsetTotal,
+        render: (_, r) => {
+          const cell = (
+            <div className="cell-number" style={{ color: colorFromValue(r.offsetTotal) }}>
+              {`${formatAmount(r.offsetTotal)} (${formatDecimalRatio(r.moneyWeightedReturn)})`}
+            </div>
+          );
+          if (!isHkCode(r.code)) return cell;
+          const hkd = hkNative.offsetTotal(r);
+          if (hkd == null) return cell;
+          return (
+            <Tooltip
+              title={formatAmount(hkd, { currency: 'hkd' })}
+              color={colorFromValue(hkd)}
+              styles={{ container: { color: '#fff' } }}
+            >
+              {cell}
+            </Tooltip>
+          );
+        },
       },
     ];
-  }, [
-    isMobile,
-    data.overall.totalValue,
-    data.overall.hkdCnyRate,
-    profitColor,
-    lossColor,
-    colorFromValue,
-  ]);
+  }, [isMobile, profitColor, lossColor, colorFromValue]);
 
   return (
     <div className="holdings-list-wrapper">

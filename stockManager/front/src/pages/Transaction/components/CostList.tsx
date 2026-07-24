@@ -199,13 +199,13 @@ export const CostList: React.FC<CostListProps> = ({
   operations,
   loading = false,
 }) => {
-  const { totalCost = 0, hkdCnyRate = 0 } = data.overall;
+  const { totalCost = 0 } = data.overall;
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
 
   const costList = useMemo(
-    () => buildCostListByPeriod(data.stocks, operations, hkdCnyRate, data.overall.cashFlowList),
-    [data.stocks, operations, hkdCnyRate, data.overall.cashFlowList],
+    () => buildCostListByPeriod(data.stocks, operations, data.overall.cashFlowList),
+    [data.stocks, operations, data.overall.cashFlowList],
   );
 
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());

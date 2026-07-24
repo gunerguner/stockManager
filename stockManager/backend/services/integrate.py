@@ -13,8 +13,8 @@ from backend.common.types import (
 )
 from backend.models import Info, WatchItem
 from backend.services.cache import CacheRepository
-from backend.services.calculation import Calculator, StockHold
-from backend.services.calculation.watchlist import build_holding_offset, build_watchlist
+from backend.services.calculation import Calculator
+from backend.services.calculation.watchlist import build_watchlist
 from backend.services.dividend import Dividend
 
 
@@ -41,6 +41,7 @@ class Integrate:
             operation_list,
             inputs.prices,
             inputs.stock_meta,
+            inputs.hkd_cny_rate,
         )
         overall = Calculator.calculate_overall(
             stock_list,
@@ -88,19 +89,10 @@ class Integrate:
             return []
 
         codes = [item["code"] for item in items]
-        operation_list = CacheRepository.get_user_operations(user)
-        holding_set = set(StockHold.get_holding_stocks(operation_list))
         market_data = CacheRepository.load_watchlist_market_data(codes)
-
-        # 用最新现价 + 用户账本计算已持有股票的累计盈亏，
-        # 避免 HoldingStatus 图标颜色与持仓页不一致（计算细节见 watchlist.build_holding_offset）
-        holding_offset = build_holding_offset(holding_set, operation_list, market_data.prices)
-
         return build_watchlist(
             items,
             market_data.prices,
             market_data.valuations,
             market_data.hist_highs,
-            holding_set,
-            holding_offset,
         )

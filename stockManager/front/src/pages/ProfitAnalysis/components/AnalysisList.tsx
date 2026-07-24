@@ -3,14 +3,9 @@ import React, { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
-import { buildAnalysisByStockType, HK_CATEGORY, type AnalysisModel } from './analysisStat';
+import { buildAnalysisByStockType, type AnalysisModel } from './analysisStat';
 import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
-import {
-  formatSharePercent,
-  MarketCurrency,
-  toCnyByCurrency,
-  toMarketCurrency,
-} from '@/utils/format/stock';
+import { formatSharePercent } from '@/utils/format/stock';
 import { renderAmount } from '@/utils/format/render';
 import { useStockProfitModal } from './StockProfitModal';
 import '@/components/Common/index.less';
@@ -25,24 +20,15 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
   data,
   loading = false,
 }) => {
-  const { incomeCash = 0, hkdCnyRate = 0 } = data.overall;
+  const { incomeCash = 0 } = data.overall;
   const isMobile = useIsMobile();
   const { showStockProfit } = useStockProfitModal();
   const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
 
   const { analysisList, totalProfit, totalLoss } = useMemo(
-    () => buildAnalysisByStockType(data.stocks, { incomeCash, hkdCnyRate }),
-    [data.stocks, incomeCash, hkdCnyRate],
+    () => buildAnalysisByStockType(data.stocks, { incomeCash }),
+    [data.stocks, incomeCash],
   );
-
-  const categoryCurrency = (record: AnalysisModel): MarketCurrency =>
-    toMarketCurrency(record.type === HK_CATEGORY);
-
-  const toCnyForPct = (record: AnalysisModel, value: number): number =>
-    toCnyByCurrency(categoryCurrency(record), value, hkdCnyRate || 1);
-
-  const renderCategoryAmount = (value: number, color: string, record: AnalysisModel) =>
-    renderAmount(value, { currency: categoryCurrency(record), color });
 
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
@@ -53,7 +39,6 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
       profit: record.profit,
       loss: record.loss,
       netIncome: record.netIncome,
-      isHkCategory: record.type === HK_CATEGORY,
     });
   };
 
@@ -72,13 +57,13 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         title: '获利',
         dataIndex: 'profit',
         sorter: (a, b) => a.profit - b.profit,
-        render: (value: number, record: AnalysisModel) => (
+        render: (value: number) => (
           <Tooltip
-            title={formatSharePercent(toCnyForPct(record, value), totalProfit)}
+            title={formatSharePercent(value, totalProfit)}
             color={profitColor}
             styles={{ container: { color: '#fff' } }}
           >
-            {renderCategoryAmount(value, profitColor, record)}
+            {renderAmount(value, { color: profitColor })}
           </Tooltip>
         ),
       },
@@ -86,13 +71,13 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         title: '亏损',
         dataIndex: 'loss',
         sorter: (a, b) => a.loss - b.loss,
-        render: (value: number, record: AnalysisModel) => (
+        render: (value: number) => (
           <Tooltip
-            title={formatSharePercent(toCnyForPct(record, value), totalLoss)}
+            title={formatSharePercent(value, totalLoss)}
             color={lossColor}
             styles={{ container: { color: '#fff' } }}
           >
-            {renderCategoryAmount(value, lossColor, record)}
+            {renderAmount(value, { color: lossColor })}
           </Tooltip>
         ),
       },
@@ -100,11 +85,11 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         title: '净收益',
         dataIndex: 'netIncome',
         sorter: (a, b) => a.netIncome - b.netIncome,
-        render: (value: number, record: AnalysisModel) =>
-          renderCategoryAmount(value, colorFromValue(value) ?? '', record),
+        render: (value: number) =>
+          renderAmount(value, { color: colorFromValue(value) ?? '' }),
       },
     ],
-    [totalProfit, totalLoss, hkdCnyRate, profitColor, lossColor, colorFromValue],
+    [totalProfit, totalLoss, profitColor, lossColor, colorFromValue],
   );
 
   return (

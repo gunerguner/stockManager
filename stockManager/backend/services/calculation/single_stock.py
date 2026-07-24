@@ -1,10 +1,11 @@
 """单股指标拼装：行情 + 账本 metrics → StockData
 
-港股通个股金额与价格为港币（HKD），不做汇率换算；组合汇总见 overall.py。
+金额类字段统一为人民币（CNY）；港股价格/持仓成本仍为港币。
 """
 from typing import cast
 
 from backend.common import logger
+from backend.common.market import is_hk_code
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
 from backend.services.calculation.constants import MIN_PRICE_THRESHOLD
@@ -57,16 +58,22 @@ def attach_price_fields(
 
 
 def attach_hold_fields(
+    code: str,
     single_real_time: RealtimePriceData,
     metrics: SingleStockMetrics,
+    hkd_cny_rate: float,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
+    hold = metrics.current_hold_count
+    yesterday_hold = metrics.yesterday_hold_count
+    fx = hkd_cny_rate if is_hk_code(code) else 1.0
+
     return {
-        "holdCount": metrics.current_hold_count,
+        "holdCount": hold,
         "holdCost": metrics.current_hold_cost,
         "overallCost": metrics.overall_cost_per_share(),
-        "totalValue": current_price * metrics.current_hold_count,
-        "totalValueYesterday": single_real_time["yesterdayClose"] * metrics.yesterday_hold_count,
+        "totalValue": current_price * hold * fx,
+        "totalValueYesterday": single_real_time["yesterdayClose"] * yesterday_hold * fx,
     }
 
 
@@ -74,22 +81,19 @@ def attach_pnl_fields(
     single_real_time: RealtimePriceData,
     metrics: SingleStockMetrics,
     operations: list[Operation],
+    total_value: float,
     total_value_yesterday: float,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
-    offset_total = metrics.offset_total(current_price)
+    offset_total_cny = metrics.offset_total_cny(total_value)
 
     return {
-        "offsetCurrent": metrics.offset_current(current_price),
+        "offsetCurrent": metrics.offset_current_cny(total_value),
         "offsetCurrentRatio": metrics.offset_current_ratio(current_price),
-        "offsetTotal": offset_total,
-        "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total),
-        "totalCost": metrics.total_fee,
-        "totalOffsetToday": metrics.offset_today(
-            current_price,
-            single_real_time["yesterdayClose"],
-            total_value_yesterday,
-        ),
+        "offsetTotal": offset_total_cny,
+        "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total_cny),
+        "totalCost": metrics.total_fee_cny,
+        "totalOffsetToday": metrics.offset_today_cny(total_value, total_value_yesterday),
         "holdingDuration": metrics.holding_duration,
     }
 
@@ -99,21 +103,23 @@ def build_single_stock(
     operations: list[Operation],
     single_real_time: RealtimePriceData | None,
     stock_meta: StockMetaModel | None = None,
+    hkd_cny_rate: float = 0.86,
 ) -> StockData:
     """计算单个股票的指标"""
     if not single_real_time:
         logger.warning(f"无法获取股票 {code} 的实时价格")
         single_real_time = _default_realtime_price()
 
-    metrics = compute_single_metrics(operations)
+    metrics = compute_single_metrics(operations, hkd_cny_rate)
 
     result = cast(StockData, {})
     result.update(attach_price_fields(code, single_real_time, stock_meta))
-    result.update(attach_hold_fields(single_real_time, metrics))
+    result.update(attach_hold_fields(code, single_real_time, metrics, hkd_cny_rate))
     result.update(attach_pnl_fields(
         single_real_time,
         metrics,
         operations,
+        result["totalValue"],
         result["totalValueYesterday"],
     ))
     return result

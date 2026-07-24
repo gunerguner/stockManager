@@ -1,7 +1,3 @@
-import { toCnyAmount } from '@/utils/format/stock';
-
-export const HK_CATEGORY = '港股通';
-
 /** 股票类型配置：[内部键, 显示名称, API类型(可选)] */
 const STOCK_TYPE_CONFIGS: Array<[string, string, string?]> = [
   ['isNew', '新股'],
@@ -13,7 +9,7 @@ const STOCK_TYPE_CONFIGS: Array<[string, string, string?]> = [
   ['fundAB', '分级基金', 'FUNDAB'],
   ['fundIn', '场内基金', 'FUNDIN'],
   ['conv', '可转债', 'CONV'],
-  ['hk', HK_CATEGORY, 'HK'],
+  ['hk', '港股通', 'HK'],
 ];
 
 const API_TYPE_MAP = new Map(
@@ -40,7 +36,6 @@ export interface AnalysisModel {
 
 export type BuildAnalysisOptions = {
   incomeCash?: number;
-  hkdCnyRate?: number;
 };
 
 export type BuildAnalysisResult = {
@@ -53,7 +48,7 @@ export const buildAnalysisByStockType = (
   data: API.Stock[],
   options: BuildAnalysisOptions = {},
 ): BuildAnalysisResult => {
-  const { incomeCash = 0, hkdCnyRate = 0 } = options;
+  const { incomeCash = 0 } = options;
 
   const stats = new Map<string, AnalysisModel>(
     STOCK_TYPE_CONFIGS.map(([key, label]) => [
@@ -70,9 +65,9 @@ export const buildAnalysisByStockType = (
     const key = isNew ? 'isNew' : API_TYPE_MAP.get(stockType);
     const stat = key ? stats.get(key) : undefined;
 
-    const cnyOffset = toCnyAmount(code, offsetTotal, hkdCnyRate);
-    if (cnyOffset > 0) totalProfitCny += cnyOffset;
-    else if (cnyOffset < 0) totalLossCny += cnyOffset;
+    // offsetTotal 已统一为人民币
+    if (offsetTotal > 0) totalProfitCny += offsetTotal;
+    else if (offsetTotal < 0) totalLossCny += offsetTotal;
 
     if (stat) {
       const profit = offsetTotal > 0 ? offsetTotal : 0;
@@ -83,7 +78,7 @@ export const buildAnalysisByStockType = (
       stat.count++;
       stat.netIncome += offsetTotal;
       stat.stocks.push({
-        code: stock.code,
+        code,
         name: stock.name,
         profit,
         loss,

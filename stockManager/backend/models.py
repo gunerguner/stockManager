@@ -2,8 +2,6 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from backend.common.constants import OperationType
-
 
 class StockMeta(models.Model):
     """股票元数据模型（全局共享）"""
@@ -83,6 +81,12 @@ class Operation(_StockMetaCodeMixin, models.Model):
     price = models.FloatField(default=0, verbose_name="价格")
     count = models.IntegerField(default=0, blank=True, verbose_name="数量")
     fee = models.FloatField(default=0, verbose_name="手续费")
+    amount = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name="成交金额(人民币)",
+        help_text="仅港股通买卖填写；非港股留空",
+    )
     comment = models.CharField(max_length=200, blank=True, verbose_name="备注")
     cash = models.FloatField(default=0, verbose_name="分红")
     stock = models.FloatField(default=0, verbose_name="送股")
@@ -97,32 +101,19 @@ class Operation(_StockMetaCodeMixin, models.Model):
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
 
     def to_dict(self) -> dict[str, object]:
-        def format_price(value: float) -> str:
-            """格式化价格：如果第三位小数非 0 则保留 3 位，否则保留 2 位"""
-            fixed3 = f"{value:.3f}"
-            return fixed3[:-1] if fixed3.endswith('0') else fixed3
-
-        data = {
+        """序列化为 API 原始字段；成交金额等由前端按口径计算。"""
+        return {
             "date": str(self.date),
             "type": self.operationType,
             "price": self.price,
             "count": self.count,
             "fee": self.fee,
+            "amount": self.amount,
+            "comment": self.comment,
+            "cash": self.cash,
+            "stock": self.stock,
+            "reserve": self.reserve,
         }
-        match self.operationType:
-            case OperationType.BUY | OperationType.SELL:
-                data["sum"] = self.price * self.count
-            case OperationType.DIVIDEND:
-                data["sum"] = self.cash * self.count
-                parts = []
-                if self.cash > 0.0:
-                    parts.append("每10股股息" + format_price(self.cash * 10))
-                if self.reserve > 0.0:
-                    parts.append("每10股转增" + format_price(self.reserve * 10))
-                if self.stock > 0.0:
-                    parts.append("每10股送股" + format_price(self.stock * 10))
-                data["comment"] = ", ".join(parts)
-        return data
 
 
 class Info(models.Model):

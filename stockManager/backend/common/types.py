@@ -21,18 +21,25 @@ class CashFlowData(TypedDict):
 
 
 class OperationData(TypedDict):
-    """单个操作记录的字典格式（API返回格式）"""
+    """单个操作记录的字典格式（API返回格式，原始字段）"""
     date: str
     type: str
     price: float
     count: int  # 单笔成交股数，整股
     fee: float
-    sum: float
+    amount: float | None  # 港股通人民币成交额；非港股为空
     comment: str
+    cash: float
+    stock: float
+    reserve: float
 
 
 class StockData(TypedDict):
-    """单只股票的计算指标（不含 operationList）"""
+    """单只股票的计算指标（不含 operationList）
+
+    金额类主字段统一为人民币（CNY）；港股价格/成本仍为港币。
+    港币 tooltip 由前端用 priceNow/holdCost/overallCost/holdCount 推导。
+    """
     code: str
     name: str
     priceNow: float
@@ -110,7 +117,6 @@ class WatchResultItem(TypedDict, total=False):
     """关注列表 API 返回项"""
     code: str
     name: str
-    holding: bool
     priceNow: float | None
     offsetToday: float
     offsetTodayRatio: float  # 原始比率
@@ -122,7 +128,6 @@ class WatchResultItem(TypedDict, total=False):
     leftPoint: float | None
     trendPoint: float | None
     bloodPoint: float | None
-    offsetTotal: float  # 累计盈亏（仅持仓股票），用最新现价即时计算，用于 HoldingStatus 图标颜色
     hidden: bool
 
 

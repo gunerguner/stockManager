@@ -101,8 +101,12 @@ declare namespace API {
     price: number;
     count: number;
     fee: number;
-    sum: number;
+    /** 港股通人民币成交金额；非港股可为空 */
+    amount?: number | null;
     comment: string;
+    cash: number;
+    stock: number;
+    reserve: number;
   };
 
   type DividendResult = BaseResult & {
@@ -121,7 +125,6 @@ declare namespace API {
   type WatchItem = {
     code: string;
     name: string;
-    holding: boolean;
     priceNow: number | null;
     offsetToday: number;
     offsetTodayRatio: number;
@@ -133,7 +136,6 @@ declare namespace API {
     leftPoint: number | null;
     trendPoint: number | null;
     bloodPoint: number | null;
-    offsetTotal?: number;
     hidden: boolean;
   };
 

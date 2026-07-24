@@ -1,4 +1,4 @@
-import { toCnyAmount } from '@/utils/format/stock';
+import { tradeAmountCny } from '@/utils/format/stock';
 
 export type CostPeriodType = 'year' | 'month';
 
@@ -9,11 +9,11 @@ export interface CostListModel {
   normalTradeCount: number; // 普通交易 BUY+SELL 笔数（非 CONV、非 DV）
   convTradeCount: number; // 可转债 BUY+SELL 笔数（CONV、非 DV）
   dividendCount: number; // 除权除息 DV 笔数
-  // ── 资金动向（金额，均为已折算 CNY）──
-  buyAmount: number; // 所有 BUY 的 price*count 合计
-  sellAmount: number; // 所有 SELL 的 price*count 合计
+  // ── 资金动向（金额，均为人民币 CNY）──
+  buyAmount: number; // 所有 BUY 人民币成交额合计
+  sellAmount: number; // 所有 SELL 人民币成交额合计
   cashFlow: number; // cashFlowList.amount 合计（正入负出）
-  fee: number; // fee 合计（港股已折算 CNY）
+  fee: number; // fee 合计（人民币）
   subList?: CostListModel[]; // year 持有月份明细；month 为 undefined
 }
 
@@ -55,11 +55,10 @@ const getOrCreateMonth = (yearRecord: CostListModel, month: string) => {
   return record;
 };
 
-/** 统计交易数据（港股通 fee 按汇率折算为 CNY；买卖金额按原值不折算） */
+/** 统计交易数据（买卖金额、手续费一律按人民币口径累加） */
 export const buildCostListByPeriod = (
   data: API.Stock[],
   operations: Record<string, API.Operation[]>,
-  hkdCnyRate: number,
   cashFlowList?: API.CashFlowRecord[],
 ): CostListModel[] => {
   const yearMap = new Map<string, CostListModel>();
@@ -75,14 +74,13 @@ export const buildCostListByPeriod = (
         continue;
       }
 
-      const amount = op.price * op.count;
-      const feeCny = toCnyAmount(stock.code, op.fee, hkdCnyRate);
+      const amount = tradeAmountCny(stock.code, op);
       const countKey = stock.stockType === 'CONV' ? 'convTradeCount' : 'normalTradeCount';
       records.forEach((r) => {
         if (op.type === 'BUY') r.buyAmount += amount;
         else if (op.type === 'SELL') r.sellAmount += amount;
         r[countKey]++;
-        r.fee += feeCny;
+        r.fee += op.fee ?? 0;
       });
     }
   }

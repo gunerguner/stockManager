@@ -17,6 +17,7 @@ class Calculator:
         operation_list: OperationDict,
         realtime_prices: RealtimePriceDict,
         stock_meta_dict: dict[str, StockMetaModel],
+        hkd_cny_rate: float = 0.86,
     ) -> list[StockData]:
         """从 operation_list 与外部行情/元数据计算每只股票的指标。"""
         return [
@@ -25,6 +26,7 @@ class Calculator:
                 operations,
                 realtime_prices.get(code),
                 stock_meta_dict.get(code),
+                hkd_cny_rate,
             )
             for code, operations in operation_list.items()
         ]
@@ -35,9 +37,9 @@ class Calculator:
         stock_list: list[StockData],
         income_cash: float = 0.0,
         cash_flow_list: CashFlowList | None = None,
-        hkd_cny_rate: float = 9.0,
+        hkd_cny_rate: float = 0.86,
     ) -> OverallData:
-        """从 stock_list、income_cash、cash_flow_list 计算整体指标（港股金额按汇率折算为 CNY）"""
+        """从 stock_list、income_cash、cash_flow_list 计算整体指标（金额已为 CNY）。"""
         return compute_overall(
             stock_list, income_cash, cash_flow_list or [], hkd_cny_rate
         )
