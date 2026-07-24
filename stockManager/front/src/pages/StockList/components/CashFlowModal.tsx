@@ -2,8 +2,7 @@ import { Typography } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useProfitLossColors } from '@/hooks/useProfitLossColors';
-import { renderAmount } from '@/utils/format/render';
+import { AmountText } from '@/utils/format/render';
 import { useCommonModal } from '@/components/Common/modal/useCommonModal';
 
 const { Text } = Typography;
@@ -16,12 +15,10 @@ export type ShowCashFlowParams = {
 export const useCashFlowModal = () => {
   const { showSingleTable } = useCommonModal();
   const isMobile = useIsMobile();
-  const { profitColor, lossColor } = useProfitLossColors();
 
   const showCashFlow = React.useCallback(
     (params: ShowCashFlowParams) => {
       const { totalCashIn, cashFlowList } = params;
-      const profitLossColors = { profitColor, lossColor };
 
       const columns: ColumnsType<API.CashFlowRecord> = [
         {
@@ -33,14 +30,14 @@ export const useCashFlowModal = () => {
           title: '出入金',
           dataIndex: 'amount',
           width: isMobile ? 100 : 150,
-          render: (value: number) => renderAmount(value, { profitLossColors }),
+          render: (value: number) => <AmountText value={value} />,
         },
       ];
 
       const headerView = (
         <>
           <Text>净入金：</Text>
-          {renderAmount(totalCashIn, { profitLossColors })}
+          <AmountText value={totalCashIn} />
         </>
       );
 
@@ -51,7 +48,7 @@ export const useCashFlowModal = () => {
         dataSource: cashFlowList,
       });
     },
-    [showSingleTable, isMobile, profitColor, lossColor],
+    [showSingleTable, isMobile],
   );
 
   return { showCashFlow };

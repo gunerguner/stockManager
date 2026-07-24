@@ -9,6 +9,11 @@ class Cache:
     """底层缓存工具类，提供批量操作和模式删除"""
 
     @staticmethod
+    def _redis() -> Any:
+        """同步 Redis 连接；stub 含 Awaitable 联合类型，此处统一收窄。"""
+        return get_redis_connection("default")
+
+    @staticmethod
     def make_key(key: str, version: int | None = None) -> str:
         """逻辑 key -> Redis 完整 key（与 cache.get/set 一致的前缀与版本）"""
         return cache.make_key(key, version=version)
@@ -27,7 +32,7 @@ class Cache:
         full_keys = [cache.make_key(k) for k in keys]
 
         try:
-            redis_client = get_redis_connection("default")
+            redis_client = Cache._redis()
             client = cast(Any, cache).client
             values = redis_client.mget(full_keys)
 
@@ -45,7 +50,7 @@ class Cache:
             return
 
         try:
-            redis_client = get_redis_connection("default")
+            redis_client = Cache._redis()
             client = cast(Any, cache).client
             pipe = redis_client.pipeline()
             for logical_key, value in mapping.items():
@@ -63,11 +68,11 @@ class Cache:
         if logical:
             pattern = Cache.make_pattern(pattern)
         try:
-            redis_client = get_redis_connection("default")
-            keys = redis_client.keys(pattern)
-            if keys:
-                redis_client.delete(*keys)
-                return len(keys)
+            redis_client = Cache._redis()
+            matched = redis_client.keys(pattern)
+            if matched:
+                redis_client.delete(*matched)
+                return len(matched)
             return 0
         except Exception:
             return 0

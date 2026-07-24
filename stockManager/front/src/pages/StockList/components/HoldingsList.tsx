@@ -11,7 +11,7 @@ import {
   isHkCode,
 } from '@/utils/format/stock';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
-import { renderAmount, renderDailyChange } from '@/utils/format/render';
+import { AmountText, DailyChangeCell } from '@/utils/format/render';
 import { useTradeDetailModal } from '@/components/Common/modal/TradeDetailModal';
 import './index.less';
 
@@ -32,7 +32,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { showTradeDetail } = useTradeDetailModal();
-  const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
+  const { colorFromValue } = useProfitLossColors();
 
   const handleRowClick = (record: API.Stock) => {
     showTradeDetail({
@@ -70,11 +70,12 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         className: 'cell-number',
         width: isMobile ? 90 : undefined,
         render: (_, r) => {
-          const cell = renderDailyChange(
-            r.offsetToday,
-            r.offsetTodayRatio,
-            r.code,
-            colorFromValue,
+          const cell = (
+            <DailyChangeCell
+              offsetToday={r.offsetToday}
+              offsetTodayRatio={r.offsetTodayRatio}
+              code={r.code}
+            />
           );
           const cny = formatAmount(r.totalOffsetToday);
           const title = isHkCode(r.code)
@@ -137,9 +138,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         render: (_, r) => {
           const cell = (
             <div className="cell-number">
-              {renderAmount(r.offsetCurrent, {
-                profitLossColors: { profitColor, lossColor },
-              })}
+              <AmountText value={r.offsetCurrent} />
             </div>
           );
           if (!isHkCode(r.code)) return cell;
@@ -182,7 +181,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         },
       },
     ];
-  }, [isMobile, profitColor, lossColor, colorFromValue]);
+  }, [isMobile, colorFromValue]);
 
   return (
     <div className="holdings-list-wrapper">

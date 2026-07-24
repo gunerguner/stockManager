@@ -1,49 +1,32 @@
 import React from 'react';
-import { formatAmount, formatDecimalRatio, formatMarketPrice, FormatAmountOptions } from './stock';
+import { useProfitLossColors } from '@/hooks/useProfitLossColors';
+import { formatAmount, formatDecimalRatio, formatMarketPrice } from './stock';
 
-export type ProfitLossColorOptions = {
-  profitColor: string;
-  lossColor: string;
+type AmountTextProps = {
+  value: number;
 };
 
-const colorFromProfitLoss = (
-  value: number,
-  colors: ProfitLossColorOptions,
-): string | undefined =>
-  value > 0 ? colors.profitColor : value < 0 ? colors.lossColor : undefined;
-
-export type RenderAmountOptions = FormatAmountOptions & {
-  color?: string;
-  profitLossColors?: ProfitLossColorOptions;
+/** 金额文本：根据数值自动着色（正红负绿） */
+export const AmountText: React.FC<AmountTextProps> = ({ value }) => {
+  const { colorFromValue } = useProfitLossColors();
+  return <span style={{ color: colorFromValue(value) }}>{formatAmount(value)}</span>;
 };
 
-export const renderAmount = (value: number, options?: RenderAmountOptions): React.ReactNode => {
-  const { color, profitLossColors, ...formatOptions } = options ?? {};
-  const displayColor =
-    color ?? (profitLossColors ? colorFromProfitLoss(value, profitLossColors) : undefined);
+type DailyChangeCellProps = {
+  offsetToday: number;
+  offsetTodayRatio: number;
+  code: string;
+};
+
+/** 当日涨跌单元格：根据涨跌自动着色（正红负绿） */
+export const DailyChangeCell: React.FC<DailyChangeCellProps> = ({
+  offsetToday,
+  offsetTodayRatio,
+  code,
+}) => {
+  const { colorFromValue } = useProfitLossColors();
   return (
-    <span style={{ color: displayColor }}>{formatAmount(value, formatOptions)}</span>
-  );
-};
-
-export type RenderCellOptions = {
-  className?: string;
-  /** When null, show dash instead of formatted value */
-  priceNow?: number | null;
-};
-
-export const renderDailyChange = (
-  offsetToday: number,
-  offsetTodayRatio: number,
-  code: string,
-  colorFromValueFn: (value: number) => string | undefined,
-  options?: RenderCellOptions,
-): React.ReactNode => {
-  if (options?.priceNow === null) return '—';
-
-  const className = options?.className ?? 'cell-number';
-  return (
-    <div className={className} style={{ color: colorFromValueFn(offsetToday) }}>
+    <div className="cell-number" style={{ color: colorFromValue(offsetToday) }}>
       {`${formatMarketPrice(offsetToday, code)} (${formatDecimalRatio(offsetTodayRatio)})`}
     </div>
   );

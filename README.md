@@ -8,7 +8,7 @@ After years of trading stocks, I never found a portfolio tracker I was fully hap
 
 ![image.png](https://s21.ax1x.com/2025/10/27/pVxFACd.png)
 
-## Analytics
+## P/L attribution and transactions
 
 ![image.png](https://s21.ax1x.com/2025/10/27/pVxFF4H.png)
 
@@ -22,7 +22,7 @@ After years of trading stocks, I never found a portfolio tracker I was fully hap
 - Full trade history per symbol.
 - Auto-generated dividend and rights-adjustment records.
 - Reliable stock sorting.
-- Hong Kong Stock Connect: per-stock HKD display (`$`), portfolio totals in CNY via HKD/CNY spot rate.
+- Hong Kong Stock Connect: trade price and per-share costs are displayed in HKD (`$`); 
 - Minimal UI—no ads, no flashy distractions.
 
 # Technical overview
@@ -41,7 +41,7 @@ I had not written much frontend before, so I spent time learning the framework a
 
 ## Data sources
 
-**Live quotes** come from Tencent via [easyquotation](https://github.com/shidenggui/easyquotation)—stocks, on-exchange funds, convertible bonds, etc. Endpoint: `http://qt.gtimg.cn/q=`.
+**Live quotes** come from Tencent via [easyquotation](https://github.com/shidenggui/easyquotation): A-shares use `tencent`; Hong Kong stocks use `hkquote`. HKD/CNY spot rates come from Sina Finance. 
 
 **Historical corporate actions** use [BaoStock](http://baostock.com/baostock/index.php) for dividend and rights-adjustment history (A-shares only; not available for HK). Valuation (PE/PB) and historical highs use Baidu opendata and Tencent gtimg instead of BaoStock.
 
@@ -80,6 +80,13 @@ Cash = principal + cumulative P/L − market value
 
 One subtle rule: **position cost** for a symbol is computed only from the latest holding period after a full exit—many edge cases are handled in code.
 
+### Hong Kong Stock Connect accounting
+
+Hong Kong Stock Connect uses two complementary ledgers:
+
+- **Native-currency display ledger:** `price`, per-share position cost, and diluted cost are in HKD.
+- **CNY cash ledger:** for HK buys and sells, record the actual settled CNY amount in `amount`; commissions (`fee`) are also CNY. Portfolio market value, P/L, and money-weighted returns are calculated in CNY.
+
 ## Data migration
 
 You can export trades from your broker or another platform. My broker had no Mac client, so I went to a net café, installed their Windows app amid a room full of gamers, and exported everything—then spent a long time parsing spreadsheets and validating rows. That migration step was the most time-consuming part of the project.
@@ -93,7 +100,7 @@ You can export trades from your broker or another platform. My broker had no Mac
 3. Install Node (≥20) and utoo (`npm install -g utoo`).
 4. Clone: `https://github.com/gunerguner/stockManager`
 5. In `stockManager/front`, run `ut install` (**no** `ut run build` needed for dev).
-6. Create `.env` under `stockManager`: `cp stockManager/.env.example stockManager/.env`. Generate `DJANGO_SECRET_KEY` with:
+6. Create `.env` in the Django project package: `cp stockManager/stockManager/.env.example stockManager/stockManager/.env`. Generate `DJANGO_SECRET_KEY` with:
    `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 7. Run `python manage.py makemigrations` and `python manage.py migrate` (or copy an existing SQLite file).
 8. Run `python manage.py createsuperuser`.

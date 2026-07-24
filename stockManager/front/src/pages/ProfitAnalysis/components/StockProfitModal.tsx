@@ -3,8 +3,7 @@ import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useProfitLossColors } from '@/hooks/useProfitLossColors';
-import { renderAmount } from '@/utils/format/render';
+import { AmountText } from '@/utils/format/render';
 import { useCommonModal } from '@/components/Common/modal/useCommonModal';
 
 const { Text } = Typography;
@@ -28,17 +27,13 @@ const SummaryItems: React.FC<{
   profit: number;
   loss: number;
   netIncome: number;
-}> = ({ profit, loss, netIncome }) => {
-  const { profitColor, lossColor } = useProfitLossColors();
-
-  return (
-    <>
-      <Text>获利：{renderAmount(profit, { color: profitColor })} </Text>
-      <Text>亏损：{renderAmount(loss, { color: lossColor })} </Text>
-      <Text>净盈亏：{renderAmount(netIncome)} </Text>
-    </>
-  );
-};
+}> = ({ profit, loss, netIncome }) => (
+  <>
+    <Text>获利：<AmountText value={profit} /> </Text>
+    <Text>亏损：<AmountText value={loss} /> </Text>
+    <Text>净盈亏：<AmountText value={netIncome} /> </Text>
+  </>
+);
 
 const SummaryHeader: React.FC<{
   categoryName: string;
@@ -80,7 +75,6 @@ const SummaryHeader: React.FC<{
 export const useStockProfitModal = () => {
   const { showSingleTable } = useCommonModal();
   const isMobile = useIsMobile();
-  const { profitColor, lossColor } = useProfitLossColors();
 
   const showStockProfit = React.useCallback(
     (params: ShowStockProfitParams) => {
@@ -103,10 +97,7 @@ export const useStockProfitModal = () => {
           title: '净盈亏',
           dataIndex: 'netIncome',
           width: isMobile ? 100 : 150,
-          render: (value: number) =>
-            renderAmount(value, {
-              profitLossColors: { profitColor, lossColor },
-            }),
+          render: (value: number) => <AmountText value={value} />,
         },
       ];
 
@@ -126,7 +117,7 @@ export const useStockProfitModal = () => {
         dataSource: sortedData,
       });
     },
-    [showSingleTable, isMobile, profitColor, lossColor],
+    [showSingleTable, isMobile],
   );
 
   return { showStockProfit };

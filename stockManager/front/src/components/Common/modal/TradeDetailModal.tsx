@@ -12,7 +12,7 @@ import {
   operationComment,
   tradeAmountCny,
 } from '@/utils/format/stock';
-import { renderAmount } from '@/utils/format/render';
+import { AmountText } from '@/utils/format/render';
 import { useCommonModal } from './useCommonModal';
 import './index.less';
 
@@ -33,7 +33,7 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
 };
 
 const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
-  const { profitColor, lossColor, colorFromValue } = useProfitLossColors();
+  const { colorFromValue } = useProfitLossColors();
   const { token } = theme.useToken();
 
   const infoRowStyle: React.CSSProperties = {
@@ -47,9 +47,7 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
       <Text>持股：{stock.holdCount} </Text>
       <Text>
         累计盈亏：
-        {renderAmount(stock.offsetTotal, {
-          profitLossColors: { profitColor, lossColor },
-        })}{' '}
+        <AmountText value={stock.offsetTotal} />{' '}
       </Text>
       <Text>
         资金加权收益率：

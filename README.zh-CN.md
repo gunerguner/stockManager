@@ -8,7 +8,7 @@
 
 ![image.png](https://s21.ax1x.com/2025/10/27/pVxFACd.png)
 
-## 数据分析
+## 盈亏归因与交易数据
 
 ![image.png](https://s21.ax1x.com/2025/10/27/pVxFF4H.png)
 
@@ -22,7 +22,7 @@
 - 完整的个股操作记录。
 - 自动生成除权除息记录。
 - 准确的个股排序功能。
-- 支持港股通：个股港币 `$` 展示，总资产按 HKD/CNY 即期折算为人民币。
+- 支持港股通：价格与每股成本按港币 `$` 展示；实际成交结算、组合总资产和盈亏统一按人民币计算。
 - 极简界面，无广告，无妖艳的干扰元素。
 
 # 技术方案
@@ -41,7 +41,7 @@
 
 ## 数据源
 
-实时交易指标来自腾讯接口，通过 [easyquotation](https://github.com/shidenggui/easyquotation) 库获取。支持股票、场内基金、可转债等产品，接口地址 `http://qt.gtimg.cn/q=`。
+实时交易指标通过 [easyquotation](https://github.com/shidenggui/easyquotation) 获取：A 股使用腾讯 `tencent`，港股使用 `hkquote`；港币兑人民币即期汇率来自新浪外汇。
 
 历史除权除息数据来自 [BaoStock](http://baostock.com/baostock/index.php)（仅 A 股；港股不支持）。估值 PE/PB、历史高价等已改用百度 opendata 与腾讯 gtimg，不再经 baostock。
 
@@ -62,8 +62,8 @@
 2、浮动盈亏
 浮动盈亏额 ＝ (当前价 - 持仓成本) * 多仓持股数
 浮动盈亏率 ＝ 浮动盈亏额 / (持仓成本价 * 持股数)
-分市场浮动盈亏额 ＝ ∑个股浮动盈亏额
-分市场浮动盈亏率 ＝ 分市场浮动盈亏额 / ∑(个股持仓成本 * 个股持股数)
+组合浮动盈亏额 ＝ ∑个股浮动盈亏额
+组合浮动盈亏率 ＝ 组合浮动盈亏额 / ∑(个股持仓成本 * 个股持股数)
 
 3、累计盈亏
 个股累计盈亏额 ＝ 多仓市值 - (∑买入金额 - ∑卖出金额 - ∑现金股息) 
@@ -82,6 +82,13 @@
 
 这块计算花了我整整一个下午的时间来做，有很多小逻辑细节，都体现在了代码里。
 
+### 港股通记账口径
+
+港股通采用两套互补账本：
+
+- **港币展示账本**：`price`、持仓成本和摊薄成本均为港币。
+- **人民币资金账本**：港股买卖的 `amount` 记录实际人民币成交金额，`fee` 也为人民币；组合市值、盈亏和资金加权收益率统一按人民币计算。
+
 ## 数据迁移
 
 个人交易的数据可以从券商的软件获取，如果之前在别的平台有记录也可以做导出。
@@ -97,7 +104,7 @@
 3. 安装 Node(版本>=20)、utoo（`npm install -g utoo`）。
 4. git clone：https://github.com/gunerguner/stockManager
 5. 进入 `stockManager/front`，执行 `ut install`（**无需** `ut run build`）。
-6. 在 `stockManager` 目录创建 `.env`：`cp stockManager/.env.example stockManager/.env`，`DJANGO_SECRET_KEY` 可用  
+6. 在 Django 项目包目录创建 `.env`：`cp stockManager/stockManager/.env.example stockManager/stockManager/.env`，`DJANGO_SECRET_KEY` 可用  
    `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'` 生成。
 7. `python manage.py makemigrations`、`python manage.py migrate`（或直接复制数据库文件）。
 8. `python manage.py createsuperuser` 创建管理账号。

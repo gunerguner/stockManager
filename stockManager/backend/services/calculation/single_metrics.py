@@ -40,10 +40,6 @@ class SingleStockMetrics:
             return 0.0
         return self.current_overall_native / self.current_hold_count
 
-    def offset_current_native(self, price_now: float) -> float:
-        """原币浮动盈亏：(现价 - 持仓成本) × 持仓。"""
-        return (price_now - self.current_hold_cost) * self.current_hold_count
-
     def offset_current_cny(self, market_value_cny: float) -> float:
         """人民币浮动盈亏：市值(CNY) - 当前持仓成本基数(CNY)。"""
         return market_value_cny - self.hold_cost_basis_cny
@@ -54,28 +50,9 @@ class SingleStockMetrics:
             return 0.0
         return (price_now - self.current_hold_cost) / self.current_hold_cost
 
-    def offset_total_native(self, price_now: float) -> float:
-        """原币累计盈亏：现价 × 持仓 - 累计投入净额(原币)。"""
-        return price_now * self.current_hold_count - self.current_overall_native
-
     def offset_total_cny(self, market_value_cny: float) -> float:
         """人民币累计盈亏：市值(CNY) - 累计投入净额(CNY)。"""
         return market_value_cny - self.current_overall_cny
-
-    def offset_today_native(
-        self,
-        price_now: float,
-        yesterday_close: float,
-        total_value_yesterday: float,
-    ) -> float:
-        """原币今日总盈亏（含今日新增投入的扣减）。"""
-        if total_value_yesterday < MIN_VALUE_THRESHOLD:
-            return self.offset_current_native(price_now)
-        return (
-            price_now * self.current_hold_count
-            - yesterday_close * self.yesterday_hold_count
-            - self.today_input_native
-        )
 
     def offset_today_cny(
         self,

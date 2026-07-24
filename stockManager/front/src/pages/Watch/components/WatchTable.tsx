@@ -6,7 +6,7 @@ import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { formatPercent } from '@/utils/format/stock';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
-import { renderDailyChange } from '@/utils/format/render';
+import { DailyChangeCell } from '@/utils/format/render';
 import {
   calcHistHighDropPct,
   calcRoeFromPbPe,
@@ -165,9 +165,15 @@ export const WatchTable: React.FC<WatchTableProps> = ({
         dataIndex: 'offsetTodayRatio',
         width: isMobile ? 90 : 110,
         render: (_, record) =>
-          renderDailyChange(record.offsetToday, record.offsetTodayRatio, record.code, colorFromValue, {
-            priceNow: record.priceNow,
-          }),
+          record.priceNow === null ? (
+            '—'
+          ) : (
+            <DailyChangeCell
+              offsetToday={record.offsetToday}
+              offsetTodayRatio={record.offsetTodayRatio}
+              code={record.code}
+            />
+          ),
       },
       {
         title: (

@@ -22,11 +22,6 @@ def operation_sort_key(op: Operation) -> tuple:
     return (op.date, op.sortOrder, op.pk)
 
 
-def format_percent(value: float, precision: int = 2) -> str:
-    """格式化浮点数为百分比字符串"""
-    return f"{value * 100:.{precision}f}%"
-
-
 def format_operations(operation_list: Iterable[Operation]) -> dict[str, list[Operation]]:
     """按股票代码分组操作记录"""
     grouped: defaultdict[str, list[Operation]] = defaultdict(list)

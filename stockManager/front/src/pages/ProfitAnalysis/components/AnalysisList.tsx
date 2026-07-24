@@ -6,7 +6,7 @@ import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { buildAnalysisByStockType, type AnalysisModel } from './analysisStat';
 import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import { formatSharePercent } from '@/utils/format/stock';
-import { renderAmount } from '@/utils/format/render';
+import { AmountText } from '@/utils/format/render';
 import { useStockProfitModal } from './StockProfitModal';
 import '@/components/Common/index.less';
 import './index.less';
@@ -63,7 +63,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             color={profitColor}
             styles={{ container: { color: '#fff' } }}
           >
-            {renderAmount(value, { color: profitColor })}
+            <AmountText value={value} />
           </Tooltip>
         ),
       },
@@ -77,7 +77,7 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
             color={lossColor}
             styles={{ container: { color: '#fff' } }}
           >
-            {renderAmount(value, { color: lossColor })}
+            <AmountText value={value} />
           </Tooltip>
         ),
       },
@@ -85,11 +85,10 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         title: '净收益',
         dataIndex: 'netIncome',
         sorter: (a, b) => a.netIncome - b.netIncome,
-        render: (value: number) =>
-          renderAmount(value, { color: colorFromValue(value) ?? '' }),
+        render: (value: number) => <AmountText value={value} />,
       },
     ],
-    [totalProfit, totalLoss, profitColor, lossColor, colorFromValue],
+    [totalProfit, totalLoss, profitColor, lossColor],
   );
 
   return (

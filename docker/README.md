@@ -157,7 +157,7 @@ stockManager 前端为 **Umi**，**不依赖** `VITE_*` / `_app.config.js`：接
 
 6. **清理 Redis 缓存**（换库后旧缓存可能仍是上一份库的数据，**建议每次换库都清**）
 
-   - 浏览器：用 superuser 登录后走 Admin「清理缓存」，或  
+   - 浏览器：用 superuser 登录业务前台后，在右上角头像菜单选择「清理缓存」（也可用 ⌘/Ctrl+K），或  
    - API：`POST /api/clearCache`（需已登录且为 superuser）
 
 ### 注意
@@ -171,18 +171,18 @@ stockManager 前端为 **Umi**，**不依赖** `VITE_*` / `_app.config.js`：接
 
 ## Redis 缓存键与清理
 
-本应用缓存经 django-redis 写入，键前缀为 **`stockmanager:1:`**（由 Django `KEY_PREFIX` + `VERSION` 组成，见 `stockManager/settings.py`）。示例：`stockmanager:1:user:1:operations`、`stockmanager:1:stock:price:sh600150`。
+本应用缓存经 django-redis 写入，键前缀为 **`stockmanager:1:`**（由 Django `KEY_PREFIX` + `VERSION` 组成，见 `stockManager/stockManager/settings.py`）。示例：`stockmanager:1:user:1:operations`、`stockmanager:1:stock:price:sh600150`。
 
 与同机其他服务共用 Redis 实例时（默认 `REDIS_URL=redis://redis:6379/1`），清理操作**仅删除此前缀下的 key**，不会 `FLUSHDB` 整库。
 
 | 方式 | 说明 |
 |------|------|
-| Admin 页按钮 | 登录 superuser 后进入 `/admin`，点击「清理缓存」（仅 `access=admin` 可见） |
+| 业务前台菜单 | 登录 superuser 后，在右上角头像菜单选择「清理缓存」（或使用 ⌘/Ctrl+K） |
 | API | `POST /api/clearCache`，需已登录且为 superuser；响应含 `deletedCount` |
 
 排查缓存：`redis-cli -n 1 KEYS 'stockmanager:1:*'`（勿对生产库执行 `FLUSHDB`）。
 
-**港股通汇率**：持仓含港股时，backend 需能访问新浪外汇 `hq.sinajs.cn`（拉 HKD/CNY 即期，须带 Referer）。若外网不可用，可依赖 Redis 中已有的 `fx:hkd_cny`（上次成功拉取后的缓存），否则汇总折算可能失败。
+**港股通汇率**：持仓含港股时，backend 需能访问新浪外汇 `hq.sinajs.cn`（拉 HKD/CNY 即期，须带 Referer）。非交易时段优先使用 Redis 中已有的 `fx:hkd_cny`；持仓涉及的市场处于交易时段时会强制回源，若此时外网不可用，汇总折算会失败且不会回落到旧缓存。
 
 ## 启动与停止
 
