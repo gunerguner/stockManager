@@ -78,22 +78,27 @@ def attach_hold_fields(
 
 
 def attach_pnl_fields(
+    code: str,
     single_real_time: RealtimePriceData,
     metrics: SingleStockMetrics,
     operations: list[Operation],
     total_value: float,
     total_value_yesterday: float,
+    hkd_cny_rate: float,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
+    fx = hkd_cny_rate if is_hk_code(code) else 1.0
     offset_total_cny = metrics.offset_total_cny(total_value)
 
     return {
-        "offsetCurrent": metrics.offset_current_cny(total_value),
+        "offsetCurrent": metrics.offset_current_cny(current_price, fx),
         "offsetCurrentRatio": metrics.offset_current_ratio(current_price),
         "offsetTotal": offset_total_cny,
         "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total_cny),
         "totalCost": metrics.total_fee_cny,
-        "totalOffsetToday": metrics.offset_today_cny(total_value, total_value_yesterday),
+        "totalOffsetToday": metrics.offset_today_cny(
+            total_value, total_value_yesterday, current_price, fx
+        ),
         "holdingDuration": metrics.holding_duration,
     }
 
@@ -116,10 +121,12 @@ def build_single_stock(
     result.update(attach_price_fields(code, single_real_time, stock_meta))
     result.update(attach_hold_fields(code, single_real_time, metrics, hkd_cny_rate))
     result.update(attach_pnl_fields(
+        code,
         single_real_time,
         metrics,
         operations,
         result["totalValue"],
         result["totalValueYesterday"],
+        hkd_cny_rate,
     ))
     return result

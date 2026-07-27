@@ -28,7 +28,6 @@ class SingleStockMetrics:
     current_hold_cost: float
     current_overall_native: float
     current_overall_cny: float
-    hold_cost_basis_cny: float
     today_input_native: float
     today_input_cny: float
     total_fee_cny: float
@@ -40,9 +39,9 @@ class SingleStockMetrics:
             return 0.0
         return self.current_overall_native / self.current_hold_count
 
-    def offset_current_cny(self, market_value_cny: float) -> float:
-        """人民币浮动盈亏：市值(CNY) - 当前持仓成本基数(CNY)。"""
-        return market_value_cny - self.hold_cost_basis_cny
+    def offset_current_cny(self, price_now: float, fx: float = 1.0) -> float:
+        """人民币浮动盈亏：(现价 - 持仓成本) × 持股数 × 汇率。"""
+        return (price_now - self.current_hold_cost) * self.current_hold_count * fx
 
     def offset_current_ratio(self, price_now: float) -> float:
         """浮动盈亏率：(现价 - 持仓成本) / 持仓成本（原币口径）。"""
@@ -58,10 +57,12 @@ class SingleStockMetrics:
         self,
         market_value_cny: float,
         yesterday_value_cny: float,
+        price_now: float = 0.0,
+        fx: float = 1.0,
     ) -> float:
         """人民币今日总盈亏。"""
         if yesterday_value_cny < MIN_VALUE_THRESHOLD:
-            return self.offset_current_cny(market_value_cny)
+            return self.offset_current_cny(price_now, fx)
         return market_value_cny - yesterday_value_cny - self.today_input_cny
 
 
@@ -76,7 +77,6 @@ def compute_single_metrics(
     yesterday_hold = 0.0
 
     hold_total_pay_native = 0.0
-    hold_total_pay_cny = 0.0
     hold_total_count = 0.0
 
     overall_sum_native = 0.0
@@ -104,7 +104,6 @@ def compute_single_metrics(
             cost_cny = buy_outflow_cny(operation)
 
             hold_total_pay_native += cost_native
-            hold_total_pay_cny += cost_cny
             hold_total_count += operation.count
 
             overall_sum_native += cost_native
@@ -139,7 +138,6 @@ def compute_single_metrics(
 
             if current_hold == 0:
                 hold_total_pay_native = 0.0
-                hold_total_pay_cny = 0.0
                 hold_total_count = 0.0
 
         elif op_type == OperationType.DIVIDEND:
@@ -170,7 +168,6 @@ def compute_single_metrics(
         current_hold_cost=current_hold_cost,
         current_overall_native=overall_sum_native,
         current_overall_cny=overall_sum_cny,
-        hold_cost_basis_cny=hold_total_pay_cny,
         today_input_native=today_input_native,
         today_input_cny=today_input_cny,
         total_fee_cny=total_fee_cny,
