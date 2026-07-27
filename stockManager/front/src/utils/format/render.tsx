@@ -12,22 +12,28 @@ export const AmountText: React.FC<AmountTextProps> = ({ value }) => {
   return <span style={{ color: colorFromValue(value) }}>{formatAmount(value)}</span>;
 };
 
-type DailyChangeCellProps = {
+type DailyChangeCellProps = React.HTMLAttributes<HTMLDivElement> & {
   offsetToday: number;
   offsetTodayRatio: number;
   code: string;
 };
 
 /** 当日涨跌单元格：根据涨跌自动着色（正红负绿） */
-export const DailyChangeCell: React.FC<DailyChangeCellProps> = ({
-  offsetToday,
-  offsetTodayRatio,
-  code,
-}) => {
-  const { colorFromValue } = useProfitLossColors();
-  return (
-    <div className="cell-number" style={{ color: colorFromValue(offsetToday) }}>
-      {`${formatMarketPrice(offsetToday, code)} (${formatDecimalRatio(offsetTodayRatio)})`}
-    </div>
-  );
-};
+export const DailyChangeCell = React.forwardRef<HTMLDivElement, DailyChangeCellProps>(
+  function DailyChangeCell(
+    { offsetToday, offsetTodayRatio, code, className = 'cell-number', style, ...props },
+    ref,
+  ) {
+    const { colorFromValue } = useProfitLossColors();
+    return (
+      <div
+        ref={ref}
+        {...props}
+        className={className}
+        style={{ color: colorFromValue(offsetToday), ...style }}
+      >
+        {`${formatMarketPrice(offsetToday, code)} (${formatDecimalRatio(offsetTodayRatio)})`}
+      </div>
+    );
+  },
+);

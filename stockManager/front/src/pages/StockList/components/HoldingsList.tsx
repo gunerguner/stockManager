@@ -70,13 +70,6 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         className: 'cell-number',
         width: isMobile ? 90 : undefined,
         render: (_, r) => {
-          const cell = (
-            <DailyChangeCell
-              offsetToday={r.offsetToday}
-              offsetTodayRatio={r.offsetTodayRatio}
-              code={r.code}
-            />
-          );
           const cny = formatAmount(r.totalOffsetToday);
           const title = isHkCode(r.code)
             ? `${cny}/${formatAmount(hkNative.offsetToday(r), { currency: 'hkd' })}`
@@ -87,7 +80,11 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
               color={colorFromValue(r.totalOffsetToday)}
               styles={{ container: { color: '#fff' } }}
             >
-              {cell}
+              <DailyChangeCell
+                offsetToday={r.offsetToday}
+                offsetTodayRatio={r.offsetTodayRatio}
+                code={r.code}
+              />
             </Tooltip>
           );
         },
