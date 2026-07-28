@@ -147,7 +147,8 @@ export const useTradeDetailModal = () => {
           render: (_: number, record: API.Operation) => {
             const amountCny = tradeAmountCny(code, record);
             const cell = <div>{formatAmount(amountCny)}</div>;
-            if (!isHkCode(code)) {
+            // 港股买卖才展示港币名义金额；DV 的 cash 已是人民币到账口径
+            if (!isHkCode(code) || record.type === 'DV') {
               return cell;
             }
             return (

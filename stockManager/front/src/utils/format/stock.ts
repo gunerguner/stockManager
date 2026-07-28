@@ -69,9 +69,11 @@ export const formatSharePercent = (
 ): string => formatPercent(total ? (part / total) * 100 : 0, precision);
 
 // ==================== 交易 / 港币推导 ====================
-/** 人民币成交金额：港股用 amount，其它用 price×count */
-export const tradeAmountCny = (code: string, op: API.Operation): number =>
-  isHkCode(code) ? op.amount ?? 0 : op.price * op.count;
+/** 人民币成交金额：DV 用 cash×count；港股买卖用 amount；其它用 price×count */
+export const tradeAmountCny = (code: string, op: API.Operation): number => {
+  if (op.type === 'DV') return (op.cash ?? 0) * (op.count ?? 0);
+  return isHkCode(code) ? op.amount ?? 0 : op.price * op.count;
+};
 
 /** 交易说明：除权除息用股息/送转文案，其余用备注 */
 export const operationComment = (op: API.Operation): string => {
