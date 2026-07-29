@@ -1,4 +1,4 @@
-import { Typography, Space, Divider, theme, Tooltip } from 'antd';
+import { Typography, Space, Tooltip } from 'antd';
 import React from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { HoldingStatus } from '@/components/Common/HoldingStatus';
@@ -10,6 +10,7 @@ import {
   formatMarketPrice,
   isHkCode,
   operationComment,
+  totalDividendCny,
   tradeAmountCny,
 } from '@/utils/format/stock';
 import { AmountText } from '@/utils/format/render';
@@ -32,25 +33,21 @@ const OPERATION_TYPE_MAP: Record<string, string> = {
   DV: '除权除息',
 };
 
-const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, isMobile }) => {
+const StockInfo: React.FC<{
+  stock: API.Stock;
+  operations: API.Operation[];
+}> = ({ stock, operations }) => {
   const { colorFromValue } = useProfitLossColors();
-  const { token } = theme.useToken();
+  const dividendTotal = totalDividendCny(stock.code, operations);
 
-  const infoRowStyle: React.CSSProperties = {
-    paddingTop: 8,
-    borderTop: `1px solid ${token.colorBorderSecondary}`,
-  };
-
-  const infoItems = (
-    <>
-      <Text>现价：{formatMarketPrice(stock.priceNow, stock.code)} </Text>
-      <Text>持股：{stock.holdCount} </Text>
-      <Text>
-        累计盈亏：
-        <AmountText value={stock.offsetTotal} />{' '}
-      </Text>
-      <Text>
-        资金加权收益率：
+  const infoItems = [
+    { label: '现价', value: formatMarketPrice(stock.priceNow, stock.code) },
+    { label: '持股', value: stock.holdCount },
+    { label: '累计盈亏', value: <AmountText value={stock.offsetTotal} /> },
+    { label: '总计分红', value: <AmountText value={dividendTotal} /> },
+    {
+      label: '资金加权收益率',
+      value: (
         <span
           style={{
             color: colorFromValue(stock.moneyWeightedReturn),
@@ -58,49 +55,45 @@ const StockInfo: React.FC<{ stock: API.Stock; isMobile: boolean }> = ({ stock, i
         >
           {formatDecimalRatio(stock.moneyWeightedReturn)}
         </span>
-      </Text>
-    </>
-  );
+      ),
+    },
+  ];
 
-  return isMobile ? (
-    <div style={infoRowStyle}>
-      <Space size="small" wrap>
-        {infoItems}
-      </Space>
+  return (
+    <div className="stock-info-grid">
+      {infoItems.map((item) => (
+        <div className="stock-info-item" key={item.label}>
+          <Text type="secondary" className="stock-info-label">
+            {item.label}
+          </Text>
+          <Text className="stock-info-value">{item.value}</Text>
+        </div>
+      ))}
     </div>
-  ) : (
-    <>
-      <Divider orientation="vertical" />
-      {infoItems}
-    </>
   );
 };
 
 const StockHeader: React.FC<{
   stock: API.Stock;
-  operationsCount: number;
+  operations: API.Operation[];
   showStockInfo: boolean;
-}> = ({ stock, operationsCount, showStockInfo }) => {
-  const isMobile = useIsMobile();
-  const { token } = theme.useToken();
-  const stockInfo = showStockInfo ? <StockInfo stock={stock} isMobile={isMobile} /> : null;
+}> = ({ stock, operations, showStockInfo }) => {
+  const stockInfo = showStockInfo ? <StockInfo stock={stock} operations={operations} /> : null;
 
   return (
     <div className="stock-header-wrapper">
       <div className="stock-header-left">
-        <Space wrap={isMobile} className={isMobile && showStockInfo ? 'stock-header-space' : ''}>
+        <Space className="stock-identity">
           <HoldingStatus {...stock} withLink />
           <Text type="secondary">({stock.code})</Text>
-          {!isMobile && stockInfo}
         </Space>
-        {isMobile && stockInfo}
+        {stockInfo}
       </div>
       <Text
         type="secondary"
         className="trade-count"
-        style={isMobile ? { borderTop: `1px solid ${token.colorBorderSecondary}` } : undefined}
       >
-        共 {operationsCount} 笔交易
+        共 {operations.length} 笔交易
       </Text>
     </div>
   );
@@ -172,7 +165,7 @@ export const useTradeDetailModal = () => {
         const headerView = (
           <StockHeader
             stock={group.stock}
-            operationsCount={group.operations.length}
+            operations={group.operations}
             showStockInfo={showStockInfo}
           />
         );

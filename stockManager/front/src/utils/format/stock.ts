@@ -75,6 +75,13 @@ export const tradeAmountCny = (code: string, op: API.Operation): number => {
   return isHkCode(code) ? op.amount ?? 0 : op.price * op.count;
 };
 
+/** 个股 DV 分红合计（人民币）：Σ cash×count */
+export const totalDividendCny = (code: string, operations: API.Operation[]): number =>
+  operations.reduce(
+    (sum, op) => (op.type === 'DV' ? sum + tradeAmountCny(code, op) : sum),
+    0,
+  );
+
 /** 交易说明：除权除息用股息/送转文案，其余用备注 */
 export const operationComment = (op: API.Operation): string => {
   if (op.type !== 'DV') return op.comment;
