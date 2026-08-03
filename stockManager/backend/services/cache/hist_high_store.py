@@ -5,8 +5,7 @@ from django.core.cache import cache
 
 from backend.common.cache import Cache
 from backend.common import logger
-from backend.common.market import Market, code_to_market
-from backend.services.market import fetch_cn_hist_high, fetch_hk_hist_high
+from backend.services.market import fetch_hist_high
 from backend.services.cache import keys
 
 _SENTINEL_NONE = "__none__"
@@ -32,8 +31,7 @@ def get_cached_hist_highs(codes: list[str]) -> tuple[dict[str, float | None], li
     cache_keys = [keys.KEY_HIST_HIGH.format(code=code) for code in codes]
     batch = Cache.get_many(cache_keys)
     for code, cache_key in zip(codes, cache_keys, strict=False):
-        cached = batch.get(cache_key)
-        if cached is not None:
+        if (cached := batch.get(cache_key)) is not None:
             result[code] = None if cached == _SENTINEL_NONE else cached
         else:
             missing.append(code)
@@ -42,10 +40,7 @@ def get_cached_hist_highs(codes: list[str]) -> tuple[dict[str, float | None], li
 
 def _fetch_single_hist_high(code: str) -> tuple[str, float | None]:
     try:
-        if code_to_market(code) == Market.HK:
-            value = fetch_hk_hist_high(code, timeout=_HIST_HIGH_TIMEOUT)
-        else:
-            value = fetch_cn_hist_high(code, timeout=_HIST_HIGH_TIMEOUT)
+        value = fetch_hist_high(code, timeout=_HIST_HIGH_TIMEOUT)
     except Exception as e:
         logger.warning(f"历史高拉取失败 {code}: {e}")
         value = None

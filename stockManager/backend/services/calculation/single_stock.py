@@ -19,8 +19,7 @@ def _resolve_stock_name(
     stock_meta: StockMetaModel | None = None,
 ) -> str:
     """优先展示实时接口名称，其次回退 StockMeta 名称。"""
-    realtime_name = (single_real_time.get("name") or "").strip()
-    if realtime_name:
+    if realtime_name := (single_real_time.get("name") or "").strip():
         return realtime_name
     if stock_meta and stock_meta.name:
         return stock_meta.name
@@ -34,7 +33,6 @@ def _default_realtime_price() -> RealtimePriceData:
         "priceOffset": 0.0,
         "offsetRatio": 0.0,
         "yesterdayClose": 0.0,
-        "yearHigh": None,
     })
 
 

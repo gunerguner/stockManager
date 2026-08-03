@@ -26,18 +26,26 @@ def apply_operation_to_hold(hold: float, operation: Operation) -> float:
             return hold
 
 
+def operation_cash_delta_cny(operation: Operation, current_hold: float) -> float:
+    """人民币现金变动：买入流出为负，卖出/分红流入为正。"""
+    match operation.operationType:
+        case OperationType.BUY:
+            return -buy_outflow_cny(operation)
+        case OperationType.SELL:
+            return sell_inflow_cny(operation)
+        case OperationType.DIVIDEND:
+            return dividend_cash_cny(operation, current_hold)
+        case _:
+            return 0.0
+
+
 def apply_net_invested(
     net_invested: float,
     current_hold: float,
     operation: Operation,
 ) -> tuple[float, float]:
     """按人民币资金账本更新净占用资金与持股数（供资金加权 / XIRR 口径）。"""
-    match operation.operationType:
-        case OperationType.BUY:
-            net_invested += buy_outflow_cny(operation)
-        case OperationType.SELL:
-            net_invested -= sell_inflow_cny(operation)
-        case OperationType.DIVIDEND:
-            net_invested -= dividend_cash_cny(operation, current_hold)
+    # 现金流入减少净投入，流出增加净投入
+    net_invested -= operation_cash_delta_cny(operation, current_hold)
     current_hold = apply_operation_to_hold(current_hold, operation)
     return net_invested, current_hold

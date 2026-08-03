@@ -13,31 +13,24 @@ from time import sleep
 
 from backend.common import logger
 from backend.common.market import is_hk_code
-from backend.services.market.http_client import get_json
+from backend.services.market.gtimg_kline import (
+    extract_kline_rows,
+    fetch_kline_node,
+    kline_url_for_code,
+)
 
-_CN_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
-_HK_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/hkfqkline/get"
 _CLOSE_INDEX = 2
 _PERIOD = "day"
 _CHUNK_DAYS = 300
 _COUNT = 320
 _MAX_RETRIES = 2
 _RETRY_SLEEP_SEC = 0.4
+_PREFERRED_KEYS = ("day", "qfqday")
 
 
 def _parse_closes_from_node(node: dict) -> dict[date, float]:
     """从 K 线节点提取收盘价：优先不复权 day，过滤负价/零价。"""
-    rows: list = []
-    for key in ("day", "qfqday"):
-        if isinstance(value := node.get(key), list) and value and isinstance(value[0], list):
-            rows = value
-            break
-    else:
-        for value in node.values():
-            if isinstance(value, list) and value and isinstance(value[0], list):
-                rows = value
-                break
-
+    rows = extract_kline_rows(node, _PREFERRED_KEYS)
     result: dict[date, float] = {}
     for row in rows:
         if not isinstance(row, list) or len(row) <= _CLOSE_INDEX:
@@ -54,7 +47,6 @@ def _parse_closes_from_node(node: dict) -> dict[date, float]:
 
 def _fetch_chunk(
     code: str,
-    url: str,
     start: date,
     end: date,
     *,
@@ -62,21 +54,19 @@ def _fetch_chunk(
 ) -> dict[date, float]:
     # A 股：末段空 = 不复权；港股 hkfqkline 空参会 bad params，用 qfq 但优先解析 day
     adjust = "qfq" if is_hk_code(code) else ""
-    param = (
-        f"{code},{_PERIOD},{start.isoformat()},{end.isoformat()},{_COUNT},{adjust}"
-    )
     last_error: Exception | None = None
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
-            data = get_json(url, params={"param": param}, timeout=timeout)
-            api_code = data.get("code")
-            if api_code not in (0, "0", None) and not data.get("data"):
-                raise RuntimeError(f"gtimg code={api_code} msg={data.get('msg')}")
-            payload = data.get("data") or {}
-            if not payload:
-                return {}
-            node = next(iter(payload.values()))
-            if not isinstance(node, dict):
+            if (node := fetch_kline_node(
+                code,
+                period=_PERIOD,
+                start=start.isoformat(),
+                end=end.isoformat(),
+                count=_COUNT,
+                adjust=adjust,
+                timeout=timeout,
+                url=kline_url_for_code(code),
+            )) is None:
                 return {}
             return _parse_closes_from_node(node)
         except Exception as e:
@@ -100,12 +90,11 @@ def fetch_daily_closes(
     """拉取 [start, end] 日频不复权收盘价；失败或缺数据返回已拉到的子集。"""
     if start > end:
         return {}
-    url = _HK_KLINE_URL if is_hk_code(code) else _CN_KLINE_URL
     merged: dict[date, float] = {}
     cursor = start
     while cursor <= end:
         chunk_end = min(cursor + timedelta(days=_CHUNK_DAYS - 1), end)
-        chunk = _fetch_chunk(code, url, cursor, chunk_end, timeout=timeout)
+        chunk = _fetch_chunk(code, cursor, chunk_end, timeout=timeout)
         merged.update(chunk)
         cursor = chunk_end + timedelta(days=1)
     return {d: px for d, px in merged.items() if start <= d <= end}

@@ -2,7 +2,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
-from backend.common.types import RealtimePriceData
+from backend.common.types import CashFlowList, RealtimePriceData
 from backend.models import Operation
 
 
@@ -15,6 +15,11 @@ def extract_offset_today(
         return 0.0, 0.0
     data = price_data or {}
     return data.get("priceOffset", 0.0), data.get("offsetRatio", 0.0)
+
+
+def sum_origin_cash(cash_flow_list: CashFlowList) -> float:
+    """出入金合计（本金口径）。"""
+    return sum(float(flow.get("amount") or 0) for flow in cash_flow_list)
 
 
 def operation_sort_key(op: Operation) -> tuple:

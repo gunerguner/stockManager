@@ -63,8 +63,7 @@ def get_calculated_target(
     user_codes: Iterable[str] | None = None,
 ) -> CalculatedResult | None:
     codes = list(user_codes) if user_codes is not None else list(get_user_operations(user).keys())
-    cached = cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.pk))
-    if not cached:
+    if not (cached := cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.pk))):
         return None
     if should_invalidate_calculated_cache(codes):
         return None

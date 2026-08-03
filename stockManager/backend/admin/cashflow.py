@@ -4,11 +4,7 @@
 from django.contrib import messages
 
 from backend.admin.base import CashFlow, UserScopedModelAdmin, admin
-
-_NAV_REFRESH_HINT = (
-    '净值数据可能已过期，请到「净值分析」页刷新；'
-    '若修改了历史交易或出入金，请使用全量刷新。'
-)
+from backend.admin.constants import NAV_REFRESH_HINT
 
 
 @admin.register(CashFlow)
@@ -43,12 +39,12 @@ class CashFlowAdmin(UserScopedModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)
 
     def delete_model(self, request, obj):
         super().delete_model(request, obj)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)
 
     def delete_queryset(self, request, queryset):
         super().delete_queryset(request, queryset)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)

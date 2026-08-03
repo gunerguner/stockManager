@@ -133,8 +133,6 @@ def nav(request: HttpRequest, user: User) -> JsonResponse:
 def refresh_nav(request: HttpRequest, data: dict, user: User) -> JsonResponse:
     """刷新净值 - POST /api/nav/refresh body: { mode: incremental|full }"""
     mode = data.get('mode') or 'incremental'
-    if mode not in ('incremental', 'full'):
-        return json_response(status=ResponseStatus.ERROR, message="mode 须为 incremental 或 full")
     logger.info(f"refresh_nav - 用户: {user.username}, mode={mode}, IP: {get_client_ip(request)}")
     try:
         result = Integrate.refresh_nav(user, mode=mode)

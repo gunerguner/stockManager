@@ -10,13 +10,17 @@ from backend.common import logger
 from backend.common.types import (
     CalculatedResult,
     CashFlowList,
+    DailyCloseByCode,
+    HoldingWindows,
     MarketsData,
+    NavAnalysisResult,
     OperationDict,
     RealtimePriceDict,
     ValuationData,
     WatchItemDict,
 )
 from backend.models import StockMeta as StockMetaModel
+from backend.services.cache import daily_price_store
 from backend.services.cache import fx_store
 from backend.services.cache import hist_high_store
 from backend.services.cache import meta_store
@@ -66,16 +70,24 @@ class CacheRepository:
         user_store.set_calculated_target(user_id, result, user_codes)
 
     @classmethod
-    def get_nav_analysis(cls, user_id: int):
+    def get_nav_analysis(cls, user_id: int) -> NavAnalysisResult | None:
         return user_store.get_nav_analysis(user_id)
 
     @classmethod
-    def set_nav_analysis(cls, user_id: int, result) -> None:
+    def set_nav_analysis(cls, user_id: int, result: NavAnalysisResult) -> None:
         user_store.set_nav_analysis(user_id, result)
 
     @classmethod
     def clear_nav_analysis(cls, user_id: int) -> None:
         user_store.clear_nav_analysis(user_id)
+
+    @classmethod
+    def get_hkd_cny_rate(cls, user_codes: Iterable[str]) -> float:
+        return fx_store.get_hkd_cny_rate(user_codes)
+
+    @classmethod
+    def ensure_daily_prices_for_windows(cls, windows: HoldingWindows) -> DailyCloseByCode:
+        return daily_price_store.ensure_daily_prices_for_windows(windows)
 
     @classmethod
     def get_stock_meta_dict(cls) -> dict[str, StockMetaModel]:
@@ -93,7 +105,7 @@ class CacheRepository:
         return CalculationInputs(
             income_cash=income_cash,
             cash_flow_list=cash_flow_list,
-            hkd_cny_rate=fx_store.get_hkd_cny_rate(user_codes),
+            hkd_cny_rate=cls.get_hkd_cny_rate(user_codes),
             prices=price_store.query_prices(user_codes),
             stock_meta=meta_store.get_stock_meta_dict(),
             markets=price_store.get_markets_metadata(),

@@ -46,8 +46,7 @@ def get_cached_valuations(codes: list[str]) -> tuple[dict[str, ValuationData], l
     cache_keys = [keys.KEY_VALUATION.format(code=code) for code in codes]
     batch = Cache.get_many(cache_keys)
     for code, cache_key in zip(codes, cache_keys, strict=False):
-        cached = batch.get(cache_key)
-        if cached is not None:
+        if (cached := batch.get(cache_key)) is not None:
             result[code] = cached
         else:
             missing.append(code)

@@ -12,10 +12,9 @@ from backend.common.types import (
     OperationDataDict,
     WatchResultItem,
 )
-from backend.models import Info, WatchItem
+from backend.models import Info
 from backend.services.cache import CacheRepository
-from backend.services.calculation import Calculator, NavAnalysis
-from backend.services.calculation.watchlist import build_watchlist
+from backend.services.calculation import Calculator, NavAnalysis, Watchlist
 from backend.services.dividend import Dividend
 
 
@@ -69,7 +68,6 @@ class Integrate:
     @classmethod
     def refresh_nav(cls, user: User, mode: str = 'incremental') -> dict:
         written = NavAnalysis.refresh(user, mode=mode)
-        CacheRepository.clear_nav_analysis(user.pk)
         result = NavAnalysis.build(user)
         CacheRepository.set_nav_analysis(user.pk, result)
         return {
@@ -89,28 +87,19 @@ class Integrate:
             info_type=Info.InfoType.INCOME_CASH,
             defaults={"value": str(income_cash)},
         )
-        CacheRepository.clear_nav_analysis(user.pk)
         logger.info(f"用户 {user.username} 更新收益现金: {income_cash}")
 
     @classmethod
     def set_watch_hidden(cls, user: User, code: str, hidden: bool) -> None:
-        try:
-            item = WatchItem.objects.get(user=user, stock_meta__code=code)
-        except WatchItem.DoesNotExist as exc:
-            raise WatchItem.DoesNotExist(f"关注项不存在: {code}") from exc
-        item.hidden = hidden
-        item.save(update_fields=["hidden"])
-        logger.info(f"用户 {user.username} 设置关注隐藏: {code}={hidden}")
+        Watchlist.set_hidden(user, code, hidden)
 
     @classmethod
     def get_watchlist(cls, user: User) -> list[WatchResultItem]:
-        items = CacheRepository.get_user_watchlist(user)
-        if not items:
+        if not (items := CacheRepository.get_user_watchlist(user)):
             return []
-
         codes = [item["code"] for item in items]
         market_data = CacheRepository.load_watchlist_market_data(codes)
-        return build_watchlist(
+        return Watchlist.build(
             items,
             market_data.prices,
             market_data.valuations,

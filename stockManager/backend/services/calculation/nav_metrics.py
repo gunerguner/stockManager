@@ -18,7 +18,7 @@ def apply_income_cash_display(
 ) -> list[NavPointData]:
     """库内 nav + incomeCash 线性摊入 → navDisplay。"""
     n = len(points)
-    if n == 0:
+    if not n:
         return []
     denom = origin_cash if abs(origin_cash) > 1e-6 else 1.0
     daily_adj = (income_cash / denom) / n if abs(income_cash) > 1e-9 else 0.0
@@ -92,17 +92,10 @@ def compute_metrics(nav_display_series: Iterable[float]) -> NavMetricsData:
     }
 
 
-def _slice_by_range(
-    points: list[NavPointData],
-    range_key: str,
-    *,
-    as_of: date | None = None,
-) -> list[NavPointData]:
-    if not points:
-        return []
-    if range_key == 'all':
+def _slice_by_range(points: list[NavPointData], range_key: str) -> list[NavPointData]:
+    if not points or range_key == 'all':
         return points
-    today = as_of or date.today()
+    today = date.today()
     if range_key == 'ytd':
         start = date(today.year, 1, 1)
     elif range_key == 'oneYear':
@@ -117,16 +110,15 @@ def assemble_nav_analysis(
     income_cash: float,
     origin_cash: float,
     *,
-    as_of: date | None = None,
     updated_at: str | None = None,
 ) -> NavAnalysisResult:
     """组装 API / Redis 缓存 payload。"""
     points = apply_income_cash_display(db_points, income_cash, origin_cash)
     metrics: NavMetricsByRange = {
-        'all': compute_metrics(p['navDisplay'] for p in _slice_by_range(points, 'all', as_of=as_of)),
-        'ytd': compute_metrics(p['navDisplay'] for p in _slice_by_range(points, 'ytd', as_of=as_of)),
+        'all': compute_metrics(p['navDisplay'] for p in points),
+        'ytd': compute_metrics(p['navDisplay'] for p in _slice_by_range(points, 'ytd')),
         'oneYear': compute_metrics(
-            p['navDisplay'] for p in _slice_by_range(points, 'oneYear', as_of=as_of)
+            p['navDisplay'] for p in _slice_by_range(points, 'oneYear')
         ),
     }
     last_date = points[-1]['date'] if points else None

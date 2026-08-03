@@ -9,14 +9,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from backend.common import logger
-from backend.common.constants import OperationType
 from backend.common.market import is_hk_code
-from backend.common.operations import apply_operation_to_hold
-from backend.common.settlement import (
-    buy_outflow_cny,
-    dividend_cash_cny,
-    sell_inflow_cny,
-)
+from backend.common.operations import apply_operation_to_hold, operation_cash_delta_cny
 from backend.common.tradingCalendar import TradingCalendar
 from backend.common.types import (
     CashFlowList,
@@ -32,8 +26,7 @@ from backend.services.calculation.constants import (
     MIN_VALUE_THRESHOLD,
 )
 from backend.services.calculation.stockHold import StockHold
-from backend.services.cache.daily_price_store import ensure_daily_prices_for_windows
-from backend.services.cache.fx_store import get_hkd_cny_rate
+from backend.services.cache import CacheRepository
 
 _MIN_UNITS = 1e-8
 
@@ -103,18 +96,8 @@ def _apply_operation_cash_and_hold(
 ) -> float:
     code = operation.code
     hold = holdings.get(code, 0.0)
-    match operation.operationType:
-        case OperationType.BUY:
-            cash -= buy_outflow_cny(operation)
-            holdings[code] = apply_operation_to_hold(hold, operation)
-        case OperationType.SELL:
-            cash += sell_inflow_cny(operation)
-            holdings[code] = apply_operation_to_hold(hold, operation)
-        case OperationType.DIVIDEND:
-            cash += dividend_cash_cny(operation, hold)
-            holdings[code] = apply_operation_to_hold(hold, operation)
-        case _:
-            holdings[code] = apply_operation_to_hold(hold, operation)
+    cash += operation_cash_delta_cny(operation, hold)
+    holdings[code] = apply_operation_to_hold(hold, operation)
     if abs(holdings.get(code, 0.0)) < MIN_HOLD_COUNT_THRESHOLD:
         holdings.pop(code, None)
     return cash
@@ -167,7 +150,7 @@ def _align_events_to_sessions(
     return aligned
 
 
-def compute_nav_series(
+def _compute_nav_series(
     *,
     sessions: list[date],
     operations_by_date: dict[date, list[Operation]],
@@ -256,7 +239,7 @@ def _holdings_at(operation_list: OperationDict, target: date) -> dict[str, float
     return holdings
 
 
-def holding_windows(
+def _holding_windows(
     operation_list: OperationDict,
     end: date,
 ) -> HoldingWindows:
@@ -374,15 +357,19 @@ def refresh_nav_for_user(
         logger.info(f"[nav] 用户 {user.pk} 无待计算交易日")
         return 0
 
-    windows = holding_windows(operation_list, end)
+    windows = _holding_windows(operation_list, end)
     price_windows = _clip_windows_to_range(
         windows,
         range_start,
         end,
         seed_date=event_cutoff,
     )
-    prices = ensure_daily_prices_for_windows(price_windows) if price_windows else {}
-    hkd_cny_rate = get_hkd_cny_rate(codes) if codes else 0.86
+    prices = (
+        CacheRepository.ensure_daily_prices_for_windows(price_windows)
+        if price_windows
+        else {}
+    )
+    hkd_cny_rate = CacheRepository.get_hkd_cny_rate(codes) if codes else 0.86
 
     if event_cutoff is not None:
         filtered_ops = {d: v for d, v in ops_by_date.items() if d > event_cutoff}
@@ -394,7 +381,7 @@ def refresh_nav_for_user(
     aligned_ops = _align_events_to_sessions(filtered_ops, sessions)
     aligned_flows = _align_events_to_sessions(filtered_flows, sessions)
 
-    rows = compute_nav_series(
+    rows = _compute_nav_series(
         sessions=sessions,
         operations_by_date=aligned_ops,
         flows_by_date=aligned_flows,

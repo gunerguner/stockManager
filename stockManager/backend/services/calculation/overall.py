@@ -9,6 +9,7 @@ from pyxirr import xirr
 
 from backend.common import logger
 from backend.common.types import CashFlowList, OverallData, StockData
+from backend.common.utils import sum_origin_cash
 
 
 def calculate_xirr(cash_flow_list: CashFlowList, total_asset: float) -> float:
@@ -39,8 +40,7 @@ def calculate_xirr(cash_flow_list: CashFlowList, total_asset: float) -> float:
         if not (any(amt > 0 for amt in amounts) and any(amt < 0 for amt in amounts)):
             return 0.0
 
-        result = xirr(dates, amounts)
-        return float(result) if result is not None else 0.0
+        return float(result) if (result := xirr(dates, amounts)) is not None else 0.0
 
     except Exception as e:
         logger.error(f"XIRR 计算失败: {str(e)}", exc_info=True)
@@ -62,7 +62,7 @@ def compute_overall(
     total_offset_today = sum(t.get("totalOffsetToday", 0.0) for t in stock_list)
     total_cost = sum(t.get("totalCost", 0.0) for t in stock_list)
 
-    origin_cash = sum(flow['amount'] for flow in cash_flow_list)
+    origin_cash = sum_origin_cash(cash_flow_list)
 
     to_return["offsetCurrent"] = current_offset
     to_return["offsetTotal"] = total_offset + income_cash

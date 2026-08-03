@@ -12,7 +12,6 @@ class RealtimePriceData(TypedDict):
     priceOffset: float
     offsetRatio: float  # 原始比率，如 0.0123 表示 1.23%
     yesterdayClose: float
-    yearHigh: float | None
 
 
 class CashFlowData(TypedDict):

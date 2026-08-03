@@ -88,8 +88,7 @@ def _missing_session_gaps(
 def _fetch_and_upsert_gaps(code: str, gaps: DateRangeList) -> DailyCloseSeries:
     fetched_all: DailyCloseSeries = {}
     for gap_start, gap_end in gaps:
-        fetched = fetch_daily_closes(code, gap_start, gap_end)
-        if not fetched:
+        if not (fetched := fetch_daily_closes(code, gap_start, gap_end)):
             logger.warning(f"[daily_price] {code} 缺口 {gap_start}~{gap_end} 为空")
             continue
         fetched_all.update(fetched)
@@ -124,8 +123,7 @@ def _ensure_one_code_windows(
     existing = load_closes([code], overall_start, overall_end).get(code) or {}
 
     for round_idx in range(_GAP_FILL_ROUNDS):
-        gaps = _gaps_in_windows(existing, merged, market)
-        if not gaps:
+        if not (gaps := _gaps_in_windows(existing, merged, market)):
             break
         logger.info(
             f"[daily_price] {code} 第 {round_idx + 1} 轮补拉 {len(gaps)} 个缺口: "

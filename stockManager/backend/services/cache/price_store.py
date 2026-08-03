@@ -20,7 +20,6 @@ _PRICE_FIELDS = frozenset({
     "priceOffset",
     "offsetRatio",
     "yesterdayClose",
-    "yearHigh",
 })
 
 _MARKET_PRICE_PATTERNS: dict[Market, tuple[str, ...]] = {

@@ -6,10 +6,11 @@ from django.contrib import messages
 from django.db.models import Max
 
 from backend.admin.base import Operation, UserScopedModelAdmin, admin
+from backend.admin.constants import NAV_REFRESH_HINT
 from backend.common.auth_user import authenticated_user
 from backend.common.constants import OperationType
 from backend.common.market import is_hk_code
-from backend.services.cache.fx_store import get_hkd_cny_rate
+from backend.services.cache import CacheRepository
 
 
 class OperationAdminForm(forms.ModelForm):
@@ -38,7 +39,7 @@ class OperationAdminForm(forms.ModelForm):
 
         if amount is None or amount <= 0:
             try:
-                rate = get_hkd_cny_rate([code])
+                rate = CacheRepository.get_hkd_cny_rate([code])
                 cleaned['amount'] = price * count * rate
             except Exception as exc:
                 raise forms.ValidationError(
@@ -50,12 +51,6 @@ class OperationAdminForm(forms.ModelForm):
                 '港股通买卖必须填写成交金额（人民币），且大于 0'
             )
         return cleaned
-
-
-_NAV_REFRESH_HINT = (
-    '净值数据可能已过期，请到「净值分析」页刷新；'
-    '若修改了历史交易或出入金，请使用全量刷新。'
-)
 
 
 @admin.register(Operation)
@@ -120,12 +115,12 @@ class OperationAdmin(UserScopedModelAdmin):
                 )
 
         super().save_model(request, obj, form, change)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)
 
     def delete_model(self, request, obj):
         super().delete_model(request, obj)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)
 
     def delete_queryset(self, request, queryset):
         super().delete_queryset(request, queryset)
-        messages.warning(request, _NAV_REFRESH_HINT)
+        messages.warning(request, NAV_REFRESH_HINT)

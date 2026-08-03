@@ -61,8 +61,7 @@ def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
     throttle_updates = cache.get(keys.KEY_STOCK_NAME_SYNC_MARK) is not None
     changed_metas = []
     for meta in metas:
-        latest_name = name_map.get(meta.code, "")
-        if not latest_name:
+        if not (latest_name := name_map.get(meta.code, "")):
             continue
         if not meta.name:
             meta.name = latest_name

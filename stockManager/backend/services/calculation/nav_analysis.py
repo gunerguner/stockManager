@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from django.contrib.auth.models import User
 
 from backend.common.types import NavAnalysisResult
+from backend.common.utils import sum_origin_cash
 from backend.models import PortfolioNavDaily
 from backend.services.cache import CacheRepository, user_store
 from backend.services.calculation.nav import refresh_nav_for_user
@@ -24,11 +25,10 @@ class NavAnalysis:
             .values_list('date', 'nav')
         )
         income_cash, cash_flow_list = user_store.get_user_cash_info(user)
-        origin_cash = sum(float(f.get('amount') or 0) for f in cash_flow_list)
         return assemble_nav_analysis(
             list(rows),
             income_cash,
-            origin_cash,
+            sum_origin_cash(cash_flow_list),
             updated_at=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -36,7 +36,7 @@ class NavAnalysis:
     def refresh(cls, user: User, *, mode: str = 'incremental') -> int:
         """拉取交易/出入金并刷新日净值写库。返回写入行数。mode: incremental | full。"""
         if mode not in ('incremental', 'full'):
-            raise ValueError(f"无效刷新模式: {mode}")
+            raise ValueError('mode 须为 incremental 或 full')
         operation_list = CacheRepository.get_user_operations(user)
         _income_cash, cash_flow_list = user_store.get_user_cash_info(user)
         return refresh_nav_for_user(
