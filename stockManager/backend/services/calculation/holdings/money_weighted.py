@@ -2,8 +2,8 @@
 import datetime
 
 from backend.common.constants import OperationType
-from backend.common.operations import apply_net_invested
-from backend.common.settlement import buy_outflow_cny
+from backend.common.domain.operations import apply_net_invested
+from backend.common.domain.settlement import buy_outflow_cny
 from backend.common.utils import operation_sort_key
 from backend.models import Operation
 from backend.services.calculation.constants import MIN_HOLD_COUNT_THRESHOLD, MIN_VALUE_THRESHOLD

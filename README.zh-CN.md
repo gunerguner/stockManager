@@ -6,26 +6,32 @@
 
 ## 持仓盈亏
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFACd.png)
+image.png
 
 ## 盈亏归因与交易数据
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFF4H.png)
+image.png
 
 ## 除权更新
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFiUe.png)
+image.png
 
 主要的特点包括：
 
-- 完整而精确的个股、整体数据指标。
-- 完整的个股操作记录。
-- 自动生成除权除息记录。
-- 准确的个股排序功能。
-- 支持港股通：价格与每股成本按港币 `$` 展示；实际成交结算、组合总资产和盈亏统一按人民币计算。
-- 极简界面，无广告，无妖艳的干扰元素。
+- **持仓盈亏一目了然**：个股与组合指标按雪球口径精确计算，浮动、累计、当日盈亏随时可查。
+- **交易履历完整可追溯**：每只股票的买卖与分红全程留痕，查阅方便。
+- **除权除息自动生成**：A 股公司行为一键补齐记录，减少手工录入与遗漏。
+- **港股通双币口径**：报价与每股成本按港币展示，成交结算与组合总资产、盈亏统一按人民币计算。
+- **盈亏归因**：拆解各板块贡献，快速看清赚在哪里、亏在哪里。
+- **净值分析**：以基金份额法回放组合净值曲线，复盘真实操作水平。
+- **交易时间线**：按时间段浏览进出场节奏，掌握每个阶段的交易情况。
+- **极简无干扰**：专注记录与分析本身，无广告、无花哨装饰。
+
+
 
 # 技术方案
+
+
 
 ## 后端
 
@@ -89,6 +95,8 @@
 - **港币展示账本**：`price`、持仓成本和摊薄成本均为港币。
 - **人民币资金账本**：港股买卖的 `amount` 记录实际人民币成交金额，`fee` 也为人民币；组合市值、盈亏和资金加权收益率统一按人民币计算。
 
+
+
 ## 数据迁移
 
 个人交易的数据可以从券商的软件获取，如果之前在别的平台有记录也可以做导出。
@@ -97,24 +105,28 @@
 
 # 搭建方式
 
+
+
 ## 手动搭建（前后端分离开发）
 
 1. 安装 Python(版本>=3.13)、pip、git、redis。
 2. 使用 pip 安装依赖（`requirements.txt`）。
 3. 安装 Node(版本>=20)、utoo（`npm install -g utoo`）。
-4. git clone：https://github.com/gunerguner/stockManager
+4. git clone：[https://github.com/gunerguner/stockManager](https://github.com/gunerguner/stockManager)
 5. 进入 `stockManager/front`，执行 `ut install`（**无需** `ut run build`）。
-6. 在 Django 项目包目录创建 `.env`：`cp stockManager/stockManager/.env.example stockManager/stockManager/.env`，`DJANGO_SECRET_KEY` 可用  
-   `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'` 生成。
+6. 在 Django 项目包目录创建 `.env`：`cp stockManager/stockManager/.env.example stockManager/stockManager/.env`，`DJANGO_SECRET_KEY` 可用
+  `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'` 生成。
 7. `python manage.py makemigrations`、`python manage.py migrate`（或直接复制数据库文件）。
 8. `python manage.py createsuperuser` 创建管理账号。
 9. 启动 Redis：`redis-server`。
 10. **两个终端启动：**
-    - 终端 1（`stockManager` 目录）：`python manage.py runserver` → API 与 Admin 在 **8000**
+  - 终端 1（`stockManager` 目录）：`python manage.py runserver` → API 与 Admin 在 **8000**
     - 终端 2（`front` 目录）：`ut run dev` → 业务前台在 **8001**（`/api/` 代理到 8000）
 
-- 业务前台：http://127.0.0.1:8001
-- 管理后台：http://127.0.0.1:8000/sys/admin/
+- 业务前台：[http://127.0.0.1:8001](http://127.0.0.1:8001)
+- 管理后台：[http://127.0.0.1:8000/sys/admin/](http://127.0.0.1:8000/sys/admin/)
+
+
 
 ## 自动搭建
 
@@ -124,6 +136,8 @@
 
 1. **Docker（推荐）**：前端仅在 `frontend` 镜像构建一次；后端镜像不含 Umi 产物。见 [docker/README.md](docker/README.md)。
 2. 传统部署：Nginx 托管 `front/dist` 并反代 API；后端仅 Gunicorn + Django Admin 静态。
+
+
 
 # 项目故事
 

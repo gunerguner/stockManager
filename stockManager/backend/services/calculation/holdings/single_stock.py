@@ -5,7 +5,7 @@
 from typing import cast
 
 from backend.common import logger
-from backend.common.market import is_hk_code
+from backend.common.domain.market import is_hk_code
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
 from backend.services.calculation.constants import MIN_PRICE_THRESHOLD

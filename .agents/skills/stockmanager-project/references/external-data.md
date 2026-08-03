@@ -100,7 +100,7 @@ flowchart LR
 ### 港股通交易与汇率口径
 
 - **录入**：`Operation.price` 为港币；港股 BUY/SELL 的 `Operation.amount` 是实际人民币成交额，`fee` 也是人民币。应优先录入实际结算值，避免按当前汇率反推历史成交。
-- **计算**：`common/settlement.py` 维护人民币资金账与原币展示账。组合市值、盈亏与 XIRR 使用人民币；当前市值以实时港币价格和本次计算取得的 HKD/CNY 汇率换算。
+- **计算**：`common/domain/settlement.py` 维护人民币资金账与原币展示账。组合市值、盈亏与 XIRR 使用人民币；当前市值以实时港币价格和本次计算取得的 HKD/CNY 汇率换算。
 - **分红**：自动除权只覆盖 A 股。港股分红以 Admin 手动创建 DV 操作，`cash` 填每股人民币到账金额。
 
 ## 4. 调用路径
@@ -108,7 +108,8 @@ flowchart LR
 | API / 功能 | 入口 | 外部数据 |
 |-----------|------|---------|
 | `GET /api/stocks` | `Integrate.get_calculated_result` | 实时价、汇率（非交易时段读缓存；持仓涉及的市场处于交易时段时回源）；港股计算还依赖 BUY/SELL 的 CNY `amount` |
-| `GET /api/watchlist` | `Integrate.get_watchlist` | 实时价、估值、历史高 |
+| `GET /api/watchlist` | `Integrate.get_watchlist` → `Watchlist.build` | 实时价、估值、历史高 |
+| `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `daily_price_store`）、汇率 |
 | `POST /api/dividend` | `Integrate.generate_dividend` | baostock 除权除息 |
 
 ## 5. 失败行为

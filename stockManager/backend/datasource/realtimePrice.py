@@ -4,7 +4,7 @@ from typing import Protocol, cast
 from easyquotation import use as eq_use
 
 from backend.common import logger
-from backend.common.market import hk_api_code, split_codes_by_market
+from backend.common.domain.market import hk_api_code, split_codes_by_market
 from backend.common.types import RealtimePriceData, RealtimePriceDict
 
 

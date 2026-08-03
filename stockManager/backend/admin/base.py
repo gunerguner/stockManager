@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.contrib.auth.models import User
 
-from backend.common.auth_user import authenticated_user
+from backend.common.web.auth_user import authenticated_user
 from backend.models import Operation, Info, StockMeta, CashFlow
 
 

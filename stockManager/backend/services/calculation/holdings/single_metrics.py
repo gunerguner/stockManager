@@ -3,8 +3,8 @@ import datetime
 from dataclasses import dataclass
 
 from backend.common.constants import OperationType
-from backend.common.operations import apply_operation_to_hold, dividend_multiplier
-from backend.common.settlement import (
+from backend.common.domain.operations import apply_operation_to_hold, dividend_multiplier
+from backend.common.domain.settlement import (
     buy_cost_native,
     buy_outflow_cny,
     dividend_cash_cny,

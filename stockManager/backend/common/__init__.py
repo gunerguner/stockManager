@@ -3,17 +3,18 @@
 提供装饰器、响应工具、常量等可复用组件
 """
 from backend.common.constants import ResponseStatus, OperationType
-from backend.common.decorators import (
-    require_authentication,
-    require_superuser,
-    require_methods,
+from backend.common.cache import Cache
+from backend.common.web import (
+    authenticated_user,
+    get_client_ip,
     handle_exception,
+    json_response,
     parse_json_body,
+    require_authentication,
+    require_methods,
+    require_superuser,
     validate_required_fields,
 )
-from backend.common.middleware import json_response, get_client_ip
-from backend.common.cache import Cache
-from backend.common.auth_user import authenticated_user
 
 # 配置logger
 import logging
@@ -34,4 +35,3 @@ __all__ = [
     'Cache',
     'authenticated_user',
 ]
-

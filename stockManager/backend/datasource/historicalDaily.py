@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from time import sleep
 
 from backend.common import logger
-from backend.common.market import is_hk_code
+from backend.common.domain.market import is_hk_code
 from backend.datasource.gtimg_kline import (
     extract_kline_rows,
     fetch_kline_node,

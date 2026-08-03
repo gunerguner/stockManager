@@ -1,7 +1,7 @@
 """Operation 类型相关的共享计算逻辑"""
 from backend.models import Operation
 from backend.common.constants import OperationType
-from backend.common.settlement import (
+from backend.common.domain.settlement import (
     buy_outflow_cny,
     dividend_cash_cny,
     sell_inflow_cny,

@@ -12,13 +12,18 @@ disable-model-invocation: false
 
 ```
 stockManager/                 # Git 根
-├── README.md                 # 产品说明、指标公式、本地启动
-├── install.sh                # macOS/Linux：venv、migrate、Redis（不构建前端）
-├── docker/                   # Compose、Dockerfile、nginx、.env.example
+├── README.md / README.zh-CN.md
+├── install.sh
+├── docker/
 └── stockManager/             # 应用根（注意嵌套同名目录）
     ├── manage.py
     ├── stockManager/         # Django 项目：settings.py、urls.py
     ├── backend/              # 唯一 Django app
+    │   ├── datasource/       # 外部行情适配（最底层）
+    │   ├── common/           # web/ + domain/ + types/utils/cache/constants
+    │   ├── services/         # app/ + cache/ + calculation/
+    │   ├── views/ / admin/ / models.py
+    │   └── ...
     ├── front/                # Umi 4 + Ant Design Pro
     ├── requirements.txt
     └── db.sqlite3
@@ -35,7 +40,7 @@ stockManager/                 # Git 根
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
 | 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（仅 A 股除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高，统一 qfq）；sina 外汇（HKD/CNY） |
-| 日历 | `exchange_calendars` **XSHG / XHKG**（`common/tradingCalendar.py`，CN/HK 分市场；前端右上角交易状态 Tag 走 `/api/tradingStatus`，后端统一计算） |
+| 日历 | `exchange_calendars` **XSHG / XHKG**（`common/domain/calendar.py`，CN/HK 分市场；前端右上角交易状态 Tag 走 `/api/tradingStatus`，后端统一计算） |
 
 ## 架构要点
 
@@ -49,6 +54,7 @@ stockManager/                 # Git 根
 | L2 | `services/cache/` | `repository`（门面 `CacheRepository`）+ `keys` + 各 store；逻辑 key、TTL、失效、回源 `datasource` |
 | L3 | `services/calculation/` | 纯计算：`holdings/`（盈亏）、`nav/`（净值回放/指标）、`constants`；**不**依赖 cache/datasource |
 | L4 | `services/app/` | 用例编排：`integrate`、`dividend`、`nav`、`watchlist` |
+| Shared | `backend/common/` | `web/`（HTTP）、`domain/`（交易原语）、根级 `types`/`utils`/`cache`/`constants` |
 
 **统一响应**：`json_response(status, data, message)`，`ResponseStatus`：SUCCESS=1、ERROR=0、UNAUTHORIZED=401。装饰器：`@require_authentication`、`@require_superuser`、`@handle_exception`、`@parse_json_body`。
 
@@ -78,15 +84,16 @@ flowchart LR
 |----|----------|
 | 交易记录 | `backend/models.py` → `Operation`（BUY/SELL/DV；港股通买卖 `price` 为 HKD、`amount` 为实际 CNY 成交额、`fee` 为 CNY） |
 | 盈亏计算 | `backend/services/calculation/holdings/`（雪球规则，含 XIRR） |
+| 净值分析 | `calculation/nav/`（纯回放）+ `services/app/nav.py`（编排写库）+ `GET/POST /api/nav*` |
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
 | 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER） |
 | 除权除息 | `backend/services/app/dividend.py` + `POST /api/dividend`（仅 A 股自动生成；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
 | 实时价 | `backend/datasource/realtimePrice.py`（`fetch_prices`，沪深+港股） |
-| 关注列表 | `WatchItem` 模型 + `GET /api/watchlist`；`cache/watch_store.py`、前端 `pages/Watch/`（risk/opportunity/leftPoint/trendPoint/bloodPoint） |
+| 关注列表 | `WatchItem` + `services/app/watchlist.py`（`build`/`set_hidden`）+ `cache/watch_store.py` + 前端 `pages/Watch/` |
 | 估值 PE/PB | `datasource/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
 | 历史高价 | `datasource/historicalHigh.py`（gtimg 周线 qfq）+ `cache/hist_high_store.py` |
-| 港股/汇率 | `common/market.py`（CN/HK 抽象）、`common/settlement.py`（CNY 资金账 + 原币展示账）、`datasource/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
+| 港股/汇率 | `common/domain/market.py`（CN/HK 抽象）、`common/domain/settlement.py`（CNY 资金账 + 原币展示账）、`datasource/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
 | 缓存 | `services/cache/` + `common/cache.py`；详见 [references/cache.md](references/cache.md) |
 
 **股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`。后端将港股严格识别为 `hk` + 5 位数字；录入以此规则为准。
@@ -98,10 +105,11 @@ flowchart LR
 | 目标 | 改动位置 |
 |------|----------|
 | 新 API | `backend/views/`（仅 `stock.py` / `user.py`）→ `backend/urls.py` → `front/src/services/api.ts` |
-| 新计算字段 | `calculation/holdings/`（`calculator`/`overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `ProfitAnalysis` / `Transaction` 页面；港股结算口径同时检查 `common/settlement.py` |
+| 新计算字段 | `calculation/holdings/`（`calculator`/`overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `ProfitAnalysis` / `Transaction` 页面；港股结算口径同时检查 `common/domain/settlement.py` |
 | 缓存逻辑 | `services/cache/`（`repository` 门面 + 各 `*_store`）；先读 [references/cache.md](references/cache.md)；失效信号在 `cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py` |
 | 行情/估值/汇率 | `backend/datasource/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在对应 `cache/*_store.py` |
-| 关注列表 | `models.WatchItem` → `cache/watch_store.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
+| 关注列表 | `models.WatchItem` → `cache/watch_store.py` → `app/watchlist.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
+| 净值 | `calculation/nav/` + `app/nav.py` → `/api/nav`、`/api/nav/refresh` → 前端 `pages/NavAnalysis/` |
 | 数据库 | `models.py` → `makemigrations` → `migrate` → `backend/admin/` |
 | 新前端页 | `front/config/routes.ts` + `src/pages/`；权限 `access.ts` |
 | 价格展示 | `front/src/utils/format/stock.ts`（`formatMarketPrice` / `formatAmount` / `isHkCode`） |
@@ -110,7 +118,7 @@ flowchart LR
 ## 快速决策树（先定位再改）
 
 - **症状：接口 401/403、登录态异常**
-  - 先看：`backend/views/user.py`、`backend/common/decorators.py`
+  - 先看：`backend/views/user.py`、`backend/common/web/decorators.py`
   - 再看：`front/src/services/api.ts` 是否保留 `credentials: 'include'`
 - **症状：持仓页慢/数据不刷新**
   - 先看：`backend/services/app/integrate.py`（是否命中缓存）
@@ -151,7 +159,9 @@ flowchart LR
 | GET | `/api/stocks` | 登录用户 |
 | GET | `/api/watchlist` | 登录用户 |
 | POST | `/api/watchlist/hidden` | 登录用户 |
-| GET | `/api/tradingStatus` | 登录用户 |
+| GET | `/api/tradingStatus` | 公开（行情日历） |
+| GET | `/api/nav` | 登录用户 |
+| POST | `/api/nav/refresh` | 登录用户 |
 | POST | `/api/dividend` | 登录用户 |
 | POST | `/api/updateIncomeCash` | 登录用户 |
 | POST | `/api/clearCache` | superuser |
@@ -163,20 +173,20 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 ## 测试
 
-**无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/profit-analysis` 盈亏归因 → `/transaction` 交易数据 → 除权刷新 →（管理员）清缓存。前端可跑 `ut run lint`、`ut run type-check`。
+**无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/profit-analysis` 盈亏归因 → `/transaction` 交易数据 → `/nav-analysis` 净值 → 除权刷新 →（管理员）清缓存。前端可跑 `ut run lint`、`ut run type-check`。
 
 建议最小检查集（改动后至少执行其一）：
 
 1. 仅后端改动：`python manage.py check`
 2. 仅前端改动：`ut run type-check`
-3. API/计算改动：手动走通 `/list` + `/profit-analysis` + `/transaction` + `/api/clearCache`
+3. API/计算改动：手动走通 `/list` + `/profit-analysis` + `/transaction` + `/nav-analysis` + `/api/clearCache`
 
 ## 编码约定
 
 - 编排/计算类用 **classmethod**（`Integrate`、`Calculator`、`StockHold`、`Dividend`、`CacheRepository`、`NavAnalysis`），无重度 DI；行情/汇率/缓存 store 层为**模块级函数**（如 `fetch_prices`、`price_store.query_prices`、`fx_store.get_hkd_cny_rate`）
 - 模型/API JSON 字段多为 **camelCase**（`operationType`、`stockType`）
-- 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`、`market.py`(CN/HK 抽象，≠ `backend/datasource` 行情源)、`tradingCalendar.py`、`utils.py`）
-- 依赖方向：`app → calculation / cache / datasource`；`cache → datasource`；`calculation` 与 `datasource` 互不依赖
+- 共享工具在 `backend/common/`：根级 `cache.py` / `types.py` / `constants.py` / `utils.py`；`web/`（装饰器、响应、认证）；`domain/`（`market` CN/HK 抽象 ≠ `datasource`、`calendar`、`settlement`、`operations`）
+- 依赖方向：`app → calculation / cache / datasource`；`cache → datasource`；`calculation` 与 `datasource` 互不依赖；`common.web` 与 `common.domain` 互不引用；`common` 不依赖 `services` / `datasource`
 - 语言与时区：`zh-hans`、`Asia/Shanghai`
 - 用户角色：`admin`（superuser）| `staff` | 普通用户（`access` 为空字符串）；前端 `access.ts` 控制 `canAdmin`
 

@@ -13,8 +13,9 @@ from backend.common import (
     require_methods,
     handle_exception,
     parse_json_body,
+    validate_required_fields,
 )
-from backend.common.tradingCalendar import get_trading_time_statuses
+from backend.common.domain.calendar import get_trading_time_statuses
 from backend.models import WatchItem
 
 
@@ -39,17 +40,13 @@ def stocks(request: HttpRequest, user: User) -> JsonResponse:
 @require_authentication
 @require_methods(['POST'])
 @parse_json_body
+@validate_required_fields(['incomeCash'])
 @handle_exception
 def update_income_cash(request: HttpRequest, data: dict, user: User) -> JsonResponse:
     """
     更新收益现金接口（逆回购等收入）
     """
-    income_cash = data.get("incomeCash")
-
-    if income_cash is None:
-        return json_response(status=ResponseStatus.ERROR, message="参数incomeCash不能为空")
-
-    Integrate.update_income_cash(user, income_cash)
+    Integrate.update_income_cash(user, data["incomeCash"])
     return json_response(status=ResponseStatus.SUCCESS, message="更新收益现金成功")
 
 
@@ -78,13 +75,12 @@ def watchlist(request: HttpRequest, user: User) -> JsonResponse:
 @require_authentication
 @require_methods(['POST'])
 @parse_json_body
+@validate_required_fields(['code', 'hidden'])
 @handle_exception
 def update_watch_hidden(request: HttpRequest, data: dict, user: User) -> JsonResponse:
     """设置关注项隐藏状态 - POST /api/watchlist/hidden"""
-    code = data.get("code")
-    hidden = data.get("hidden")
-    if not code:
-        return json_response(status=ResponseStatus.ERROR, message="参数code不能为空")
+    code = data["code"]
+    hidden = data["hidden"]
     if not isinstance(hidden, bool):
         return json_response(status=ResponseStatus.ERROR, message="参数hidden必须为布尔值")
 

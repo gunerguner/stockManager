@@ -5,9 +5,9 @@
 import functools
 import json
 
-from backend.common.auth_user import authenticated_user
+from backend.common.web.auth_user import authenticated_user
 from backend.common.constants import ResponseStatus
-from backend.common.middleware import json_response
+from backend.common.web.response import json_response
 
 # 配置logger
 import logging

@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from backend.admin.base import BaseModelAdmin, User, admin
-from backend.common.auth_user import authenticated_user
+from backend.common.web.auth_user import authenticated_user
 
 # 取消 Django 默认的 Session 注册（如果已注册）
 if Session in admin.site._registry:

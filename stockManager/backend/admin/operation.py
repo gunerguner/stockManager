@@ -7,9 +7,9 @@ from django.db.models import Max
 
 from backend.admin.base import Operation, UserScopedModelAdmin, admin
 from backend.admin.constants import NAV_REFRESH_HINT
-from backend.common.auth_user import authenticated_user
+from backend.common.web.auth_user import authenticated_user
 from backend.common.constants import OperationType
-from backend.common.market import is_hk_code
+from backend.common.domain.market import is_hk_code
 from backend.services.cache import CacheRepository
 
 

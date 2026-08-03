@@ -14,7 +14,7 @@ import pytz
 from exchange_calendars import get_calendar, ExchangeCalendar
 import pandas as pd
 
-from backend.common.market import Market
+from backend.common.domain.market import Market
 
 TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
 

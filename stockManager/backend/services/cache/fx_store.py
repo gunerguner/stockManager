@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 from django.core.cache import cache
 
-from backend.common.market import markets_in_codes
+from backend.common.domain.market import markets_in_codes
 from backend.datasource.exchangeRate import fetch_hkd_cny_rate
 from backend.services.cache import keys
 from backend.services.cache import refresh_policy

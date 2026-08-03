@@ -4,7 +4,7 @@
 import datetime
 
 from backend.models import Operation
-from backend.common.operations import apply_operation_to_hold
+from backend.common.domain.operations import apply_operation_to_hold
 from backend.common.types import OperationDict
 from backend.common.utils import operation_sort_key
 

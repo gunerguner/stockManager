@@ -83,6 +83,7 @@ flowchart LR
 | `watch_store.py` | 用户关注列表缓存与 `WatchItem` 信号 |
 | `valuation_store.py` | 单股估值 epsTtm/bvps 缓存 |
 | `hist_high_store.py` | 单股近 6 年历史最高价缓存 |
+| `daily_price_store.py` | 日收盘价 DB 持久化与缺口补拉（净值回放） |
 | `repository.py` | `CacheRepository` 门面，聚合各 store 编排调用 |
 
 ### 1.2 分层分组
@@ -92,7 +93,9 @@ flowchart LR
 | `services/cache/` | `from backend.services.cache import CacheRepository` |
 | `backend/datasource/` | `from backend.datasource import fetch_prices, fetch_hkd_cny_rate, fetch_pe_pb, fetch_hist_high, fetch_dividends` |
 | `services/calculation/` | `from backend.services.calculation import Calculator, StockHold` |
-| `services/app/` | `from backend.services.app import Integrate, Dividend` |
+| `services/app/` | `from backend.services.app import Integrate, Dividend, NavAnalysis, Watchlist` |
+| `common/web/` | `from backend.common.web import require_authentication, json_response` |
+| `common/domain/` | `from backend.common.domain import is_hk_code, TradingCalendar` |
 
 ## 2. 基础配置与 key 约定
 
@@ -220,7 +223,7 @@ should_refresh_market(market)
 | A 股时段 | 9:30–11:30、13:00–15:00（上海时区，`[start, end)`） |
 | 港股时段 | 9:30–12:00、13:00–16:00（上海时区，`[start, end)`） |
 
-实现见 `backend/common/tradingCalendar.py`：`is_trading_day`、`is_trading_time_passed`、`is_in_trading_hours_at`。
+实现见 `backend/common/domain/calendar.py`：`is_trading_day`、`is_trading_time_passed`、`is_in_trading_hours_at`。
 
 #### 典型场景
 
@@ -398,14 +401,15 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - 缓存仓库：`backend/services/cache/repository.py`（`CacheRepository`）
 - 逻辑 key / TTL：`backend/services/cache/keys.py`
 - 刷新策略：`backend/services/cache/refresh_policy.py`
-- 各 store：`user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`watch_store.py`、`valuation_store.py`、`hist_high_store.py`
+- 各 store：`user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`watch_store.py`、`valuation_store.py`、`hist_high_store.py`、`daily_price_store.py`
 - Redis 工具：`backend/common/cache.py`
-- 交易时段：`backend/common/tradingCalendar.py`
-- 市场抽象：`backend/common/market.py`（CN/HK 分市场）
+- 交易时段：`backend/common/domain/calendar.py`
+- 市场抽象：`backend/common/domain/market.py`（CN/HK 分市场）
 - 业务编排：`backend/services/app/integrate.py`
 - 行情拉取：`backend/datasource/realtimePrice.py`（`fetch_prices`）
 - 汇率：`backend/datasource/exchangeRate.py`（`fetch_hkd_cny_rate`）
 - 估值：`backend/datasource/baiduValuation.py`（A 股 ab / 港股 hk）；历史高：`historicalHigh.py`（gtimg）
 - 历史高价：`backend/datasource/historicalHigh.py`
 - 收益计算：`backend/services/calculation/holdings/calculator.py`
-- API：`backend/views/stock.py`（`get_stocks`、`get_watchlist`、`clear_cache`）
+- HTTP 装饰器：`backend/common/web/decorators.py`
+- API：`backend/views/stock.py`（`stocks`、`watchlist`、`nav`、`clear_cache` 等）

@@ -16,16 +16,18 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | 根路由 | `stockManager/stockManager/urls.py`（`^api/` → backend） |
 | API 路由 | `stockManager/backend/urls.py` |
 | 模型 | `stockManager/backend/models.py` |
-| 盈亏引擎 | `stockManager/backend/services/calculation/holdings/`（`calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`） |
+| 盈亏引擎 | `stockManager/backend/services/calculation/holdings/`（`calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`、`stock_hold`） |
 | 净值算法 | `stockManager/backend/services/calculation/nav/`（`replay`、`metrics`）；编排在 `services/app/nav.py` |
-| 交易结算口径（A 股 / 港股通） | `stockManager/backend/common/settlement.py`（CNY 资金账 + 原币展示账） |
+| 关注列表用例 | `stockManager/backend/services/app/watchlist.py`（`Watchlist.build` / `set_hidden`） |
+| 交易结算口径（A 股 / 港股通） | `stockManager/backend/common/domain/settlement.py`（CNY 资金账 + 原币展示账） |
 | 业务门面 | `stockManager/backend/services/app/integrate.py` |
+| HTTP 装饰器/响应 | `stockManager/backend/common/web/`（`decorators`、`response`、`auth_user`） |
 | 缓存门面 | `stockManager/backend/services/cache/repository.py`（`CacheRepository`） |
 | 缓存 key/TTL | `stockManager/backend/services/cache/keys.py` |
 | 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`daily_price_store.py`、`refresh_policy.py`、`operation_codec.py` |
 | 缓存工具 | `stockManager/backend/common/cache.py`（`Cache` 类） |
-| 市场抽象（CN/HK） | `stockManager/backend/common/market.py` |
-| 交易日历（CN/HK） | `stockManager/backend/common/tradingCalendar.py` |
+| 市场抽象（CN/HK） | `stockManager/backend/common/domain/market.py` |
+| 交易日历（CN/HK） | `stockManager/backend/common/domain/calendar.py` |
 | 行情数据源 | `backend/datasource/`：`realtimePrice.py`(`fetch_prices`)、`baostock_source.py`、`baiduValuation.py`、`exchangeRate.py`、`historicalHigh.py`、`historicalDaily.py`、`http_client.py` |
 | 持仓推算 | `stockManager/backend/services/calculation/holdings/stock_hold.py` |
 | 除权 | `stockManager/backend/services/app/dividend.py` |
@@ -34,15 +36,15 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | Umi 配置 | `stockManager/front/config/config.ts`、`routes.ts`、`proxy.ts` |
 | API 客户端 | `stockManager/front/src/services/api.ts` |
 | 布局/鉴权 | `stockManager/front/src/app.tsx`、`access.ts` |
-| 主页面 | `front/src/pages/StockList/`、`ProfitAnalysis/`、`Transaction/`、`Watch/`、`Account/`、`Login/` |
-| 交易状态 UI | `front/src/components/RightContent/TradingTime.tsx`（仅渲染，数据 `GET /api/tradingStatus`；后端逻辑 `common/tradingCalendar.py:get_trading_time_statuses`） |
+| 主页面 | `front/src/pages/StockList/`、`ProfitAnalysis/`、`Transaction/`、`Watch/`、`NavAnalysis/`、`Account/`、`Login/` |
+| 交易状态 UI | `front/src/components/RightContent/TradingTime.tsx`（仅渲染，数据 `GET /api/tradingStatus`；后端逻辑 `common/domain/calendar.py:get_trading_time_statuses`） |
 | 环境模板 | `stockManager/stockManager/.env.example`、`docker/.env.example` |
 
 ## 数据库与迁移
 
 - 引擎：SQLite；路径 `SQLITE_PATH` 或默认 `stockManager/db.sqlite3`
-- 模型：`Operation`、`Info`、`CashFlow`、`StockMeta`、`WatchItem`（FK 到 Django `User`；`StockMeta` 全局共享）
-- 迁移目录：`backend/migrations/`（0001 初始 → 0002 模型选项 → 0003 用户数据迁移 → 0004–0006 CashFlow 与 originCash → 0007 日期 → 0008 StockMeta.name → 0009 Operation.sortOrder → 0010 StockMeta.HK → 0011 WatchItem → 0012 移除 WatchItem.sortOrder → 0013 WatchItem.hidden → 0014 Operation/WatchItem 改关联 StockMeta → 0015 Operation.amount（港股通实际 CNY 成交额））
+- 模型：`Operation`、`Info`、`CashFlow`、`StockMeta`、`WatchItem`、`PortfolioNavDaily`、`StockDailyPrice`（FK 到 Django `User`；`StockMeta` 全局共享）
+- 迁移目录：`backend/migrations/`（0001 初始 → … → 0015 Operation.amount（港股通实际 CNY 成交额）→ 0016 PortfolioNavDaily / StockDailyPrice）
 - 命令：`python manage.py makemigrations` / `migrate`
 - Docker 默认 `RUN_MIGRATIONS_ON_START=false`，需时 `docker compose exec backend python manage.py migrate`
 
@@ -54,6 +56,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | `/profit-analysis` | ProfitAnalysis | 盈亏归因 |
 | `/transaction` | Transaction | 交易数据 |
 | `/watch` | Watch | 关注列表（icon `star`） |
+| `/nav-analysis` | NavAnalysis | 组合净值 |
 | `/login` | Login | 无布局 |
 | `/account` | Account | 账户 |
 
@@ -78,7 +81,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 - **持仓成本**：清仓后重新买入会重置成本基数（README 有说明）
 - **浮动盈亏**：`(当前价 - 持仓成本) × 持股数`
 - **当日盈亏**：有昨市值与无昨市值两套公式
-- 实现集中在 `calculator.py`，类型在 `common/types.py`（`StockData`、`OverallData`）
+- 实现集中在 `services/calculation/holdings/`（`calculator` / `overall` / `single_*`），类型在 `common/types.py`（`StockData`、`OverallData`）
 
 ## Docker 手动验证清单
 
@@ -101,10 +104,12 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | 你改了什么 | 还要联动检查 |
 |-----------|----------------|
 | `models.py` | 迁移文件、Admin 展示、缓存失效信号（`cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py`） |
-| `calculator.py` / `overall.py` / `single_*.py` | `common/types.py`、`/api/stocks` 输出、`/list`/`/profit-analysis`/`/transaction` 前端展示；港股结算同时检查 `common/settlement.py` |
+| `calculation/holdings/`（`calculator` / `overall` / `single_*`） | `common/types.py`、`/api/stocks` 输出、`/list`/`/profit-analysis`/`/transaction` 前端展示；港股结算同时检查 `common/domain/settlement.py` |
+| `calculation/nav/` / `app/nav.py` | `/api/nav`、`/api/nav/refresh`、前端 `pages/NavAnalysis/`、`daily_price_store` |
+| `app/watchlist.py` | `/api/watchlist`、`/api/watchlist/hidden`、前端 `pages/Watch/` |
 | `backend/datasource/realtimePrice.py` | `price_store`/`refresh_policy` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
-| `common/tradingCalendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
-| `common/market.py`（CN/HK 抽象） | `price_store`/`fx_store`/`valuation_store`、估值与汇率换算口径 |
+| `common/domain/calendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
+| `common/domain/market.py`（CN/HK 抽象） | `price_store`/`fx_store`/`valuation_store`、估值与汇率换算口径 |
 | `WatchItem` / `watch_store.py` | `/api/watchlist`、前端 `pages/Watch/`、`valuation_store`/`hist_high_store` |
 | `front/config/routes.ts` | 权限 `access.ts`、菜单展示、默认重定向 |
 | `docker/nginx.conf` | `/api` 转发、静态资源路径、frontend 重建 |

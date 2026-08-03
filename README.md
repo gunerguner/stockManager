@@ -18,12 +18,14 @@ After years of trading stocks, I never found a portfolio tracker I was fully hap
 
 ## Highlights
 
-- Complete and accurate per-stock and portfolio-level metrics.
-- Full trade history per symbol.
-- Auto-generated dividend and rights-adjustment records.
-- Reliable stock sorting.
-- Hong Kong Stock Connect: trade price and per-share costs are displayed in HKD (`$`); 
-- Minimal UI—no ads, no flashy distractions.
+- **Holdings & P/L at a glance:** Per-stock and portfolio metrics follow Xueqiu formulas—floating, cumulative, and daily P/L ready when you need them.
+- **Full trade history:** Every buy, sell, and dividend is recorded per symbol and easy to review.
+- **Auto corporate actions:** A-share dividends and rights adjustments are generated automatically—less manual entry, fewer gaps.
+- **Hong Kong Stock Connect dual ledgers:** Quotes and per-share costs in HKD; settled amounts and portfolio P/L in CNY.
+- **P/L attribution:** Break down contribution by sector to see where you made or lost money.
+- **NAV analysis:** Fund-unit style NAV replay to review the real quality of your decisions.
+- **Trade timeline:** Browse entries and exits by period to understand trading rhythm over time.
+- **Minimal and focused:** Built for tracking and analysis—no ads, no flashy clutter.
 
 # Technical overview
 

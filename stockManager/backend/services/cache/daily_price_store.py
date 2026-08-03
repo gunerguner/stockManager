@@ -7,8 +7,8 @@ from datetime import date
 from django.db import close_old_connections, transaction
 
 from backend.common import logger
-from backend.common.market import Market, code_to_market
-from backend.common.tradingCalendar import TradingCalendar
+from backend.common.domain.market import Market, code_to_market
+from backend.common.domain.calendar import TradingCalendar
 from backend.common.types import (
     DailyCloseByCode,
     DailyCloseSeries,

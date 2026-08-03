@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 from backend.common.cache import Cache
 from backend.common import logger
-from backend.common.market import markets_in_codes
+from backend.common.domain.market import markets_in_codes
 from backend.common.utils import format_operations
 from backend.common.types import CalculatedResult, CashFlowData, CashFlowList, NavAnalysisResult, OperationDict
 from backend.models import Operation, Info, CashFlow

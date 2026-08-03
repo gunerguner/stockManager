@@ -1,5 +1,5 @@
 """港股通 / A 股交易结算口径：人民币资金账本 + 原币展示账本。"""
-from backend.common.market import is_hk_code
+from backend.common.domain.market import is_hk_code
 from backend.models import Operation
 
 
