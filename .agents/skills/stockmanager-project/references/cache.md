@@ -6,7 +6,7 @@
 
 - **改缓存 key / TTL / 失效**：优先查 §9 策略速查表；新增缓存走 §10 检查清单
 - **持仓不刷新 / 价格过期**：读 §5.1 交易时段逻辑失效与典型场景表
-- **查读写路径**：读 §6；market 拉取细节见 [external-data.md](external-data.md)
+- **查读写路径**：读 §6；datasource 拉取细节见 [external-data.md](external-data.md)
 
 ## 1. 总览：缓存分层与职责
 
@@ -25,8 +25,9 @@
 | --- | --- | --- |
 | 配置 | `stockManager/stockManager/settings.py` | `RedisCache`、`KEY_PREFIX`、`VERSION`、JSON 序列化 |
 | 工具 | `backend/common/cache.py` | `make_key` / `make_pattern`、`get_many`（MGET）、`set_many`（Pipeline）、`delete_pattern` |
-| 仓库 | `backend/services/cache/` | 逻辑 key、TTL、读写/失效；对外 `from services.cache import CacheRepository` |
-| 业务 | `integrate.py`、`market/`、`calculation/`、`dividend.py` | 经 `CacheRepository` 使用缓存；`market/` 仅拉取与标准化，不含缓存编排 |
+| 仓库 | `backend/services/cache/` | 逻辑 key、TTL、读写/失效；对外 `from backend.services.cache import CacheRepository` |
+| 业务 | `services/app/`、`services/calculation/` | 经 `CacheRepository` 使用缓存 |
+| 行情源 | `backend/datasource/` | 仅拉取与标准化，不含缓存编排 |
 | 接口 | `backend/views/stock.py` | `/api/stocks`、`/api/watchlist` 读缓存；`POST /api/clearCache` 全量清理 |
 
 ```mermaid
@@ -46,7 +47,7 @@ flowchart LR
     valStore[valuation_store.py]
     histStore[hist_high_store.py]
   end
-  subgraph market [market 数据源]
+  subgraph datasource [datasource 数据源]
     fetchPrices[fetch_prices]
     fetchFX[fetch_hkd_cny_rate]
     fetchVal[fetch_pe_pb 百度 ab/hk]
@@ -61,7 +62,7 @@ flowchart LR
   end
   Redis[(Redis)]
   biz --> repo
-  repo --> market
+  repo --> datasource
   repo --> django
   repo --> util
   django --> Redis
@@ -84,14 +85,14 @@ flowchart LR
 | `hist_high_store.py` | 单股近 6 年历史最高价缓存 |
 | `repository.py` | `CacheRepository` 门面，聚合各 store 编排调用 |
 
-### 1.2 services 层分组
+### 1.2 分层分组
 
-| 子包 | import 示例 |
+| 包 | import 示例 |
 | --- | --- |
-| `cache/` | `from services.cache import CacheRepository` |
-| `market/` | `from services.market import fetch_prices, fetch_hkd_cny_rate, fetch_pe_pb, fetch_cn_hist_high, fetch_hk_hist_high, fetch_dividends` |
-| `calculation/` | `from services.calculation import Calculator, StockHold` |
-| 根目录 | `integrate.py`、`dividend.py` |
+| `services/cache/` | `from backend.services.cache import CacheRepository` |
+| `backend/datasource/` | `from backend.datasource import fetch_prices, fetch_hkd_cny_rate, fetch_pe_pb, fetch_hist_high, fetch_dividends` |
+| `services/calculation/` | `from backend.services.calculation import Calculator, StockHold` |
+| `services/app/` | `from backend.services.app import Integrate, Dividend` |
 
 ## 2. 基础配置与 key 约定
 
@@ -265,7 +266,7 @@ should_refresh_market(market)
 
 ```text
 price_store.query_prices → _get_cached_prices（逻辑失效检查）
-  → missing 走 market.fetch_prices（easyquotation）
+  → missing 走 datasource.fetch_prices（easyquotation）
   → _set_prices_batch
        → Cache.set_many(各 stock:price:{code})
        → refresh_policy.set_price_timestamp（涉及市场）
@@ -302,7 +303,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 1. `_get_cached_prices` → 按市场调用 `refresh_policy.should_refresh_market`；若需刷新则先 `_evict_market_prices`（清该市场全部 `stock:price:*`）再整批 miss
 2. 不需刷新时 `Cache.get_many`；缓存数据须包含完整 `_PRICE_FIELDS`（含 `yearHigh`），否则视为 miss
-3. 命中部分直接返回；`missing` 走 `market.fetch_prices`（easyquotation tencent/hkquote）
+3. 命中部分直接返回；`missing` 走 `datasource.fetch_prices`（easyquotation tencent/hkquote）
 4. `_set_prices_batch` 回写价格；**仅当该市场本次 missing 全部回源成功**才推进 `stock:price:timestamp:{market}` 并清全用户 `calculated_target`；再触发 `sync_names_from_realtime`
 
 **批量读**：`Cache.get_many(逻辑 keys)` → `make_key` + Redis `MGET` + `client.decode`；未命中为 `None`；异常时降级为逐 key `cache.get`（`price_store` 记录 `logger.error`）。
@@ -358,7 +359,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - **逻辑 key 统一**：前缀/版本由 `make_key` / `make_pattern` 与 Django cache 承担，避免与 settings 漂移。
 - **实时与性能平衡**：交易时段逻辑失效 + 非交易时段批量 MGET。
 - **失效链完整**：用户数据、价格时间戳、元数据、关注列表、管理员清缓存均有覆盖。
-- **market 与 cache 分离**：外部数据源适配在 `market/`，缓存编排在 `cache/*_store.py`，职责清晰。
+- **datasource 与 cache 分离**：外部数据源适配在 `datasource/`，缓存编排在 `cache/*_store.py`，职责清晰。
 
 ### 8.2 待改进点（非阻塞，日常改动可跳过）
 
@@ -401,10 +402,10 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - Redis 工具：`backend/common/cache.py`
 - 交易时段：`backend/common/tradingCalendar.py`
 - 市场抽象：`backend/common/market.py`（CN/HK 分市场）
-- 业务编排：`backend/services/integrate.py`
-- 行情拉取：`backend/services/market/realtimePrice.py`（`fetch_prices`）
-- 汇率：`backend/services/market/exchangeRate.py`（`fetch_hkd_cny_rate`）
-- 估值：`backend/services/market/baiduValuation.py`（A 股 ab / 港股 hk）；历史高：`historicalHigh.py`（gtimg）
-- 历史高价：`backend/services/market/historicalHigh.py`
-- 收益计算：`backend/services/calculation/calculator.py`
+- 业务编排：`backend/services/app/integrate.py`
+- 行情拉取：`backend/datasource/realtimePrice.py`（`fetch_prices`）
+- 汇率：`backend/datasource/exchangeRate.py`（`fetch_hkd_cny_rate`）
+- 估值：`backend/datasource/baiduValuation.py`（A 股 ab / 港股 hk）；历史高：`historicalHigh.py`（gtimg）
+- 历史高价：`backend/datasource/historicalHigh.py`
+- 收益计算：`backend/services/calculation/holdings/calculator.py`
 - API：`backend/views/stock.py`（`get_stocks`、`get_watchlist`、`clear_cache`）

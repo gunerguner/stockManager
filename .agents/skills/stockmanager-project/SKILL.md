@@ -39,16 +39,16 @@ stockManager/                 # Git 根
 
 ## 架构要点
 
-**请求路径**：Umi SPA → `/api/*` → `backend.views` → `services/integrate.py`（门面）→ `calculation/` / `market/` / `cache/`。
+**请求路径**：Umi SPA → `/api/*` → `backend.views` → `services/app/integrate.py`（门面）→ `cache/` / `calculation/`；回源走 `backend/datasource/`。
 
-**services 子包**：
+**分层**（依赖只向下）：
 
-| 子包 | 模块 | 说明 |
-|------|------|------|
-| `cache/` | `repository`（门面 `CacheRepository`）+ `keys` + 各 store | `user_store`/`price_store`/`meta_store`/`fx_store`/`valuation_store`/`hist_high_store`/`watch_store`/`refresh_policy`/`operation_codec`；逻辑 key、TTL、失效、分市场刷新 |
-| `market/` | `realtimePrice`(`fetch_prices`)、`baostock_source`、`baiduValuation`、`exchangeRate`、`historicalHigh`、`http_client` | 外部数据源适配（仅拉取与标准化，不含缓存编排），多为**模块级函数** |
-| `calculation/` | `calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`、`stockHold`、`constants` | 盈亏、组合汇总、单股指标、资金加权、持仓推算 |
-| 根目录 | `integrate`、`dividend` | 编排与除权 |
+| 层 | 包 | 说明 |
+|----|----|------|
+| Infra | `backend/datasource/` | 外部数据源适配（`realtimePrice`/`baostock_source`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`historicalDaily`/`http_client`）；仅拉取与标准化 |
+| L2 | `services/cache/` | `repository`（门面 `CacheRepository`）+ `keys` + 各 store；逻辑 key、TTL、失效、回源 `datasource` |
+| L3 | `services/calculation/` | 纯计算：`holdings/`（盈亏）、`nav/`（净值回放/指标）、`constants`；**不**依赖 cache/datasource |
+| L4 | `services/app/` | 用例编排：`integrate`、`dividend`、`nav`、`watchlist` |
 
 **统一响应**：`json_response(status, data, message)`，`ResponseStatus`：SUCCESS=1、ERROR=0、UNAUTHORIZED=401。装饰器：`@require_authentication`、`@require_superuser`、`@handle_exception`、`@parse_json_body`。
 
@@ -59,7 +59,7 @@ stockManager/                 # Git 根
 2. 缓存命中 → 返回 `CalculatedResult`（含 `stocks` / `overall` / `markets`）
 3. 否则：加载 `Operation` → `CacheRepository.load_calculation_inputs`（聚合现金流、汇率、行情 `price_store.query_prices`→`fetch_prices`、元数据、各市场状态）→ `Calculator.calculate_stock_list` → `calculate_overall` → 写缓存
 
-**写后失效**：信号在 `cache/` 内（**非** `integrate.py`）。`cache/user_store.py` 的 `post_save`/`post_delete` 清 `Operation` / `CashFlow` / `Info`（仅 `INCOME_CASH`）用户缓存；`cache/meta_store.py` 清 `StockMeta` 全量元数据；`cache/watch_store.py` 清 `WatchItem` 关注列表缓存。
+**写后失效**：信号在 `cache/` 内（**非** `app/integrate.py`）。`cache/user_store.py` 的 `post_save`/`post_delete` 清 `Operation` / `CashFlow` / `Info`（仅 `INCOME_CASH`）用户缓存；`cache/meta_store.py` 清 `StockMeta` 全量元数据；`cache/watch_store.py` 清 `WatchItem` 关注列表缓存。
 
 ```mermaid
 flowchart LR
@@ -77,16 +77,16 @@ flowchart LR
 | 域 | 关键文件 |
 |----|----------|
 | 交易记录 | `backend/models.py` → `Operation`（BUY/SELL/DV；港股通买卖 `price` 为 HKD、`amount` 为实际 CNY 成交额、`fee` 为 CNY） |
-| 盈亏计算 | `backend/services/calculation/calculator.py`（雪球规则，含 XIRR） |
+| 盈亏计算 | `backend/services/calculation/holdings/`（雪球规则，含 XIRR） |
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
 | 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER） |
-| 除权除息 | `backend/services/dividend.py` + `POST /api/dividend`（仅 A 股自动生成；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
-| 实时价 | `backend/services/market/realtimePrice.py`（`fetch_prices`，沪深+港股） |
+| 除权除息 | `backend/services/app/dividend.py` + `POST /api/dividend`（仅 A 股自动生成；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
+| 实时价 | `backend/datasource/realtimePrice.py`（`fetch_prices`，沪深+港股） |
 | 关注列表 | `WatchItem` 模型 + `GET /api/watchlist`；`cache/watch_store.py`、前端 `pages/Watch/`（risk/opportunity/leftPoint/trendPoint/bloodPoint） |
-| 估值 PE/PB | `market/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
-| 历史高价 | `market/historicalHigh.py`（gtimg 周线 qfq）+ `cache/hist_high_store.py` |
-| 港股/汇率 | `common/market.py`（CN/HK 抽象）、`common/settlement.py`（CNY 资金账 + 原币展示账）、`market/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
+| 估值 PE/PB | `datasource/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
+| 历史高价 | `datasource/historicalHigh.py`（gtimg 周线 qfq）+ `cache/hist_high_store.py` |
+| 港股/汇率 | `common/market.py`（CN/HK 抽象）、`common/settlement.py`（CNY 资金账 + 原币展示账）、`datasource/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
 | 缓存 | `services/cache/` + `common/cache.py`；详见 [references/cache.md](references/cache.md) |
 
 **股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`。后端将港股严格识别为 `hk` + 5 位数字；录入以此规则为准。
@@ -98,9 +98,9 @@ flowchart LR
 | 目标 | 改动位置 |
 |------|----------|
 | 新 API | `backend/views/`（仅 `stock.py` / `user.py`）→ `backend/urls.py` → `front/src/services/api.ts` |
-| 新计算字段 | `calculation/calculator.py`（或 `overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `ProfitAnalysis` / `Transaction` 页面；港股结算口径同时检查 `common/settlement.py` |
+| 新计算字段 | `calculation/holdings/`（`calculator`/`overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `ProfitAnalysis` / `Transaction` 页面；港股结算口径同时检查 `common/settlement.py` |
 | 缓存逻辑 | `services/cache/`（`repository` 门面 + 各 `*_store`）；先读 [references/cache.md](references/cache.md)；失效信号在 `cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py` |
-| 行情/估值/汇率 | `market/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在对应 `cache/*_store.py` |
+| 行情/估值/汇率 | `backend/datasource/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在对应 `cache/*_store.py` |
 | 关注列表 | `models.WatchItem` → `cache/watch_store.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
 | 数据库 | `models.py` → `makemigrations` → `migrate` → `backend/admin/` |
 | 新前端页 | `front/config/routes.ts` + `src/pages/`；权限 `access.ts` |
@@ -113,14 +113,14 @@ flowchart LR
   - 先看：`backend/views/user.py`、`backend/common/decorators.py`
   - 再看：`front/src/services/api.ts` 是否保留 `credentials: 'include'`
 - **症状：持仓页慢/数据不刷新**
-  - 先看：`backend/services/integrate.py`（是否命中缓存）
+  - 先看：`backend/services/app/integrate.py`（是否命中缓存）
   - 再看：`backend/services/cache/`（TTL 与 key）
-  - 再看：`backend/services/market/realtimePrice.py`（行情源与交易时段）
+  - 再看：`backend/datasource/realtimePrice.py`（行情源与交易时段）
 - **症状：改了前端但线上没变化**
   - 先做：`docker compose build frontend && docker compose up -d frontend`
   - 原因：仅 frontend 镜像包含 Umi 构建产物
 - **症状：新增字段前端拿不到**
-  - 先看：`backend/common/types.py` 与 `calculation/calculator.py` 是否同步
+  - 先看：`backend/common/types.py` 与 `calculation/holdings/` 是否同步
   - 再看：`front/src/services/api.ts` 的类型定义与页面消费
 
 ## 本地开发
@@ -173,9 +173,10 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 ## 编码约定
 
-- 编排/计算类用 **classmethod**（`Integrate`、`Calculator`、`StockHold`、`Dividend`、`CacheRepository`），无重度 DI；行情/汇率/缓存 store 层为**模块级函数**（如 `fetch_prices`、`price_store.query_prices`、`fx_store.get_hkd_cny_rate`）
+- 编排/计算类用 **classmethod**（`Integrate`、`Calculator`、`StockHold`、`Dividend`、`CacheRepository`、`NavAnalysis`），无重度 DI；行情/汇率/缓存 store 层为**模块级函数**（如 `fetch_prices`、`price_store.query_prices`、`fx_store.get_hkd_cny_rate`）
 - 模型/API JSON 字段多为 **camelCase**（`operationType`、`stockType`）
-- 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`、`market.py`(CN/HK 抽象)、`tradingCalendar.py`、`utils.py`）
+- 共享工具在 `backend/common/`（`cache.py`、`decorators.py`、`types.py`、`constants.py`、`market.py`(CN/HK 抽象，≠ `backend/datasource` 行情源)、`tradingCalendar.py`、`utils.py`）
+- 依赖方向：`app → calculation / cache / datasource`；`cache → datasource`；`calculation` 与 `datasource` 互不依赖
 - 语言与时区：`zh-hans`、`Asia/Shanghai`
 - 用户角色：`admin`（superuser）| `staff` | 普通用户（`access` 为空字符串）；前端 `access.ts` 控制 `canAdmin`
 
@@ -183,7 +184,7 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 - 是否新增/修改 API：`backend/urls.py` 与 `front/src/services/api.ts` 是否同时更新
 - 是否修改模型：是否完成 `makemigrations` 与 `migrate`，并检查 admin 展示
-- 是否修改计算字段：`common/types.py`、`calculator.py`、前端页面字段是否三处一致
+- 是否修改计算字段：`common/types.py`、`calculation/holdings/`、前端页面字段是否三处一致
 - 是否修改缓存：是否覆盖写后失效路径（`Operation` / `Info` / `CashFlow` / `StockMeta` / `WatchItem`）
 - 是否修改前端路由或静态资源：是否验证 Docker frontend 重建流程
 
@@ -193,5 +194,5 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 |------|------|
 | 路径索引 / 部署 / 迁移 / 排障 | [references/reference.md](references/reference.md) |
 | 缓存 key / TTL / 失效 / 交易时段刷新 | [references/cache.md](references/cache.md) |
-| 外部数据源 / market 层 / 失败行为 | [references/external-data.md](references/external-data.md) |
+| 外部数据源 / datasource 层 / 失败行为 | [references/external-data.md](references/external-data.md) |
 | 前端主题 / 明暗切换 / 盈亏颜色 / less | [references/theme.md](references/theme.md) |

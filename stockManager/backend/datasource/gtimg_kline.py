@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from backend.common.market import is_hk_code
-from backend.services.market.http_client import get_json
+from backend.datasource.http_client import get_json
 
 CN_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
 HK_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/hkfqkline/get"

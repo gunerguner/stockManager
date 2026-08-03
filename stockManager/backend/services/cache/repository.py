@@ -53,6 +53,10 @@ class CacheRepository:
         return user_store.get_user_operations(user)
 
     @classmethod
+    def get_user_cash_info(cls, user: User) -> tuple[float, CashFlowList]:
+        return user_store.get_user_cash_info(user)
+
+    @classmethod
     def get_calculated_target(
         cls,
         user: User,
@@ -101,7 +105,7 @@ class CacheRepository:
     def load_calculation_inputs(cls, user: User, operation_list: OperationDict) -> CalculationInputs:
         """聚合持仓计算所需的现金流、汇率、行情与元数据。"""
         user_codes = list(operation_list.keys())
-        income_cash, cash_flow_list = user_store.get_user_cash_info(user)
+        income_cash, cash_flow_list = cls.get_user_cash_info(user)
         return CalculationInputs(
             income_cash=income_cash,
             cash_flow_list=cash_flow_list,

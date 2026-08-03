@@ -1,6 +1,5 @@
 """
-分红服务模块
-提供股票分红数据查询和处理功能
+分红用例：从外部源拉取除权除息并写入 Operation
 """
 import datetime
 
@@ -10,14 +9,14 @@ from backend.common import logger
 from backend.common.constants import OperationType
 from backend.common.types import OperationDict, DividendUpdateData
 from backend.common.utils import operation_sort_key
+from backend.datasource import baostock_session, fetch_dividends
 from backend.models import Operation, StockMeta
 from backend.services.cache import CacheRepository
 from backend.services.calculation import StockHold
-from backend.services.market import baostock_session, fetch_dividends
 
 
 class Dividend:
-    """分红服务类，负责处理股票分红相关操作（纯工具类，无状态）"""
+    """分红服务类，负责处理股票分红相关操作"""
 
     @classmethod
     def generate_dividend(cls, user: User, operation_list: OperationDict) -> list[DividendUpdateData]:
@@ -51,7 +50,6 @@ class Dividend:
         first_year = min(op.date.year for op in operations)
         if exist_dv_operations:
             max_div_year = max(op.date.year for op in exist_dv_operations)
-            # 从最后一次有记录的分红年份起扫（含该年），配合 date_set 去重
             return max(first_year, max_div_year)
         return first_year
 

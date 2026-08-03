@@ -6,9 +6,13 @@ import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 
 type NavMetricsProps = {
   metrics: API.NavMetrics;
+  latestNav?: number | null;
 };
 
-export const NavMetricsPanel: React.FC<NavMetricsProps> = ({ metrics }) => {
+export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
+  metrics,
+  latestNav,
+}) => {
   const isMobile = useIsMobile();
   const { colorFromValue } = useProfitLossColors();
 
@@ -19,6 +23,16 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({ metrics }) => {
     suffix?: string;
     color?: string;
   }[] = [
+    ...(latestNav != null
+      ? [
+          {
+            title: '最新净值',
+            value: latestNav,
+            precision: 4,
+            color: colorFromValue(latestNav - 1),
+          },
+        ]
+      : []),
     {
       title: '年化收益',
       value: metrics.annualizedReturn * 100,
@@ -51,7 +65,7 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({ metrics }) => {
     <>
       <Row gutter={[16, 12]}>
         {items.map((item) => (
-          <Col key={item.title} xs={12} sm={6}>
+          <Col key={item.title} xs={12} sm={8} md={4}>
             <Statistic
               title={item.title}
               value={item.value}

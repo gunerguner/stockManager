@@ -11,7 +11,7 @@ from backend.common.cache import Cache
 from backend.common import logger
 from backend.common.market import to_baidu_params
 from backend.common.types import RealtimePriceDict, ValuationData
-from backend.services.market import fetch_pe_pb
+from backend.datasource import fetch_pe_pb
 from backend.services.cache import keys
 
 _VALUATION_TIMEOUT = 5

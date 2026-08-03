@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest, JsonResponse
 
 from backend.services.cache import CacheRepository
-from backend.services.integrate import Integrate
+from backend.services.app import Integrate
 from backend.common import (
     ResponseStatus,
     logger,

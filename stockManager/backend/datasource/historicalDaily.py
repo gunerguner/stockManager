@@ -13,7 +13,7 @@ from time import sleep
 
 from backend.common import logger
 from backend.common.market import is_hk_code
-from backend.services.market.gtimg_kline import (
+from backend.datasource.gtimg_kline import (
     extract_kline_rows,
     fetch_kline_node,
     kline_url_for_code,

@@ -44,6 +44,7 @@ export const NavChart: React.FC<NavChartProps> = ({ points, height = 360 }) => {
 
     chart.setOption(
       {
+        animation: false,
         backgroundColor: 'transparent',
         grid: { left: 48, right: 24, top: 24, bottom: 32 },
         tooltip: {

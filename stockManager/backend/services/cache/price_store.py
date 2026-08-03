@@ -8,7 +8,7 @@ from backend.common import logger
 from backend.common.market import Market, split_codes_by_market
 from backend.common.tradingCalendar import TZ_SHANGHAI
 from backend.common.types import MarketsData, RealtimePriceDict
-from backend.services.market.realtimePrice import fetch_prices
+from backend.datasource.realtimePrice import fetch_prices
 from backend.services.cache import keys
 from backend.services.cache import meta_store
 from backend.services.cache import refresh_policy

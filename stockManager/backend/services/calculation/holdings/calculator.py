@@ -4,8 +4,8 @@
 """
 from backend.common.types import CashFlowList, OperationDict, OverallData, RealtimePriceDict, StockData
 from backend.models import StockMeta as StockMetaModel
-from backend.services.calculation.overall import compute_overall
-from backend.services.calculation.single_stock import build_single_stock
+from backend.services.calculation.holdings.overall import compute_overall
+from backend.services.calculation.holdings.single_stock import build_single_stock
 
 
 class Calculator:

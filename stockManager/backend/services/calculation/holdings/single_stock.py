@@ -9,8 +9,8 @@ from backend.common.market import is_hk_code
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
 from backend.services.calculation.constants import MIN_PRICE_THRESHOLD
-from backend.services.calculation.money_weighted import calculate_money_weighted_return
-from backend.services.calculation.single_metrics import SingleStockMetrics, compute_single_metrics
+from backend.services.calculation.holdings.money_weighted import calculate_money_weighted_return
+from backend.services.calculation.holdings.single_metrics import SingleStockMetrics, compute_single_metrics
 
 
 def _resolve_stock_name(

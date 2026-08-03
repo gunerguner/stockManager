@@ -5,7 +5,7 @@ from django.core.cache import cache
 
 from backend.common.cache import Cache
 from backend.common import logger
-from backend.services.market import fetch_hist_high
+from backend.datasource import fetch_hist_high
 from backend.services.cache import keys
 
 _SENTINEL_NONE = "__none__"

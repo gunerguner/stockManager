@@ -29,6 +29,9 @@ export const NavContent: React.FC<NavContentProps> = ({
     [data?.points, range],
   );
   const metrics = data?.metrics?.[range] ?? emptyNavMetrics();
+  const latestNav = data?.points?.length
+    ? data.points[data.points.length - 1].navDisplay
+    : null;
 
   return (
     <Spin spinning={loading || refreshing}>
@@ -39,7 +42,7 @@ export const NavContent: React.FC<NavContentProps> = ({
         />
       ) : (
         <>
-          <NavMetricsPanel metrics={metrics} />
+          <NavMetricsPanel metrics={metrics} latestNav={latestNav} />
           <div style={{ marginTop: 16 }}>
             <NavChart
               points={filteredPoints}

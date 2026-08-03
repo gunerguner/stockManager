@@ -1,7 +1,4 @@
-"""盈亏计算与持仓服务"""
-from backend.services.calculation.calculator import Calculator
-from backend.services.calculation.nav_analysis import NavAnalysis
-from backend.services.calculation.stockHold import StockHold
-from backend.services.calculation.watchlist import Watchlist
+"""盈亏与净值纯计算（无 cache / datasource / 编排）"""
+from backend.services.calculation.holdings import Calculator, StockHold
 
-__all__ = ['Calculator', 'NavAnalysis', 'StockHold', 'Watchlist']
+__all__ = ['Calculator', 'StockHold']

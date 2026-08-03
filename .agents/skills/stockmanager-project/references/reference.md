@@ -16,18 +16,19 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | 根路由 | `stockManager/stockManager/urls.py`（`^api/` → backend） |
 | API 路由 | `stockManager/backend/urls.py` |
 | 模型 | `stockManager/backend/models.py` |
-| 盈亏引擎 | `stockManager/backend/services/calculation/`（`calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`、`constants`） |
+| 盈亏引擎 | `stockManager/backend/services/calculation/holdings/`（`calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`） |
+| 净值算法 | `stockManager/backend/services/calculation/nav/`（`replay`、`metrics`）；编排在 `services/app/nav.py` |
 | 交易结算口径（A 股 / 港股通） | `stockManager/backend/common/settlement.py`（CNY 资金账 + 原币展示账） |
-| 业务门面 | `stockManager/backend/services/integrate.py` |
+| 业务门面 | `stockManager/backend/services/app/integrate.py` |
 | 缓存门面 | `stockManager/backend/services/cache/repository.py`（`CacheRepository`） |
 | 缓存 key/TTL | `stockManager/backend/services/cache/keys.py` |
-| 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`refresh_policy.py`、`operation_codec.py` |
+| 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`daily_price_store.py`、`refresh_policy.py`、`operation_codec.py` |
 | 缓存工具 | `stockManager/backend/common/cache.py`（`Cache` 类） |
 | 市场抽象（CN/HK） | `stockManager/backend/common/market.py` |
 | 交易日历（CN/HK） | `stockManager/backend/common/tradingCalendar.py` |
-| 行情数据源 | `market/realtimePrice.py`(`fetch_prices`)、`baostock_source.py`、`baiduValuation.py`、`exchangeRate.py`、`historicalHigh.py`、`http_client.py` |
-| 持仓推算 | `stockManager/backend/services/calculation/stockHold.py` |
-| 除权 | `stockManager/backend/services/dividend.py` |
+| 行情数据源 | `backend/datasource/`：`realtimePrice.py`(`fetch_prices`)、`baostock_source.py`、`baiduValuation.py`、`exchangeRate.py`、`historicalHigh.py`、`historicalDaily.py`、`http_client.py` |
+| 持仓推算 | `stockManager/backend/services/calculation/holdings/stock_hold.py` |
+| 除权 | `stockManager/backend/services/app/dividend.py` |
 | 缓存文档 | `.agents/skills/stockmanager-project/references/cache.md` |
 | 外部数据文档 | `.agents/skills/stockmanager-project/references/external-data.md` |
 | Umi 配置 | `stockManager/front/config/config.ts`、`routes.ts`、`proxy.ts` |
@@ -101,7 +102,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 |-----------|----------------|
 | `models.py` | 迁移文件、Admin 展示、缓存失效信号（`cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py`） |
 | `calculator.py` / `overall.py` / `single_*.py` | `common/types.py`、`/api/stocks` 输出、`/list`/`/profit-analysis`/`/transaction` 前端展示；港股结算同时检查 `common/settlement.py` |
-| `market/realtimePrice.py` | `price_store`/`refresh_policy` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
+| `backend/datasource/realtimePrice.py` | `price_store`/`refresh_policy` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
 | `common/tradingCalendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
 | `common/market.py`（CN/HK 抽象） | `price_store`/`fx_store`/`valuation_store`、估值与汇率换算口径 |
 | `WatchItem` / `watch_store.py` | `/api/watchlist`、前端 `pages/Watch/`、`valuation_store`/`hist_high_store` |

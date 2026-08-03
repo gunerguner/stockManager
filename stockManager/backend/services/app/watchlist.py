@@ -1,4 +1,4 @@
-"""关注列表：行情拼装 + 隐藏设置（供 Integrate 调用）"""
+"""关注列表用例：展示拼装与隐藏设置"""
 from __future__ import annotations
 
 from django.contrib.auth.models import User
@@ -15,7 +15,7 @@ from backend.models import WatchItem
 
 
 class Watchlist:
-    """关注列表：纯拼装与隐藏开关（无缓存编排）。"""
+    """关注列表：拼装展示与隐藏开关。"""
 
     @classmethod
     def build(
@@ -25,7 +25,7 @@ class Watchlist:
         valuations: dict[str, ValuationData],
         hist_highs: dict[str, float | None],
     ) -> list[WatchResultItem]:
-        """DB 关注配置 + 行情/估值/历史高 → 展示列表。"""
+        """关注配置 + 行情/估值/历史高 → 展示列表。"""
         result: list[WatchResultItem] = []
         for item in items:
             code = item["code"]

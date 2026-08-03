@@ -16,7 +16,7 @@ from backend.common.types import (
     HoldingWindows,
 )
 from backend.models import StockDailyPrice
-from backend.services.market.historicalDaily import fetch_daily_closes
+from backend.datasource.historicalDaily import fetch_daily_closes
 
 _MAX_WORKERS = 6
 _GAP_FILL_ROUNDS = 2

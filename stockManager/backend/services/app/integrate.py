@@ -13,9 +13,11 @@ from backend.common.types import (
     WatchResultItem,
 )
 from backend.models import Info
+from backend.services.app.dividend import Dividend
+from backend.services.app.nav import NavAnalysis
+from backend.services.app.watchlist import Watchlist
 from backend.services.cache import CacheRepository
-from backend.services.calculation import Calculator, NavAnalysis, Watchlist
-from backend.services.dividend import Dividend
+from backend.services.calculation import Calculator
 
 
 class Integrate:
