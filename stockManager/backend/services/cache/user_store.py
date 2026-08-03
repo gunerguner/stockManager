@@ -10,7 +10,7 @@ from backend.common.cache import Cache
 from backend.common import logger
 from backend.common.market import markets_in_codes
 from backend.common.utils import format_operations
-from backend.common.types import CalculatedResult, CashFlowData, CashFlowList, OperationDict
+from backend.common.types import CalculatedResult, CashFlowData, CashFlowList, NavAnalysisResult, OperationDict
 from backend.models import Operation, Info, CashFlow
 from backend.services.cache import keys
 from backend.services.cache import operation_codec
@@ -92,9 +92,24 @@ def clear_all_calculated_targets() -> None:
         logger.info(f"[Redis] 价格更新，清除 {deleted_count} 个用户的计算结果缓存")
 
 
+def get_nav_analysis(user_id: int) -> NavAnalysisResult | None:
+    return cache.get(keys.KEY_NAV_ANALYSIS.format(user_id=user_id))
+
+
+def set_nav_analysis(user_id: int, result: NavAnalysisResult) -> None:
+    cache.set(
+        keys.KEY_NAV_ANALYSIS.format(user_id=user_id),
+        result,
+        keys.TTL_NAV_ANALYSIS,
+    )
+
+
+def clear_nav_analysis(user_id: int) -> None:
+    cache.delete(keys.KEY_NAV_ANALYSIS.format(user_id=user_id))
+
+
 def get_user_operations(user: User) -> OperationDict:
-    cached = get_user_operations_cache(user)
-    if cached is not None:
+    if (cached := get_user_operations_cache(user)) is not None:
         return cached
     operations = format_operations(
         Operation.objects.filter(user=user).select_related('stock_meta').order_by('date', 'sortOrder', 'id')
@@ -104,8 +119,7 @@ def get_user_operations(user: User) -> OperationDict:
 
 
 def get_user_cash_info(user: User) -> tuple[float, CashFlowList]:
-    cached = get_user_cash_info_cache(user)
-    if cached is not None:
+    if (cached := get_user_cash_info_cache(user)) is not None:
         return cached
     income_info = Info.objects.filter(user=user, info_type=Info.InfoType.INCOME_CASH).first()
     income_cash = float(income_info.value) if income_info else 0.0
@@ -124,6 +138,7 @@ def clear_user_cache(user_id: int) -> None:
     clear_user_operations(user_id)
     clear_user_cash_info(user_id)
     clear_calculated_target(user_id)
+    clear_nav_analysis(user_id)
 
 
 @receiver([post_save, post_delete], sender=Operation)

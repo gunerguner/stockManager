@@ -4,6 +4,8 @@
 """
 import functools
 import json
+
+from backend.common.auth_user import authenticated_user
 from backend.common.constants import ResponseStatus
 from backend.common.middleware import json_response
 
@@ -14,31 +16,33 @@ logger = logging.getLogger(__name__)
 
 def require_authentication(view_func):
     """
-    装饰器：要求用户必须已认证
-    
-    使用方法:
+    装饰器：要求用户必须已认证，并注入 user 参数。
+
         @require_authentication
-        def my_view(request):
-            # 视图逻辑
-            pass
+        def my_view(request, user: User):
+            ...
     """
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
-        return view_func(request, *args, **kwargs)
+        return view_func(
+            request, *args, user=authenticated_user(request), **kwargs
+        )
     return wrapper
 
 
 def require_superuser(view_func):
-    """装饰器：要求用户为 superuser（admin）"""
+    """装饰器：要求用户为 superuser，并注入 user 参数。"""
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
         if not request.user.is_superuser:
             return json_response(status=ResponseStatus.UNAUTHORIZED, message="无权限")
-        return view_func(request, *args, **kwargs)
+        return view_func(
+            request, *args, user=authenticated_user(request), **kwargs
+        )
     return wrapper
 
 
@@ -129,8 +133,7 @@ def parse_json_body(view_func):
 def _is_missing_field(field: str, data: dict) -> bool:
     if field not in data:
         return True
-    value = data.get(field)
-    if value is None:
+    if (value := data.get(field)) is None:
         return True
     return isinstance(value, str) and value.strip() == ''
 

@@ -33,8 +33,7 @@ class Dividend:
         with baostock_session():
             for code in cn_holding:
                 operations = operation_list[code]
-                updated_code = cls._generate_dividend_single(user, code, operations)
-                if updated_code:
+                if updated_code := cls._generate_dividend_single(user, code, operations):
                     stock_meta = stock_meta_dict.get(updated_code)
                     updated_codes.append({
                         "code": updated_code,

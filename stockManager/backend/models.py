@@ -199,3 +199,55 @@ class WatchItem(_StockMetaCodeMixin, models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.code}"
+
+
+class StockDailyPrice(models.Model):
+    """股票日频不复权收盘价（全局共享，供净值回放）"""
+
+    code = models.CharField(max_length=200, verbose_name="股票代码")
+    date = models.DateField(verbose_name="交易日期")
+    close = models.FloatField(verbose_name="收盘价")
+
+    class Meta:
+        verbose_name = "日频收盘价"
+        verbose_name_plural = "日频收盘价"
+        constraints = [
+            models.UniqueConstraint(fields=['code', 'date'], name='uniq_stock_daily_price_code_date'),
+        ]
+        indexes = [
+            models.Index(fields=['code', 'date']),
+        ]
+        ordering = ['code', 'date']
+
+    def __str__(self) -> str:
+        return f"{self.code} {self.date} {self.close}"
+
+
+class PortfolioNavDaily(models.Model):
+    """用户组合日净值（库内不含 incomeCash）"""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='portfolio_nav_dailies',
+        verbose_name="用户",
+    )
+    date = models.DateField(verbose_name="交易日期")
+    nav = models.FloatField(verbose_name="净值")
+    units = models.FloatField(default=0, verbose_name="份额")
+    asset = models.FloatField(default=0, verbose_name="总资产")
+    cash = models.FloatField(default=0, verbose_name="现金")
+
+    class Meta:
+        verbose_name = "组合日净值"
+        verbose_name_plural = "组合日净值"
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='uniq_portfolio_nav_user_date'),
+        ]
+        indexes = [
+            models.Index(fields=['user', 'date']),
+        ]
+        ordering = ['user', 'date']
+
+    def __str__(self) -> str:
+        return f"{self.user.username} {self.date} nav={self.nav}"

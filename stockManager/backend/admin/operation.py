@@ -45,11 +45,17 @@ class OperationAdminForm(forms.ModelForm):
                     '港股通买卖必须填写成交金额（人民币），且大于 0'
                 ) from exc
 
-        if cleaned.get('amount') is None or cleaned['amount'] <= 0:
+        if (amount := cleaned.get('amount')) is None or amount <= 0:
             raise forms.ValidationError(
                 '港股通买卖必须填写成交金额（人民币），且大于 0'
             )
         return cleaned
+
+
+_NAV_REFRESH_HINT = (
+    '净值数据可能已过期，请到「净值分析」页刷新；'
+    '若修改了历史交易或出入金，请使用全量刷新。'
+)
 
 
 @admin.register(Operation)
@@ -58,7 +64,7 @@ class OperationAdmin(UserScopedModelAdmin):
 
     form = OperationAdminForm
     list_display = [
-        'user', 'stock_name', 'date', 'sortOrder', 'operationType',
+        'user', 'stock_name', 'date', 'operationType',
         'price', 'count', 'amount', 'fee',
     ]
     list_filter = ['user', 'operationType', 'date']
@@ -114,3 +120,12 @@ class OperationAdmin(UserScopedModelAdmin):
                 )
 
         super().save_model(request, obj, form, change)
+        messages.warning(request, _NAV_REFRESH_HINT)
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        messages.warning(request, _NAV_REFRESH_HINT)
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        messages.warning(request, _NAV_REFRESH_HINT)

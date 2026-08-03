@@ -1,12 +1,18 @@
+import { useEffect } from 'react';
 import { FloatButton, theme } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
-import { useWatchlist } from '@/hooks/useWatchlist';
+import { useModel } from '@umijs/max';
 import { WatchBoard } from './components/WatchBoard';
 import '@/components/Common/index.less';
 
 const Watch: React.FC = () => {
-  const { list, fetchWatchlist, setItemHidden, loading } = useWatchlist();
+  const { list, fetchWatchlist, setItemHidden, initialized, loading } =
+    useModel('watchlist');
   const { token } = theme.useToken();
+
+  useEffect(() => {
+    if (!initialized) void fetchWatchlist();
+  }, [initialized, fetchWatchlist]);
 
   return (
     <>

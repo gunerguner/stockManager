@@ -24,6 +24,12 @@ export default [
     component: './ProfitAnalysis',
   },
   {
+    path: '/nav-analysis',
+    name: '净值分析',
+    icon: 'lineChart',
+    component: './NavAnalysis',
+  },
+  {
     path: '/transaction',
     name: '交易数据',
     icon: 'database',

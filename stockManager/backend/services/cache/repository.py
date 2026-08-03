@@ -66,6 +66,18 @@ class CacheRepository:
         user_store.set_calculated_target(user_id, result, user_codes)
 
     @classmethod
+    def get_nav_analysis(cls, user_id: int):
+        return user_store.get_nav_analysis(user_id)
+
+    @classmethod
+    def set_nav_analysis(cls, user_id: int, result) -> None:
+        user_store.set_nav_analysis(user_id, result)
+
+    @classmethod
+    def clear_nav_analysis(cls, user_id: int) -> None:
+        user_store.clear_nav_analysis(user_id)
+
+    @classmethod
     def get_stock_meta_dict(cls) -> dict[str, StockMetaModel]:
         return meta_store.get_stock_meta_dict()
 

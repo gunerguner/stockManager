@@ -8,7 +8,7 @@
 A 股调休上班日（补班）仍不开盘，亦不在 sessions 内。
 """
 from typing import ClassVar, cast
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import math
 import pytz
 from exchange_calendars import get_calendar, ExchangeCalendar
@@ -34,6 +34,11 @@ def _to_shanghai(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return TZ_SHANGHAI.localize(dt)
     return dt.astimezone(TZ_SHANGHAI)
+
+
+def _session_ts(day: date) -> pd.Timestamp:
+    """date → Timestamp；由 date 构造不会产生 NaT，供 pyright 收窄。"""
+    return cast(pd.Timestamp, pd.Timestamp(day))
 
 
 class TradingCalendar:
@@ -117,6 +122,66 @@ class TradingCalendar:
                         return session_start
             check_date += timedelta(days=1)
         raise RuntimeError(f"未找到 {market} 在 100 天内的开盘时段")
+
+    @classmethod
+    def sessions_between(
+        cls,
+        start: date,
+        end: date,
+        market: Market = Market.CN,
+    ) -> list[date]:
+        """返回闭区间 [start, end] 内的全部交易日。"""
+        if start > end:
+            return []
+        cal = cls.get_calendar(market)
+        sessions = cal.sessions_in_range(
+            _session_ts(start),
+            _session_ts(end),
+        )
+        return [ts.date() for ts in sessions]
+
+    @classmethod
+    def latest_closed_session(
+        cls,
+        as_of: datetime | None = None,
+        market: Market = Market.CN,
+    ) -> date:
+        """返回最近一个已收盘交易日（供净值序列终点）。
+
+        - 若当天是交易日且已过该市场常规收盘时刻 → 当天
+        - 否则 → 严格更早的上一交易日
+
+        A 股按 15:00、港股按 16:00（上海时区）判定收盘。
+        """
+        now = _to_shanghai(as_of or datetime.now(TZ_SHANGHAI))
+        today = now.date()
+        cal = cls.get_calendar(market)
+        close_minute = _MARKET_SESSION_MINUTES[market][-1][1]
+        minutes_now = now.hour * 60 + now.minute
+        if cal.is_session(_session_ts(today)) and minutes_now >= close_minute:
+            return today
+
+        end = today - timedelta(days=1)
+        start = end - timedelta(days=18)
+        sessions = cal.sessions_in_range(_session_ts(start), _session_ts(end))
+        if len(sessions) == 0:
+            raise RuntimeError(f"未找到 {market} 在 {today} 之前的交易日")
+        return cast(pd.Timestamp, sessions[-1]).date()
+
+    @classmethod
+    def next_session(
+        cls,
+        after: date,
+        market: Market = Market.CN,
+    ) -> date | None:
+        """返回严格晚于 after 的下一交易日；无则 None。"""
+        cal = cls.get_calendar(market)
+        start = after + timedelta(days=1)
+        end = start + timedelta(days=18)
+        sessions = cal.sessions_in_range(_session_ts(start), _session_ts(end))
+        if len(sessions) == 0:
+            return None
+        return cast(pd.Timestamp, sessions[0]).date()
 
 
 # ==================== 交易状态 Tag 生成（供 /api/tradingStatus 使用） ====================

@@ -1,5 +1,6 @@
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import auth
+from django.contrib.auth.models import User
 from django.http import HttpRequest, JsonResponse
 
 from backend.common import (
@@ -11,7 +12,6 @@ from backend.common import (
     handle_exception,
     parse_json_body,
     validate_required_fields,
-    authenticated_user,
 )
 
 
@@ -23,13 +23,11 @@ def login(request: HttpRequest, data: dict) -> JsonResponse:
     """用户登录接口"""
     if request.user.is_authenticated:
         return json_response(status=ResponseStatus.ERROR, message="已登录，请勿重复登录")
-    
+
     username = data.get("username")
     password = data.get("password")
-    
-    user_obj = auth.authenticate(username=username, password=password)
-    
-    if user_obj is not None:
+
+    if (user_obj := auth.authenticate(username=username, password=password)) is not None:
         auth.login(request, user_obj)
         logger.info(f"用户 {username} 登录成功")
         return json_response(status=ResponseStatus.SUCCESS, message="登录成功")
@@ -40,9 +38,9 @@ def login(request: HttpRequest, data: dict) -> JsonResponse:
 
 @require_authentication
 @handle_exception
-def logout(request: HttpRequest) -> JsonResponse:
+def logout(request: HttpRequest, user: User) -> JsonResponse:
     """用户登出接口"""
-    username = authenticated_user(request).username
+    username = user.username
     request.session.flush()
     logger.info(f"用户 {username} 登出成功")
     return json_response(status=ResponseStatus.SUCCESS, message="登出成功")
@@ -51,9 +49,8 @@ def logout(request: HttpRequest) -> JsonResponse:
 @ensure_csrf_cookie
 @require_authentication
 @handle_exception
-def currentUser(request: HttpRequest) -> JsonResponse:
+def currentUser(request: HttpRequest, user: User) -> JsonResponse:
     """获取当前登录用户信息"""
-    user = authenticated_user(request)
     match (user.is_superuser, user.is_staff):
         case (True, _):
             access = "admin"
@@ -61,7 +58,7 @@ def currentUser(request: HttpRequest) -> JsonResponse:
             access = "staff"
         case _:
             access = ""
-    
+
     user_info = {
         "username": user.username,
         "name": user.first_name,

@@ -38,15 +38,13 @@ def _build_price(stock_data: dict, price_key: str, close_key: str) -> RealtimePr
 
 def _build_price_cn(stock_data: dict, price_key: str, close_key: str) -> RealtimePriceData:
     base = _build_price(stock_data, price_key, close_key)
-    high_raw = stock_data.get("high_2")
-    base["yearHigh"] = safe_float(high_raw) if high_raw else None
+    base["yearHigh"] = safe_float(high_raw) if (high_raw := stock_data.get("high_2")) else None
     return base
 
 
 def _build_price_hk(stock_data: dict, price_key: str, close_key: str) -> RealtimePriceData:
     base = _build_price(stock_data, price_key, close_key)
-    high_raw = stock_data.get("year_high")
-    base["yearHigh"] = safe_float(high_raw) if high_raw else None
+    base["yearHigh"] = safe_float(high_raw) if (high_raw := stock_data.get("year_high")) else None
     return base
 
 

@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 from backend.common import logger
 from backend.services.market.http_client import get_json
 
-_CN_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-_HK_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get"
+_CN_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
+_HK_KLINE_URL = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/hkfqkline/get"
 _MONTHS = 72  # 6 年
 _HIGH_INDEX = 3
 _PERIOD = "week"
@@ -24,7 +24,10 @@ def _date_range() -> tuple[str, str]:
 
 
 def _extract_kline(node: dict) -> list[list]:
-    """从返回节点中找出 K 线数组（week / qfqweek 等键名随复权方式变化）。"""
+    """优先取前复权周 K（qfqweek），再回退其它 list。"""
+    for key in ("qfqweek", "week", "qfqday", "day"):
+        if isinstance(value := node.get(key), list) and value and isinstance(value[0], list):
+            return value
     for value in node.values():
         if isinstance(value, list) and value and isinstance(value[0], list):
             return value

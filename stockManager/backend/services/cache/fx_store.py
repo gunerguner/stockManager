@@ -11,8 +11,7 @@ from backend.services.cache import refresh_policy
 
 def get_hkd_cny_rate(user_codes: Iterable[str]) -> float:
     if not refresh_policy.any_market_in_trading_hours(markets_in_codes(user_codes)):
-        cached = cache.get(keys.KEY_FX_HKD_CNY)
-        if cached is not None:
+        if (cached := cache.get(keys.KEY_FX_HKD_CNY)) is not None:
             return float(cached)
 
     rate = fetch_hkd_cny_rate()

@@ -14,8 +14,7 @@ def clear_stock_meta_all() -> None:
 
 
 def get_stock_meta_dict() -> dict[str, StockMetaModel]:
-    cached = cache.get(keys.KEY_STOCK_META_ALL)
-    if cached:
+    if cached := cache.get(keys.KEY_STOCK_META_ALL):
         return {
             code: StockMetaModel(
                 code=data["code"],

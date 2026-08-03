@@ -99,3 +99,16 @@ export async function updateWatchHidden(
 export async function getTradingStatus(options?: RequestOptions) {
   return getRequest<API.TradingStatusResult>('/api/tradingStatus', options);
 }
+
+/** 获取净值分析 GET /api/nav */
+export async function getNavAnalysis(options?: RequestOptions) {
+  return getRequest<API.NavAnalysisResult>('/api/nav', options);
+}
+
+/** 刷新净值 POST /api/nav/refresh */
+export async function refreshNav(
+  mode: 'incremental' | 'full',
+  options?: RequestOptions,
+) {
+  return postRequest<API.NavRefreshResult>('/api/nav/refresh', { mode }, options);
+}

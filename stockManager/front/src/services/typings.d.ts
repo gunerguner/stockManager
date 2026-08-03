@@ -152,4 +152,43 @@ declare namespace API {
   type TradingStatusResult = BaseResult & {
     data?: TradingTimeStatus[];
   };
+
+  type NavPoint = {
+    date: string;
+    nav: number;
+    navDisplay: number;
+  };
+
+  type NavMetrics = {
+    annualizedReturn: number;
+    sharpeRatio: number;
+    maxDrawdown: number;
+    calmarRatio: number;
+  };
+
+  type NavMetricsByRange = {
+    all: NavMetrics;
+    ytd: NavMetrics;
+    oneYear: NavMetrics;
+  };
+
+  type NavAnalysisData = {
+    points: NavPoint[];
+    metrics: NavMetricsByRange;
+    incomeCash: number;
+    originCash: number;
+    lastDate: string | null;
+    updatedAt: string | null;
+  };
+
+  type NavAnalysisResult = BaseResult & {
+    data?: NavAnalysisData;
+  };
+
+  type NavRefreshResult = BaseResult & {
+    data?: {
+      written: number;
+      pointCount: number;
+    };
+  };
 }

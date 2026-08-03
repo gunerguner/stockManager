@@ -1,7 +1,14 @@
 """
 出入金记录管理
 """
+from django.contrib import messages
+
 from backend.admin.base import CashFlow, UserScopedModelAdmin, admin
+
+_NAV_REFRESH_HINT = (
+    '净值数据可能已过期，请到「净值分析」页刷新；'
+    '若修改了历史交易或出入金，请使用全量刷新。'
+)
 
 
 @admin.register(CashFlow)
@@ -33,3 +40,15 @@ class CashFlowAdmin(UserScopedModelAdmin):
         if obj is None:
             return '-'
         return '入金' if obj.amount >= 0 else '出金'
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        messages.warning(request, _NAV_REFRESH_HINT)
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        messages.warning(request, _NAV_REFRESH_HINT)
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        messages.warning(request, _NAV_REFRESH_HINT)

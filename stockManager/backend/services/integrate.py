@@ -7,13 +7,14 @@ from backend.common import logger
 from backend.common.types import (
     CalculatedResult,
     DividendUpdateData,
+    NavAnalysisResult,
     OperationData,
     OperationDataDict,
     WatchResultItem,
 )
 from backend.models import Info, WatchItem
 from backend.services.cache import CacheRepository
-from backend.services.calculation import Calculator
+from backend.services.calculation import Calculator, NavAnalysis
 from backend.services.calculation.watchlist import build_watchlist
 from backend.services.dividend import Dividend
 
@@ -32,8 +33,7 @@ class Integrate:
         operation_list = CacheRepository.get_user_operations(user)
         user_codes = list(operation_list.keys())
 
-        cached = CacheRepository.get_calculated_target(user, user_codes)
-        if cached is not None:
+        if (cached := CacheRepository.get_calculated_target(user, user_codes)) is not None:
             return cached
 
         inputs = CacheRepository.load_calculation_inputs(user, operation_list)
@@ -59,6 +59,25 @@ class Integrate:
         return result
 
     @classmethod
+    def get_nav_analysis(cls, user: User) -> NavAnalysisResult:
+        if (cached := CacheRepository.get_nav_analysis(user.pk)) is not None:
+            return cached
+        result = NavAnalysis.build(user)
+        CacheRepository.set_nav_analysis(user.pk, result)
+        return result
+
+    @classmethod
+    def refresh_nav(cls, user: User, mode: str = 'incremental') -> dict:
+        written = NavAnalysis.refresh(user, mode=mode)
+        CacheRepository.clear_nav_analysis(user.pk)
+        result = NavAnalysis.build(user)
+        CacheRepository.set_nav_analysis(user.pk, result)
+        return {
+            'written': written,
+            'pointCount': len(result.get('points') or []),
+        }
+
+    @classmethod
     def generate_dividend(cls, user: User) -> list[DividendUpdateData]:
         operation_list = CacheRepository.get_user_operations(user)
         return Dividend.generate_dividend(user, operation_list)
@@ -70,6 +89,7 @@ class Integrate:
             info_type=Info.InfoType.INCOME_CASH,
             defaults={"value": str(income_cash)},
         )
+        CacheRepository.clear_nav_analysis(user.pk)
         logger.info(f"用户 {user.username} 更新收益现金: {income_cash}")
 
     @classmethod

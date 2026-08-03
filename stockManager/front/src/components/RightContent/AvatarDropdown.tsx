@@ -24,6 +24,8 @@ const AvatarDropdown: React.FC = () => {
   const [cacheLoading, setCacheLoading] = useState(false);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { resetStockData } = useModel('stocks');
+  const { resetWatchlist } = useModel('watchlist');
+  const { resetNavAnalysis } = useModel('navAnalysis');
   const { modal } = App.useApp();
   const { token } = theme.useToken();
 
@@ -36,6 +38,8 @@ const AvatarDropdown: React.FC = () => {
       await logout();
       setInitialState?.((state) => ({ ...state, currentUser: undefined }));
       resetStockData();
+      resetWatchlist();
+      resetNavAnalysis();
 
       setTimeout(() => {
         const params = new URLSearchParams({ redirect: history.location.pathname });

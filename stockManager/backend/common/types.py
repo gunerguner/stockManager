@@ -1,4 +1,5 @@
 """类型定义模块"""
+from datetime import date
 from typing import TypedDict
 
 from backend.models import Operation
@@ -137,7 +138,45 @@ class ValuationData(TypedDict):
     bvps: float | None
 
 
+class NavPointData(TypedDict):
+    """净值序列点"""
+    date: str
+    nav: float
+    navDisplay: float
+
+
+class NavMetricsData(TypedDict):
+    """净值区间指标（原始比率）"""
+    annualizedReturn: float
+    sharpeRatio: float
+    maxDrawdown: float
+    calmarRatio: float
+
+
+class NavMetricsByRange(TypedDict):
+    all: NavMetricsData
+    ytd: NavMetricsData
+    oneYear: NavMetricsData
+
+
+class NavAnalysisResult(TypedDict):
+    """净值分析 API / Redis 缓存结构"""
+    points: list[NavPointData]
+    metrics: NavMetricsByRange
+    incomeCash: float
+    originCash: float
+    lastDate: str | None
+    updatedAt: str | None
+
+
 OperationDict = dict[str, list[Operation]]
 CashFlowList = list[CashFlowData]
 OperationDataDict = dict[str, list[OperationData]]
 RealtimePriceDict = dict[str, RealtimePriceData]
+
+# 日频行情 / 净值持仓窗口
+DateRange = tuple[date, date]
+DateRangeList = list[DateRange]
+HoldingWindows = dict[str, DateRangeList]  # code -> [(start, end), ...]
+DailyCloseSeries = dict[date, float]  # date -> close
+DailyCloseByCode = dict[str, DailyCloseSeries]  # code -> series

@@ -115,8 +115,7 @@ class SessionAdmin(BaseModelAdmin):
         actions.pop('delete_selected', None)
 
         for action_name in ['clear_expired_sessions', 'clear_all_sessions']:
-            action = actions.get(action_name)
-            if action is None:
+            if (action := actions.get(action_name)) is None:
                 continue
             func, name, description = action
             setattr(func, 'allow_empty', True)

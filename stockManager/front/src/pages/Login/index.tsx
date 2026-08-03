@@ -26,6 +26,8 @@ const Login: React.FC = () => {
   const [loginError, setLoginError] = useState(false);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { resetStockData } = useModel('stocks');
+  const { resetWatchlist } = useModel('watchlist');
+  const { resetNavAnalysis } = useModel('navAnalysis');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -48,6 +50,8 @@ const Login: React.FC = () => {
       if (isApiSuccess(result)) {
         message.success('登录成功！');
         resetStockData();
+        resetWatchlist();
+        resetNavAnalysis();
 
         const userInfo = await initialState?.fetchUserInfo?.();
         if (userInfo) {

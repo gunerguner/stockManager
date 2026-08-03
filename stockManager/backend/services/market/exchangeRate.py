@@ -13,8 +13,7 @@ def fetch_hkd_cny_rate() -> float:
         _SINA_FX_URL,
         headers={"Referer": _SINA_REFERER},
     )
-    match = re.search(r'="([^"]+)"', text)
-    if not match:
+    if not (match := re.search(r'="([^"]+)"', text)):
         raise ValueError("sina 外汇响应格式异常")
     parts = match.group(1).split(",")
     if len(parts) < 2:

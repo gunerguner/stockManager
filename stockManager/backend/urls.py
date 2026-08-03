@@ -11,7 +11,9 @@ urlpatterns = [
     path('watchlist', stock.watchlist, name='watchlist'),
     path('watchlist/hidden', stock.update_watch_hidden, name='watchlist_hidden'),
     path('tradingStatus', stock.trading_status, name='tradingStatus'),
-    
+    path('nav', stock.nav, name='nav'),
+    path('nav/refresh', stock.refresh_nav, name='nav_refresh'),
+
     # 用户相关接口
     path('currentUser', user.currentUser, name='currentUser'),
     path('login', user.login, name='login'),

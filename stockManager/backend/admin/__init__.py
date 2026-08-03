@@ -9,6 +9,7 @@ from backend.admin import cashflow  # noqa: F401
 from backend.admin import stockmeta  # noqa: F401
 from backend.admin import session  # noqa: F401
 from backend.admin import watchitem  # noqa: F401
+from backend.admin import portfolionav  # noqa: F401
 
 __all__ = [
     'operation',
@@ -17,5 +18,6 @@ __all__ = [
     'stockmeta',
     'session',
     'watchitem',
+    'portfolionav',
 ]
 

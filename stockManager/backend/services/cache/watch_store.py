@@ -14,8 +14,7 @@ from backend.services.cache import keys
 
 def get_user_watchlist(user: User) -> list[WatchItemDict]:
     key = keys.KEY_USER_WATCHLIST.format(user_id=user.pk)
-    cached = cache.get(key)
-    if cached is not None:
+    if (cached := cache.get(key)) is not None:
         return cached
     items = cast(
         list[WatchItemDict],
