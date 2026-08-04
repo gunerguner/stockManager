@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Empty, Spin } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { NavChart } from './NavChart';
@@ -6,6 +6,7 @@ import { NavMetricsPanel } from './NavMetrics';
 import {
   emptyNavMetrics,
   filterNavPoints,
+  navKeepDates,
   type NavRangeKey,
 } from './navStat';
 
@@ -23,12 +24,15 @@ export const NavContent: React.FC<NavContentProps> = ({
   refreshing = false,
 }) => {
   const isMobile = useIsMobile();
+  const [showDrawdown, setShowDrawdown] = useState(false);
+
+  const metrics = data?.metrics?.[range] ?? emptyNavMetrics();
+  const keepDates = useMemo(() => navKeepDates(metrics), [metrics]);
 
   const filteredPoints = useMemo(
-    () => filterNavPoints(data?.points ?? [], range),
-    [data?.points, range],
+    () => filterNavPoints(data?.points ?? [], range, keepDates),
+    [data?.points, range, keepDates],
   );
-  const metrics = data?.metrics?.[range] ?? emptyNavMetrics();
   const latestNav = data?.points?.length
     ? data.points[data.points.length - 1].navDisplay
     : null;
@@ -42,11 +46,19 @@ export const NavContent: React.FC<NavContentProps> = ({
         />
       ) : (
         <>
-          <NavMetricsPanel metrics={metrics} latestNav={latestNav} />
+          <NavMetricsPanel
+            metrics={metrics}
+            latestNav={latestNav}
+            showDrawdown={showDrawdown}
+            onToggleDrawdown={() => setShowDrawdown((v) => !v)}
+          />
           <div style={{ marginTop: 16 }}>
             <NavChart
               points={filteredPoints}
               height={isMobile ? 280 : 380}
+              maxNav={metrics.maxNav}
+              drawdown={metrics.drawdown}
+              showDrawdown={showDrawdown}
             />
           </div>
         </>

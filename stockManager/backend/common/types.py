@@ -144,12 +144,29 @@ class NavPointData(TypedDict):
     navDisplay: float
 
 
+class NavMaxNavMarker(TypedDict):
+    """区间最高净值锚点"""
+    date: str
+    display: float
+
+
+class NavDrawdownPeriod(TypedDict):
+    """最大回撤区间（峰 / 谷 / 收复或未收复终点）"""
+    peakDate: str
+    troughDate: str
+    endDate: str
+    recovered: bool
+    recoverDays: int | None
+
+
 class NavMetricsData(TypedDict):
-    """净值区间指标（原始比率）"""
+    """净值区间指标（原始比率）+ 图表标注锚点"""
     annualizedReturn: float
     sharpeRatio: float
     maxDrawdown: float
     calmarRatio: float
+    maxNav: NavMaxNavMarker | None
+    drawdown: NavDrawdownPeriod | None
 
 
 class NavMetricsByRange(TypedDict):

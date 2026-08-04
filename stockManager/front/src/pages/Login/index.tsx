@@ -18,7 +18,7 @@ const redirectTo = (delay = 10) => {
 };
 
 const LoginMessage: React.FC<{ content: string }> = ({ content }) => (
-  <Alert className={styles.loginMessage} message={content} type="error" showIcon />
+  <Alert className={styles.loginMessage} title={content} type="error" showIcon />
 );
 
 const Login: React.FC = () => {

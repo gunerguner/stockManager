@@ -50,30 +50,47 @@ const WatchDetailContent: React.FC<{
 
   return (
     <>
-      <Descriptions column={1} size="small" className="watch-detail-descriptions">
-        <Descriptions.Item label="风险">{renderMultilineText(record.risk)}</Descriptions.Item>
-        <Descriptions.Item label="机会">{renderMultilineText(record.opportunity)}</Descriptions.Item>
-        <Descriptions.Item label="左侧点">
-          {formatMarketPriceOrDash(record.leftPoint, record.code)}
-        </Descriptions.Item>
-        <Descriptions.Item label="趋势点">
-          {formatMarketPriceOrDash(record.trendPoint, record.code)}
-        </Descriptions.Item>
-        <Descriptions.Item label="血筹点">
-          {formatMarketPriceOrDash(record.bloodPoint, record.code)}
-        </Descriptions.Item>
-        <Descriptions.Item label="现价">
-          {formatMarketPriceOrDash(record.priceNow, record.code)}
-        </Descriptions.Item>
-        <Descriptions.Item label="6年内最高">
-          {formatMarketPriceOrDash(record.histHigh, record.code)}
-        </Descriptions.Item>
-        <Descriptions.Item label="PB">{formatDecimal(record.pb)}</Descriptions.Item>
-        <Descriptions.Item label="PE(TTM)">{formatDecimal(record.pe)}</Descriptions.Item>
-        <Descriptions.Item label="ROE">
-          {formatPercent(calcRoeFromPbPe(record.pb, record.pe))}
-        </Descriptions.Item>
-      </Descriptions>
+      <Descriptions
+        column={1}
+        size="small"
+        className="watch-detail-descriptions"
+        items={[
+          { key: 'risk', label: '风险', children: renderMultilineText(record.risk) },
+          { key: 'opportunity', label: '机会', children: renderMultilineText(record.opportunity) },
+          {
+            key: 'leftPoint',
+            label: '左侧点',
+            children: formatMarketPriceOrDash(record.leftPoint, record.code),
+          },
+          {
+            key: 'trendPoint',
+            label: '趋势点',
+            children: formatMarketPriceOrDash(record.trendPoint, record.code),
+          },
+          {
+            key: 'bloodPoint',
+            label: '血筹点',
+            children: formatMarketPriceOrDash(record.bloodPoint, record.code),
+          },
+          {
+            key: 'priceNow',
+            label: '现价',
+            children: formatMarketPriceOrDash(record.priceNow, record.code),
+          },
+          {
+            key: 'histHigh',
+            label: '6年内最高',
+            children: formatMarketPriceOrDash(record.histHigh, record.code),
+          },
+          { key: 'pb', label: 'PB', children: formatDecimal(record.pb) },
+          { key: 'pe', label: 'PE(TTM)', children: formatDecimal(record.pe) },
+          {
+            key: 'roe',
+            label: 'ROE',
+            children: formatPercent(calcRoeFromPbPe(record.pb, record.pe)),
+          },
+        ]}
+      />
       {onToggleHidden && (
         <div style={{ marginTop: 16, textAlign: 'right' }}>
           <Button type="primary" ghost loading={submitting} onClick={handleToggle}>

@@ -159,11 +159,26 @@ declare namespace API {
     navDisplay: number;
   };
 
+  type NavMaxNavMarker = {
+    date: string;
+    display: number;
+  };
+
+  type NavDrawdownPeriod = {
+    peakDate: string;
+    troughDate: string;
+    endDate: string;
+    recovered: boolean;
+    recoverDays: number | null;
+  };
+
   type NavMetrics = {
     annualizedReturn: number;
     sharpeRatio: number;
     maxDrawdown: number;
     calmarRatio: number;
+    maxNav: NavMaxNavMarker | null;
+    drawdown: NavDrawdownPeriod | null;
   };
 
   type NavMetricsByRange = {
