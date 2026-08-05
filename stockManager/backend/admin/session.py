@@ -72,8 +72,7 @@ class SessionAdmin(BaseModelAdmin):
     @admin.display(description='用户')
     def get_user(self, obj: Session) -> str:
         """获取 session 关联的用户（显示名称）"""
-        user = self._get_user_from_session(obj)
-        if user is None:
+        if (user := self._get_user_from_session(obj)) is None:
             return '匿名用户'
         return user.get_full_name() or user.email or user.username
 
@@ -86,8 +85,7 @@ class SessionAdmin(BaseModelAdmin):
     @admin.display(description='用户信息')
     def get_user_info(self, obj: Session) -> Any:
         """获取用户详细信息（详情页显示）"""
-        user = self._get_user_from_session(obj)
-        if user is None:
+        if (user := self._get_user_from_session(obj)) is None:
             return '匿名用户（未登录）'
 
         return format_html(

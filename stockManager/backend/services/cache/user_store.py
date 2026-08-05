@@ -63,9 +63,10 @@ def get_calculated_target(
     user_codes: Iterable[str] | None = None,
 ) -> CalculatedResult | None:
     codes = list(user_codes) if user_codes is not None else list(get_user_operations(user).keys())
-    if not (cached := cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.pk))):
-        return None
-    if should_invalidate_calculated_cache(codes):
+    if (
+        not (cached := cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.pk)))
+        or should_invalidate_calculated_cache(codes)
+    ):
         return None
     return cached
 
@@ -144,9 +145,9 @@ def clear_user_cache(user_id: int) -> None:
 @receiver([post_save, post_delete], sender=CashFlow)
 @receiver([post_save, post_delete], sender=Info)
 def clear_user_cache_on_model_change(sender, instance, **kwargs) -> None:
-    if sender == Info and instance.info_type != Info.InfoType.INCOME_CASH:
-        return
-    if not instance.user_id:
+    if (
+        sender == Info and instance.info_type != Info.InfoType.INCOME_CASH
+    ) or not instance.user_id:
         return
     clear_user_cache(instance.user_id)
     logger.info(f"[Redis] {sender.__name__} 变化，清除用户 {instance.user_id} 的缓存")

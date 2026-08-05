@@ -1,6 +1,4 @@
 """净值展示摊入与区间指标（纯函数）"""
-from __future__ import annotations
-
 import math
 from datetime import date, datetime, timedelta
 
@@ -12,9 +10,9 @@ from backend.common.types import (
     NavMetricsData,
     NavPointData,
 )
+from backend.common.thresholds import EPS
 
 _TRADING_DAYS_PER_YEAR = 242
-_MIN_STD = 1e-12
 
 
 def apply_income_cash_display(
@@ -23,29 +21,26 @@ def apply_income_cash_display(
     origin_cash: float,
 ) -> list[NavPointData]:
     """库内 nav + incomeCash 线性摊入 → navDisplay。"""
-    n = len(points)
-    if not n:
+    if not (n := len(points)):
         return []
-    denom = origin_cash if abs(origin_cash) > 1e-6 else 1.0
-    daily_adj = (income_cash / denom) / n if abs(income_cash) > 1e-9 else 0.0
-    result: list[NavPointData] = []
-    for i, (d, nav) in enumerate(points):
-        result.append({
+    denom = origin_cash if abs(origin_cash) > EPS else 1.0
+    daily_adj = (income_cash / denom) / n if abs(income_cash) > EPS else 0.0
+    return [
+        {
             'date': d.isoformat(),
             'nav': nav,
             'navDisplay': nav + daily_adj * (i + 1),
-        })
-    return result
+        }
+        for i, (d, nav) in enumerate(points)
+    ]
 
 
 def _daily_returns(navs: list[float]) -> list[float]:
-    rets: list[float] = []
-    for i in range(1, len(navs)):
-        prev = navs[i - 1]
-        if abs(prev) < 1e-12:
-            continue
-        rets.append(navs[i] / prev - 1.0)
-    return rets
+    return [
+        navs[i] / prev - 1.0
+        for i in range(1, len(navs))
+        if abs(prev := navs[i - 1]) >= EPS
+    ]
 
 
 def _empty_metrics() -> NavMetricsData:
@@ -68,12 +63,12 @@ def _build_drawdown_period(
     peak_date = points[dd_peak_idx]['date']
     trough_date = points[trough_idx]['date']
     peak_nav = navs[dd_peak_idx]
-    recovery_idx: int | None = None
-    for i in range(trough_idx + 1, len(navs)):
-        if navs[i] >= peak_nav:
-            recovery_idx = i
-            break
-    if recovery_idx is not None:
+    if (
+        recovery_idx := next(
+            (i for i in range(trough_idx + 1, len(navs)) if navs[i] >= peak_nav),
+            None,
+        )
+    ) is not None:
         end_date = points[recovery_idx]['date']
         trough_d = datetime.strptime(trough_date, '%Y-%m-%d').date()
         recover_d = datetime.strptime(end_date, '%Y-%m-%d').date()
@@ -99,10 +94,7 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
     if not points:
         return empty
 
-    max_nav_idx = 0
-    for i in range(1, len(points)):
-        if points[i]['navDisplay'] > points[max_nav_idx]['navDisplay']:
-            max_nav_idx = i
+    max_nav_idx = max(range(len(points)), key=lambda i: points[i]['navDisplay'])
     max_nav: NavMaxNavMarker = {
         'date': points[max_nav_idx]['date'],
         'display': points[max_nav_idx]['navDisplay'],
@@ -118,20 +110,20 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
     if start <= 0 or days <= 0:
         return empty
 
-    annualized = (end / start) ** (_TRADING_DAYS_PER_YEAR / days) - 1.0
+    annualized_return = (end / start) ** (_TRADING_DAYS_PER_YEAR / days) - 1.0
 
     rets = _daily_returns(navs)
-    sharpe = 0.0
+    sharpe_ratio = 0.0
     if len(rets) >= 2:
         mean = sum(rets) / len(rets)
         var = sum((r - mean) ** 2 for r in rets) / (len(rets) - 1)
         std = math.sqrt(var)
-        if std > _MIN_STD:
-            sharpe = (mean / std) * math.sqrt(_TRADING_DAYS_PER_YEAR)
+        if std > EPS:
+            sharpe_ratio = (mean / std) * math.sqrt(_TRADING_DAYS_PER_YEAR)
 
     running_peak = navs[0]
     running_peak_idx = 0
-    max_dd = 0.0
+    max_drawdown = 0.0
     dd_peak_idx = 0
     trough_idx = 0
     for i, v in enumerate(navs):
@@ -140,24 +132,25 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
             running_peak_idx = i
         if running_peak > 0:
             dd = v / running_peak - 1.0
-            if dd < max_dd:
-                max_dd = dd
+            if dd < max_drawdown:
+                max_drawdown = dd
                 dd_peak_idx = running_peak_idx
                 trough_idx = i
 
-    calmar = 0.0
-    if abs(max_dd) > 1e-12:
-        calmar = annualized / abs(max_dd)
-
-    drawdown: NavDrawdownPeriod | None = None
-    if abs(max_dd) > 1e-12:
-        drawdown = _build_drawdown_period(points, navs, dd_peak_idx, trough_idx)
+    if abs(max_drawdown) > EPS:
+        calmar_ratio = annualized_return / abs(max_drawdown)
+        drawdown: NavDrawdownPeriod | None = _build_drawdown_period(
+            points, navs, dd_peak_idx, trough_idx
+        )
+    else:
+        calmar_ratio = 0.0
+        drawdown = None
 
     return {
-        'annualizedReturn': annualized,
-        'sharpeRatio': sharpe,
-        'maxDrawdown': max_dd,
-        'calmarRatio': calmar,
+        'annualizedReturn': annualized_return,
+        'sharpeRatio': sharpe_ratio,
+        'maxDrawdown': max_drawdown,
+        'calmarRatio': calmar_ratio,
         'maxNav': max_nav,
         'drawdown': drawdown,
     }
@@ -194,13 +187,11 @@ def assemble_nav_analysis(
 ) -> NavAnalysisResult:
     """组装 API / Redis 缓存 payload。"""
     points = apply_income_cash_display(db_points, income_cash, origin_cash)
-    last_date = points[-1]['date'] if points else None
-    result: NavAnalysisResult = {
+    return {
         'points': points,
         'metrics': compute_metrics_by_range(points),
         'incomeCash': income_cash,
         'originCash': origin_cash,
-        'lastDate': last_date,
+        'lastDate': points[-1]['date'] if points else None,
         'updatedAt': updated_at,
     }
-    return result

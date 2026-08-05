@@ -56,27 +56,27 @@ def compute_overall(
     """计算整体指标（个股金额已为 CNY，直接相加）。"""
     to_return = cast(OverallData, {})
 
-    current_offset = sum(t.get("offsetCurrent", 0.0) for t in stock_list)
-    total_offset = sum(t.get("offsetTotal", 0.0) for t in stock_list)
+    offset_current = sum(t.get("offsetCurrent", 0.0) for t in stock_list)
+    offset_total = sum(t.get("offsetTotal", 0.0) for t in stock_list)
     total_value = sum(t.get("totalValue", 0.0) for t in stock_list)
-    total_offset_today = sum(t.get("totalOffsetToday", 0.0) for t in stock_list)
+    offset_today = sum(t.get("totalOffsetToday", 0.0) for t in stock_list)
     total_cost = sum(t.get("totalCost", 0.0) for t in stock_list)
 
     origin_cash = sum_origin_cash(cash_flow_list)
 
-    to_return["offsetCurrent"] = current_offset
-    to_return["offsetTotal"] = total_offset + income_cash
+    to_return["offsetCurrent"] = offset_current
+    to_return["offsetTotal"] = offset_total + income_cash
     to_return["totalValue"] = total_value
-    to_return["offsetToday"] = total_offset_today
-    to_return["totalCash"] = origin_cash + total_offset + income_cash - total_value
-    to_return["totalAsset"] = origin_cash + total_offset + income_cash
+    to_return["offsetToday"] = offset_today
+    to_return["totalCash"] = origin_cash + offset_total + income_cash - total_value
+    to_return["totalAsset"] = origin_cash + offset_total + income_cash
     to_return["totalCost"] = total_cost
     to_return["incomeCash"] = income_cash
     to_return["originCash"] = origin_cash
 
     total_asset = to_return["totalAsset"]
-    xirr_rate = calculate_xirr(cash_flow_list, total_asset)
-    to_return["xirrAnnualized"] = xirr_rate
+    xirr_annualized = calculate_xirr(cash_flow_list, total_asset)
+    to_return["xirrAnnualized"] = xirr_annualized
 
     to_return["cashFlowList"] = [
         {

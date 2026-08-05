@@ -1,0 +1,40 @@
+.nav-toolbar {
+  margin-bottom: 16px;
+
+  .nav-toolbar__meta {
+    font-size: 12px;
+  }
+}
+
+.nav-metrics {
+  .nav-metrics__item {
+    border-radius: var(--ant-border-radius);
+
+    &--clickable {
+      cursor: pointer;
+    }
+
+    &--active {
+      padding: 4px 8px;
+      margin: -4px -8px;
+      background: var(--ant-color-error-bg);
+      outline: 1px solid var(--ant-color-error-border);
+    }
+  }
+
+  .nav-metrics__hint {
+    margin-top: 12px;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+}
+
+.nav-chart {
+  margin-top: 16px;
+}
+
+@media (max-width: @screen-md) {
+  .nav-toolbar {
+    margin-bottom: 12px;
+  }
+}

@@ -8,7 +8,7 @@ from backend.common import logger
 from backend.common.domain.market import is_hk_code
 from backend.common.types import RealtimePriceData, StockData
 from backend.models import Operation, StockMeta as StockMetaModel
-from backend.services.calculation.constants import MIN_PRICE_THRESHOLD
+from backend.common.thresholds import MIN_QTY
 from backend.services.calculation.holdings.money_weighted import calculate_money_weighted_return
 from backend.services.calculation.holdings.single_metrics import SingleStockMetrics, compute_single_metrics
 
@@ -41,16 +41,19 @@ def attach_price_fields(
     single_real_time: RealtimePriceData,
     stock_meta: StockMetaModel | None,
 ) -> dict:
-    price_now = single_real_time["currentPrice"]
+    current_price = single_real_time["currentPrice"]
     return {
         "code": code,
         **({"stockType": stock_meta.stockType, "isNew": stock_meta.isNew} if stock_meta else {}),
         "name": _resolve_stock_name(code, single_real_time, stock_meta),
-        "priceNow": price_now,
+        "priceNow": current_price,
         **(
             {"offsetToday": 0.0, "offsetTodayRatio": 0.0}
-            if price_now < MIN_PRICE_THRESHOLD
-            else {"offsetToday": single_real_time["priceOffset"], "offsetTodayRatio": single_real_time["offsetRatio"]}
+            if current_price < MIN_QTY
+            else {
+                "offsetToday": single_real_time["priceOffset"],
+                "offsetTodayRatio": single_real_time["offsetRatio"],
+            }
         ),
     }
 
@@ -62,16 +65,16 @@ def attach_hold_fields(
     hkd_cny_rate: float,
 ) -> dict:
     current_price = single_real_time["currentPrice"]
-    hold = metrics.current_hold_count
-    yesterday_hold = metrics.yesterday_hold_count
+    current_hold_count = metrics.current_hold_count
+    yesterday_hold_count = metrics.yesterday_hold_count
     fx = hkd_cny_rate if is_hk_code(code) else 1.0
 
     return {
-        "holdCount": hold,
+        "holdCount": current_hold_count,
         "holdCost": metrics.current_hold_cost,
         "overallCost": metrics.overall_cost_per_share(),
-        "totalValue": current_price * hold * fx,
-        "totalValueYesterday": single_real_time["yesterdayClose"] * yesterday_hold * fx,
+        "totalValue": current_price * current_hold_count * fx,
+        "totalValueYesterday": single_real_time["yesterdayClose"] * yesterday_hold_count * fx,
     }
 
 
@@ -86,13 +89,13 @@ def attach_pnl_fields(
 ) -> dict:
     current_price = single_real_time["currentPrice"]
     fx = hkd_cny_rate if is_hk_code(code) else 1.0
-    offset_total_cny = metrics.offset_total_cny(total_value)
+    offset_total = metrics.offset_total_cny(total_value)
 
     return {
         "offsetCurrent": metrics.offset_current_cny(current_price, fx),
         "offsetCurrentRatio": metrics.offset_current_ratio(current_price),
-        "offsetTotal": offset_total_cny,
-        "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total_cny),
+        "offsetTotal": offset_total,
+        "moneyWeightedReturn": calculate_money_weighted_return(operations, offset_total),
         "totalCost": metrics.total_fee_cny,
         "totalOffsetToday": metrics.offset_today_cny(
             total_value, total_value_yesterday, current_price, fx

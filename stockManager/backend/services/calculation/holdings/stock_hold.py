@@ -13,18 +13,19 @@ class StockHold:
     """持仓计算服务类，负责处理股票持仓相关计算"""
     
     @classmethod
-    def get_holding_stocks(cls, operation_list: OperationDict, target_date: datetime.date | None = None) -> list[str]:
+    def get_holding_stocks(
+        cls,
+        operation_list: OperationDict,
+        target_date: datetime.date | None = None,
+    ) -> list[str]:
         """获取指定日期持有的股票代码列表"""
-        if target_date is None:
-            target_date = datetime.date.today()
-
+        day = target_date or datetime.date.today()
         return [
             code
             for code, operations in operation_list.items()
-            if operations
-            and cls.calculate_hold_count_at_date(
+            if cls.calculate_hold_count_at_date(
                 sorted(operations, key=operation_sort_key),
-                target_date,
+                day,
             ) > 0
         ]
     

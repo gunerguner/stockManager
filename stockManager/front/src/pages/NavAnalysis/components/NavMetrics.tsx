@@ -1,8 +1,9 @@
 import React from 'react';
-import { Col, Row, Statistic, Typography, theme } from 'antd';
+import { Col, Row, Statistic, Typography } from 'antd';
 import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
+import './index.less';
 
 type NavMetricsProps = {
   metrics: API.NavMetrics;
@@ -19,7 +20,6 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { colorFromValue } = useProfitLossColors();
-  const { token } = theme.useToken();
 
   const canToggleDrawdown =
     Boolean(onToggleDrawdown) &&
@@ -74,14 +74,22 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
   ];
 
   return (
-    <>
+    <div className="nav-metrics">
       <Row gutter={[16, 12]}>
         {items.map((item) => {
           const isDrawdown = item.title === '最大回撤';
           const active = isDrawdown && showDrawdown;
+          const itemClass = [
+            'nav-metrics__item',
+            item.clickable ? 'nav-metrics__item--clickable' : '',
+            active ? 'nav-metrics__item--active' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
           return (
             <Col key={item.title} xs={12} sm={8} md={4}>
               <div
+                className={itemClass}
                 role={item.clickable ? 'button' : undefined}
                 tabIndex={item.clickable ? 0 : undefined}
                 title={
@@ -103,16 +111,6 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
                       }
                     : undefined
                 }
-                style={{
-                  cursor: item.clickable ? 'pointer' : undefined,
-                  borderRadius: token.borderRadius,
-                  padding: active ? '4px 8px' : undefined,
-                  margin: active ? '-4px -8px' : undefined,
-                  background: active ? token.colorErrorBg : undefined,
-                  outline: active
-                    ? `1px solid ${token.colorErrorBorder}`
-                    : undefined,
-                }}
               >
                 <Statistic
                   title={item.title}
@@ -126,13 +124,10 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
           );
         })}
       </Row>
-      <Typography.Paragraph
-        type="secondary"
-        style={{ marginTop: 12, marginBottom: 0, fontSize: 12 }}
-      >
+      <Typography.Paragraph type="secondary" className="nav-metrics__hint">
         净值年化为时间加权（剔出入金），与资金加权的 XIRR 口径不同。夏普无风险利率按 0
         计算。点击「最大回撤」可在图表标注回撤起止与收复。
       </Typography.Paragraph>
-    </>
+    </div>
   );
 };

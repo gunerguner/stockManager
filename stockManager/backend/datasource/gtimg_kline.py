@@ -1,6 +1,4 @@
 """腾讯 gtimg K 线公共请求与节点解析"""
-from __future__ import annotations
-
 from backend.common.domain.market import is_hk_code
 from backend.datasource.http_client import get_json
 

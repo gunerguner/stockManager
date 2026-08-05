@@ -2,6 +2,7 @@ import { Button, Segmented, Space, Typography } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { NAV_RANGE_OPTIONS, type NavRangeKey } from './navStat';
+import './index.less';
 
 type NavToolbarProps = {
   range: NavRangeKey;
@@ -24,13 +25,10 @@ export const NavToolbar: React.FC<NavToolbarProps> = ({
 
   return (
     <Space
+      className="nav-toolbar"
       wrap
       size="middle"
-      style={{
-        width: '100%',
-        justifyContent: 'space-between',
-        marginBottom: isMobile ? 12 : 16,
-      }}
+      styles={{ root: { width: '100%', justifyContent: 'space-between' } }}
     >
       <Space wrap align="center">
         <Segmented
@@ -43,7 +41,7 @@ export const NavToolbar: React.FC<NavToolbarProps> = ({
           size={isMobile ? 'small' : 'middle'}
         />
         {lastDate ? (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          <Typography.Text type="secondary" className="nav-toolbar__meta">
             最近收盘日：{lastDate}
           </Typography.Text>
         ) : null}

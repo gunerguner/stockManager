@@ -1,6 +1,4 @@
 """日频收盘价持久化与缺口补拉（按持仓窗口 + 交易日差集 + 并发）"""
-from __future__ import annotations
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
@@ -62,10 +60,9 @@ def _missing_session_gaps(
     market: Market = Market.CN,
 ) -> DateRangeList:
     """在 [start, end] 的对应市场交易日中，找出缺失收盘价的连续区间。"""
-    if start > end:
-        return []
-    sessions = TradingCalendar.sessions_between(start, end, market)
-    if not sessions:
+    if start > end or not (
+        sessions := TradingCalendar.sessions_between(start, end, market)
+    ):
         return []
     gaps: DateRangeList = []
     gap_start: date | None = None
@@ -115,8 +112,7 @@ def _ensure_one_code_windows(
 ) -> DailyCloseSeries:
     close_old_connections()
     market = code_to_market(code)
-    merged = _merge_windows([(s, e) for s, e in windows if s <= e])
-    if not merged:
+    if not (merged := _merge_windows([(s, e) for s, e in windows if s <= e])):
         return {}
     overall_start = merged[0][0]
     overall_end = max(e for _, e in merged)
@@ -148,13 +144,13 @@ def _ensure_one_code_windows(
 
 def ensure_daily_prices_for_windows(windows: HoldingWindows) -> DailyCloseByCode:
     """按持仓窗口确保日 K：只补交易日缺口，多股票并发拉取。"""
-    cleaned: HoldingWindows = {
-        code: [(s, e) for s, e in wins if s <= e]
-        for code, wins in windows.items()
-        if wins
-    }
-    cleaned = {code: wins for code, wins in cleaned.items() if wins}
-    if not cleaned:
+    if not (
+        cleaned := {
+            code: filtered
+            for code, wins in windows.items()
+            if wins and (filtered := [(s, e) for s, e in wins if s <= e])
+        }
+    ):
         return {}
 
     result: DailyCloseByCode = {}

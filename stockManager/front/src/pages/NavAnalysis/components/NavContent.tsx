@@ -9,6 +9,7 @@ import {
   navKeepDates,
   type NavRangeKey,
 } from './navStat';
+import './index.less';
 
 type NavContentProps = {
   data: API.NavAnalysisData | null;
@@ -42,7 +43,7 @@ export const NavContent: React.FC<NavContentProps> = ({
       {!loading && filteredPoints.length === 0 ? (
         <Empty
           description="暂无净值数据，请先点击「全量刷新」生成"
-          style={{ padding: '48px 0' }}
+          styles={{ root: { padding: '48px 0' } }}
         />
       ) : (
         <>
@@ -52,7 +53,7 @@ export const NavContent: React.FC<NavContentProps> = ({
             showDrawdown={showDrawdown}
             onToggleDrawdown={() => setShowDrawdown((v) => !v)}
           />
-          <div style={{ marginTop: 16 }}>
+          <div className="nav-chart">
             <NavChart
               points={filteredPoints}
               height={isMobile ? 280 : 380}

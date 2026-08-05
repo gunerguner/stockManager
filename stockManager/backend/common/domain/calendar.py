@@ -163,8 +163,7 @@ class TradingCalendar:
 
         end = today - timedelta(days=1)
         start = end - timedelta(days=18)
-        sessions = cal.sessions_in_range(_session_ts(start), _session_ts(end))
-        if len(sessions) == 0:
+        if len(sessions := cal.sessions_in_range(_session_ts(start), _session_ts(end))) == 0:
             raise RuntimeError(f"未找到 {market} 在 {today} 之前的交易日")
         return cast(pd.Timestamp, sessions[-1]).date()
 
@@ -178,8 +177,7 @@ class TradingCalendar:
         cal = cls.get_calendar(market)
         start = after + timedelta(days=1)
         end = start + timedelta(days=18)
-        sessions = cal.sessions_in_range(_session_ts(start), _session_ts(end))
-        if len(sessions) == 0:
+        if len(sessions := cal.sessions_in_range(_session_ts(start), _session_ts(end))) == 0:
             return None
         return cast(pd.Timestamp, sessions[0]).date()
 

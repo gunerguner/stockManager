@@ -2,6 +2,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
+from backend.common.thresholds import MIN_QTY
 from backend.common.types import CashFlowList, RealtimePriceData
 from backend.models import Operation
 
@@ -11,10 +12,21 @@ def extract_offset_today(
     price_data: RealtimePriceData | dict | None = None,
 ) -> tuple[float, float]:
     """从现价与行情数据提取当日涨跌额与比率。"""
-    if price_now is None or price_now < 0.001:
+    if price_now is None or price_now < MIN_QTY:
         return 0.0, 0.0
     data = price_data or {}
     return data.get("priceOffset", 0.0), data.get("offsetRatio", 0.0)
+
+
+def safe_ratio(
+    numerator: float | None,
+    denominator: float | None,
+    digits: int = 2,
+) -> float | None:
+    """两数相除并四舍五入；任一方缺失或为 0 时返回 None（如 PE/PB）。"""
+    if numerator and denominator:
+        return round(numerator / denominator, digits)
+    return None
 
 
 def sum_origin_cash(cash_flow_list: CashFlowList) -> float:

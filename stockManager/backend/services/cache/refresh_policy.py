@@ -31,8 +31,7 @@ def set_price_timestamp(market: Market, timestamp: str) -> None:
 
 def should_refresh_market(market: Market) -> bool:
     """上次拉价至今是否经过该市场任意交易时段（含跨日、法定假日跳过）。"""
-    ts = get_price_timestamp(market)
-    if not ts:
+    if not (ts := get_price_timestamp(market)):
         return True
     last_time = datetime.fromisoformat(ts)
     if last_time.tzinfo is None:

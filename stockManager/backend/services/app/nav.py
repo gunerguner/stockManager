@@ -1,6 +1,4 @@
 """组合净值用例：刷新回放写库与展示指标组装"""
-from __future__ import annotations
-
 from datetime import datetime, timezone
 
 from django.contrib.auth.models import User
@@ -82,8 +80,7 @@ class NavAnalysis:
                 mode = 'full'
 
         if mode == 'full' or range_start is None:
-            origin = resolve_start_date(all_ops, cash_flow_list)
-            if origin is None:
+            if (origin := resolve_start_date(all_ops, cash_flow_list)) is None:
                 PortfolioNavDaily.objects.filter(user=user).delete()
                 logger.info(f"[nav] 用户 {user.pk} 无交易/出入金，已清空净值")
                 return 0
@@ -91,8 +88,7 @@ class NavAnalysis:
             PortfolioNavDaily.objects.filter(user=user).delete()
             event_cutoff = None
 
-        sessions = TradingCalendar.sessions_between(range_start, end)
-        if not sessions:
+        if not (sessions := TradingCalendar.sessions_between(range_start, end)):
             logger.info(f"[nav] 用户 {user.pk} 无待计算交易日")
             return 0
 

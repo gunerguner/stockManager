@@ -42,19 +42,17 @@ def get_stock_meta_dict() -> dict[str, StockMetaModel]:
 
 
 def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
-    if not prices:
-        return 0
-
-    name_map = {
-        code: name
-        for code, price_data in prices.items()
-        if (name := (price_data.get("name") or "").strip())
-    }
-    if not name_map:
-        return 0
-
-    metas = list(StockMetaModel.objects.filter(code__in=name_map.keys()))
-    if not metas:
+    if (
+        not prices
+        or not (
+            name_map := {
+                code: name
+                for code, price_data in prices.items()
+                if (name := (price_data.get("name") or "").strip())
+            }
+        )
+        or not (metas := list(StockMetaModel.objects.filter(code__in=name_map.keys())))
+    ):
         return 0
 
     # 全日只做一次「已有名称的纠偏」；空名称始终允许回填

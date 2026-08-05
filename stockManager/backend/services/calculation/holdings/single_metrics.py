@@ -14,11 +14,7 @@ from backend.common.domain.settlement import (
     trade_fee_cny,
 )
 from backend.models import Operation
-from backend.services.calculation.constants import (
-    MIN_HOLD_COUNT_THRESHOLD,
-    MIN_PRICE_THRESHOLD,
-    MIN_VALUE_THRESHOLD,
-)
+from backend.common.thresholds import MIN_MONEY, MIN_QTY
 
 
 @dataclass(frozen=True)
@@ -35,7 +31,7 @@ class SingleStockMetrics:
 
     def overall_cost_per_share(self) -> float:
         """累计投入(原币) / 当前持股；不持有时返回 0.0。"""
-        if abs(self.current_hold_count) < MIN_HOLD_COUNT_THRESHOLD:
+        if abs(self.current_hold_count) < MIN_QTY:
             return 0.0
         return self.current_overall_native / self.current_hold_count
 
@@ -45,7 +41,7 @@ class SingleStockMetrics:
 
     def offset_current_ratio(self, price_now: float) -> float:
         """浮动盈亏率：(现价 - 持仓成本) / 持仓成本（原币口径）。"""
-        if abs(self.current_hold_cost) < MIN_PRICE_THRESHOLD:
+        if abs(self.current_hold_cost) < MIN_QTY:
             return 0.0
         return (price_now - self.current_hold_cost) / self.current_hold_cost
 
@@ -61,7 +57,7 @@ class SingleStockMetrics:
         fx: float = 1.0,
     ) -> float:
         """人民币今日总盈亏。"""
-        if yesterday_value_cny < MIN_VALUE_THRESHOLD:
+        if yesterday_value_cny < MIN_MONEY:
             return self.offset_current_cny(price_now, fx)
         return market_value_cny - yesterday_value_cny - self.today_input_cny
 
@@ -73,21 +69,21 @@ def compute_single_metrics(
     """一次遍历计算所有单股账本指标（原币展示账本 + 人民币资金账本）。"""
     today = datetime.date.today()
 
-    current_hold = 0.0
-    yesterday_hold = 0.0
+    current_hold_count = 0.0
+    yesterday_hold_count = 0.0
 
     hold_total_pay_native = 0.0
     hold_total_count = 0.0
 
-    overall_sum_native = 0.0
-    overall_sum_cny = 0.0
+    current_overall_native = 0.0
+    current_overall_cny = 0.0
 
     today_input_native = 0.0
     today_input_cny = 0.0
     total_fee_cny = 0.0
 
     holding_start_date = None
-    total_holding_days = 0
+    holding_duration = 0
 
     for operation in operations:
         op_type = operation.operationType
@@ -97,8 +93,8 @@ def compute_single_metrics(
         is_today = operation.date == today
 
         if op_type == OperationType.BUY:
-            previous_hold = current_hold
-            current_hold += operation.count
+            previous_hold_count = current_hold_count
+            current_hold_count += operation.count
 
             cost_native = buy_cost_native(operation)
             cost_cny = buy_outflow_cny(operation)
@@ -106,70 +102,70 @@ def compute_single_metrics(
             hold_total_pay_native += cost_native
             hold_total_count += operation.count
 
-            overall_sum_native += cost_native
-            overall_sum_cny += cost_cny
+            current_overall_native += cost_native
+            current_overall_cny += cost_cny
 
             if is_today:
                 today_input_native += cost_native
                 today_input_cny += cost_cny
 
-            if previous_hold < 1 and current_hold >= 1:
+            if previous_hold_count < 1 and current_hold_count >= 1:
                 holding_start_date = operation.date
 
         elif op_type == OperationType.SELL:
-            previous_hold = current_hold
-            current_hold -= operation.count
+            previous_hold_count = current_hold_count
+            current_hold_count -= operation.count
 
             proceeds_native = sell_proceeds_native(operation)
             inflow_cny = sell_inflow_cny(operation)
 
-            overall_sum_native -= proceeds_native
-            overall_sum_cny -= inflow_cny
+            current_overall_native -= proceeds_native
+            current_overall_cny -= inflow_cny
 
             if is_today:
                 today_input_native -= proceeds_native
                 today_input_cny -= inflow_cny
 
-            if previous_hold >= 1 and current_hold < 1:
+            if previous_hold_count >= 1 and current_hold_count < 1:
                 if holding_start_date:
                     duration = (operation.date - holding_start_date).days
-                    total_holding_days += duration
+                    holding_duration += duration
                     holding_start_date = None
 
-            if current_hold == 0:
+            if current_hold_count == 0:
                 hold_total_pay_native = 0.0
                 hold_total_count = 0.0
 
         elif op_type == OperationType.DIVIDEND:
             multiplier = dividend_multiplier(operation)
             hold_total_count += hold_total_count * multiplier
-            overall_sum_native -= dividend_cash_native(
-                operation, current_hold, hkd_cny_rate
+            current_overall_native -= dividend_cash_native(
+                operation, current_hold_count, hkd_cny_rate
             )
-            overall_sum_cny -= dividend_cash_cny(operation, current_hold)
-            current_hold = apply_operation_to_hold(current_hold, operation)
+            current_overall_cny -= dividend_cash_cny(operation, current_hold_count)
+            current_hold_count = apply_operation_to_hold(current_hold_count, operation)
 
         if not is_today:
-            yesterday_hold = current_hold
+            yesterday_hold_count = current_hold_count
 
-    if current_hold >= 1 and holding_start_date:
+    if current_hold_count >= 1 and holding_start_date:
         duration = (today - holding_start_date).days
-        total_holding_days += duration
+        holding_duration += duration
 
     current_hold_cost = (
         hold_total_pay_native / hold_total_count
-        if abs(hold_total_count) >= MIN_HOLD_COUNT_THRESHOLD
+        if abs(hold_total_count) >= MIN_QTY
         else 0.0
     )
 
     return SingleStockMetrics(
-        current_hold_count=current_hold,
-        yesterday_hold_count=yesterday_hold,
+        current_hold_count=current_hold_count,
+        yesterday_hold_count=yesterday_hold_count,
         current_hold_cost=current_hold_cost,
-        current_overall_native=overall_sum_native,
-        current_overall_cny=overall_sum_cny,
+        current_overall_native=current_overall_native,
+        current_overall_cny=current_overall_cny,
         today_input_native=today_input_native,
         today_input_cny=today_input_cny,
         total_fee_cny=total_fee_cny,
-        holding_duration=total_holding_days,
+        holding_duration=holding_duration,
     )

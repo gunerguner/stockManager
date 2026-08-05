@@ -131,11 +131,9 @@ def parse_json_body(view_func):
 
 
 def _is_missing_field(field: str, data: dict) -> bool:
-    if field not in data:
-        return True
-    if (value := data.get(field)) is None:
-        return True
-    return isinstance(value, str) and value.strip() == ''
+    return (value := data.get(field)) is None or (
+        isinstance(value, str) and value.strip() == ''
+    )
 
 
 def validate_required_fields(required_fields: list[str]):

@@ -22,8 +22,11 @@ class Dividend:
     def generate_dividend(cls, user: User, operation_list: OperationDict) -> list[DividendUpdateData]:
         """为持有的股票生成分红数据"""
         holding_stocks = StockHold.get_holding_stocks(operation_list)
-        cn_holding = [code for code in holding_stocks if not code.lower().startswith("hk")]
-        if not cn_holding:
+        if not (
+            cn_holding := [
+                code for code in holding_stocks if not code.lower().startswith("hk")
+            ]
+        ):
             return []
 
         updated_codes: list[DividendUpdateData] = []

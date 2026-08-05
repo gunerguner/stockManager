@@ -1,6 +1,4 @@
 """关注列表用例：展示拼装与隐藏设置"""
-from __future__ import annotations
-
 from django.contrib.auth.models import User
 
 from backend.common import logger
@@ -10,7 +8,7 @@ from backend.common.types import (
     WatchItemDict,
     WatchResultItem,
 )
-from backend.common.utils import extract_offset_today
+from backend.common.utils import extract_offset_today, safe_ratio
 from backend.models import WatchItem
 
 
@@ -40,8 +38,8 @@ class Watchlist:
                 offsetToday=offset_today,
                 offsetTodayRatio=offset_today_ratio,
                 histHigh=hist_highs.get(code),
-                pe=cls._ratio(price_now, valuation.get("epsTtm")),
-                pb=cls._ratio(price_now, valuation.get("bvps")),
+                pe=safe_ratio(price_now, valuation.get("epsTtm")),
+                pb=safe_ratio(price_now, valuation.get("bvps")),
                 risk=item["risk"] or "",
                 opportunity=item["opportunity"] or "",
                 leftPoint=item["leftPoint"],
@@ -61,9 +59,3 @@ class Watchlist:
         item.hidden = hidden
         item.save(update_fields=["hidden"])
         logger.info(f"用户 {user.username} 设置关注隐藏: {code}={hidden}")
-
-    @staticmethod
-    def _ratio(price: float | None, per_share: float | None) -> float | None:
-        if price and per_share:
-            return round(price / per_share, 2)
-        return None
