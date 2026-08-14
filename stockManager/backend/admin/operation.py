@@ -10,6 +10,7 @@ from backend.admin.constants import NAV_REFRESH_HINT
 from backend.common.web.auth_user import authenticated_user
 from backend.common.constants import OperationType
 from backend.common.domain.market import is_hk_code
+from backend.common.money import quantize_money, to_decimal
 from backend.services.cache import CacheRepository
 
 
@@ -26,7 +27,7 @@ class OperationAdminForm(forms.ModelForm):
         stock_meta = cleaned.get('stock_meta')
         op_type = cleaned.get('operationType')
         amount = cleaned.get('amount')
-        price = cleaned.get('price') or 0
+        price = to_decimal(cleaned.get('price') or 0)
         count = cleaned.get('count') or 0
 
         if not stock_meta or op_type not in (OperationType.BUY, OperationType.SELL):
@@ -40,7 +41,9 @@ class OperationAdminForm(forms.ModelForm):
         if amount is None or amount <= 0:
             try:
                 rate = CacheRepository.get_hkd_cny_rate([code])
-                cleaned['amount'] = price * count * rate
+                cleaned['amount'] = quantize_money(
+                    price * count * to_decimal(rate)
+                )
             except Exception as exc:
                 raise forms.ValidationError(
                     '港股通买卖必须填写成交金额（人民币），且大于 0'
@@ -50,6 +53,7 @@ class OperationAdminForm(forms.ModelForm):
             raise forms.ValidationError(
                 '港股通买卖必须填写成交金额（人民币），且大于 0'
             )
+        cleaned['amount'] = quantize_money(amount)
         return cleaned
 
 

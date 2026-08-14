@@ -1,6 +1,8 @@
 """Operation 缓存序列化/反序列化"""
 import json
 from datetime import datetime
+from decimal import Decimal
+from typing import Any
 
 from django.contrib.auth.models import User
 from django.db.models.base import ModelState
@@ -15,15 +17,38 @@ _OPERATION_FIELDS = (
     "price",
     "count",
     "fee",
+    "amount",
     "comment",
     "cash",
     "stock",
     "reserve",
 )
 
+_DECIMAL_FIELDS = frozenset({"price", "fee", "amount", "cash"})
+
+
+def _serialize_value(field: str, value: Any) -> Any:
+    """Decimal 存字符串，避免 json.dumps 失败；amount 可为空。"""
+    if field in _DECIMAL_FIELDS:
+        if value is None:
+            return None
+        return str(value)
+    return value
+
+
+def _deserialize_value(field: str, value: Any) -> Any:
+    if field not in _DECIMAL_FIELDS:
+        return value
+    if value is None:
+        return None
+    return Decimal(str(value))
+
 
 def _serialize_operation(op: Operation) -> dict:
-    data = {field: getattr(op, field) for field in _OPERATION_FIELDS}
+    data = {
+        field: _serialize_value(field, getattr(op, field))
+        for field in _OPERATION_FIELDS
+    }
     data["date"] = str(op.date)
     return data
 
@@ -49,8 +74,10 @@ def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
     for field in _OPERATION_FIELDS:
         if field == "sortOrder":
             setattr(op, field, op_data.get(field, 0))
+        elif field == "amount":
+            setattr(op, field, _deserialize_value(field, op_data.get(field)))
         else:
-            setattr(op, field, op_data[field])
+            setattr(op, field, _deserialize_value(field, op_data[field]))
     return op
 
 

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -78,17 +80,34 @@ class Operation(_StockMetaCodeMixin, models.Model):
         default=operationType.BUY,
         verbose_name="操作类型"
     )
-    price = models.FloatField(default=0, verbose_name="价格")
+    price = models.DecimalField(
+        max_digits=16,
+        decimal_places=4,
+        default=Decimal("0"),
+        verbose_name="价格",
+    )
     count = models.IntegerField(default=0, blank=True, verbose_name="数量")
-    fee = models.FloatField(default=0, verbose_name="手续费")
-    amount = models.FloatField(
+    fee = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal("0"),
+        verbose_name="手续费",
+    )
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
         null=True,
         blank=True,
         verbose_name="成交金额(人民币)",
         help_text="仅港股通买卖填写；非港股留空",
     )
     comment = models.CharField(max_length=200, blank=True, verbose_name="备注")
-    cash = models.FloatField(default=0, verbose_name="分红")
+    cash = models.DecimalField(
+        max_digits=16,
+        decimal_places=6,
+        default=Decimal("0"),
+        verbose_name="分红",
+    )
     stock = models.FloatField(default=0, verbose_name="送股")
     reserve = models.FloatField(default=0, verbose_name="转增")
 
@@ -99,21 +118,6 @@ class Operation(_StockMetaCodeMixin, models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.code} {self.date} {self.operationType} {self.count}"
-
-    def to_dict(self) -> dict[str, object]:
-        """序列化为 API 原始字段；成交金额等由前端按口径计算。"""
-        return {
-            "date": str(self.date),
-            "type": self.operationType,
-            "price": self.price,
-            "count": self.count,
-            "fee": self.fee,
-            "amount": self.amount,
-            "comment": self.comment,
-            "cash": self.cash,
-            "stock": self.stock,
-            "reserve": self.reserve,
-        }
 
 
 class Info(models.Model):

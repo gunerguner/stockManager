@@ -1,9 +1,10 @@
 """公共工具函数模块"""
 from collections import defaultdict
 from collections.abc import Iterable
+from enum import Enum
 
 from backend.common.thresholds import MIN_QTY
-from backend.common.types import CashFlowList, RealtimePriceData
+from backend.common.types import CashFlowList, OperationData, RealtimePriceData
 from backend.models import Operation
 
 
@@ -32,6 +33,25 @@ def safe_ratio(
 def sum_origin_cash(cash_flow_list: CashFlowList) -> float:
     """出入金合计（本金口径）。"""
     return sum(float(flow.get("amount") or 0) for flow in cash_flow_list)
+
+
+def operation_to_api(op: Operation) -> OperationData:
+    """API 边界：Decimal 转 float，避免 JsonResponse 把金额编成字符串。"""
+    raw_type = op.operationType
+    op_type = raw_type.value if isinstance(raw_type, Enum) else str(raw_type)
+    amount = op.amount
+    return {
+        "date": str(op.date),
+        "type": op_type,
+        "price": float(op.price),
+        "count": op.count,
+        "fee": float(op.fee),
+        "amount": float(amount) if amount is not None else None,
+        "comment": op.comment,
+        "cash": float(op.cash),
+        "stock": op.stock,
+        "reserve": op.reserve,
+    }
 
 
 def operation_sort_key(op: Operation) -> tuple:

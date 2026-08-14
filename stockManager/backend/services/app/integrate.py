@@ -1,6 +1,4 @@
 """用户数据集成（外观模式）：协调缓存、计算、分红等服务。"""
-from typing import cast
-
 from django.contrib.auth.models import User
 
 from backend.common import logger
@@ -8,10 +6,10 @@ from backend.common.types import (
     CalculatedResult,
     DividendUpdateData,
     NavAnalysisResult,
-    OperationData,
     OperationDataDict,
     WatchResultItem,
 )
+from backend.common.utils import operation_to_api
 from backend.models import Info
 from backend.services.app.dividend import Dividend
 from backend.services.app.nav import NavAnalysis
@@ -25,7 +23,7 @@ class Integrate:
     def get_operations(cls, user: User) -> OperationDataDict:
         operation_list = CacheRepository.get_user_operations(user)
         return {
-            code: [cast(OperationData, op.to_dict()) for op in reversed(ops)]
+            code: [operation_to_api(op) for op in reversed(ops)]
             for code, ops in operation_list.items()
         }
 

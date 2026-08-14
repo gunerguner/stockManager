@@ -5,7 +5,7 @@ from backend.models import Operation
 
 def trade_notional_hkd(operation: Operation) -> float:
     """成交名义金额（港币）：price × count。"""
-    return operation.price * operation.count
+    return float(operation.price or 0) * operation.count
 
 
 def trade_amount_cny(operation: Operation) -> float:

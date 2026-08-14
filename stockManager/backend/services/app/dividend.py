@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 
 from backend.common import logger
 from backend.common.constants import OperationType
+from backend.common.money import quantize_cash
 from backend.common.types import OperationDict, DividendUpdateData
 from backend.common.utils import operation_sort_key
 from backend.datasource import baostock_session, fetch_dividends
@@ -100,7 +101,7 @@ class Dividend:
                     date=dividend_date,
                     stock_meta=StockMeta.objects.get(code=code),
                     operationType=OperationType.DIVIDEND,
-                    cash=row["cash"],
+                    cash=quantize_cash(row["cash"]),
                     reserve=row["reserve"],
                     stock=row["stock"],
                     count=hold_count_at_date,
