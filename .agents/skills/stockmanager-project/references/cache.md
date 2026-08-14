@@ -79,11 +79,12 @@ flowchart LR
 | `user_store.py` | 用户 operations、cash_info、calculated_target 读写与失效信号 |
 | `price_store.py` | 股价批量读写、写价后更新时间戳并清全用户计算结果 |
 | `meta_store.py` | StockMeta 全量缓存、名称日同步标记与信号 |
-| `fx_store.py` | 港币汇率 `fx:hkd_cny` 读写 |
+| `fx_store.py` | 港币即期汇率 `fx:hkd_cny` 读写 |
 | `watch_store.py` | 用户关注列表缓存与 `WatchItem` 信号 |
 | `valuation_store.py` | 单股估值 epsTtm/bvps 缓存 |
 | `hist_high_store.py` | 单股近 6 年历史最高价缓存 |
 | `daily_price_store.py` | 日收盘价 DB 持久化与缺口补拉（净值回放） |
+| `daily_fx_store.py` | HKD/CNY 日频牌价 DB 持久化与缺口补拉（净值回放） |
 | `repository.py` | `CacheRepository` 门面，聚合各 store 编排调用 |
 
 ### 1.2 分层分组
@@ -401,13 +402,13 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - 缓存仓库：`backend/services/cache/repository.py`（`CacheRepository`）
 - 逻辑 key / TTL：`backend/services/cache/keys.py`
 - 刷新策略：`backend/services/cache/refresh_policy.py`
-- 各 store：`user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`watch_store.py`、`valuation_store.py`、`hist_high_store.py`、`daily_price_store.py`
+- 各 store：`user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`watch_store.py`、`valuation_store.py`、`hist_high_store.py`、`daily_price_store.py`、`daily_fx_store.py`
 - Redis 工具：`backend/common/cache.py`
 - 交易时段：`backend/common/domain/calendar.py`
 - 市场抽象：`backend/common/domain/market.py`（CN/HK 分市场）
 - 业务编排：`backend/services/app/integrate.py`
 - 行情拉取：`backend/datasource/realtimePrice.py`（`fetch_prices`）
-- 汇率：`backend/datasource/exchangeRate.py`（`fetch_hkd_cny_rate`）
+- 汇率：`backend/datasource/exchangeRate.py`（即期 `fetch_hkd_cny_rate`；日频 `fetch_hkd_cny_daily_rates`）
 - 估值：`backend/datasource/baiduValuation.py`（A 股 ab / 港股 hk）；历史高：`historicalHigh.py`（gtimg）
 - 历史高价：`backend/datasource/historicalHigh.py`
 - 收益计算：`backend/services/calculation/holdings/calculator.py`

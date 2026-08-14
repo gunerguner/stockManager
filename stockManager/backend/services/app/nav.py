@@ -6,6 +6,7 @@ from django.db import transaction
 
 from backend.common import logger
 from backend.common.domain.calendar import TradingCalendar
+from backend.common.domain.market import is_hk_code
 from backend.common.types import NavAnalysisResult
 from backend.common.utils import sum_origin_cash
 from backend.models import PortfolioNavDaily
@@ -19,6 +20,12 @@ from backend.services.calculation.nav import (
     holdings_at,
     resolve_start_date,
 )
+
+
+def _needs_hk_fx(start_holdings: dict[str, float], price_windows: dict) -> bool:
+    return any(is_hk_code(code) for code in start_holdings) or any(
+        is_hk_code(code) for code in price_windows
+    )
 
 
 class NavAnalysis:
@@ -51,7 +58,6 @@ class NavAnalysis:
 
         end = TradingCalendar.latest_closed_session()
         all_ops, _ops_by_date = group_operations(operation_list)
-        codes = list(operation_list.keys())
 
         start_nav = 1.0
         start_units = 0.0
@@ -85,8 +91,11 @@ class NavAnalysis:
                 logger.info(f"[nav] 用户 {user.pk} 无交易/出入金，已清空净值")
                 return 0
             range_start = origin
-            PortfolioNavDaily.objects.filter(user=user).delete()
             event_cutoff = None
+            start_nav = 1.0
+            start_units = 0.0
+            start_cash = 0.0
+            start_holdings = {}
 
         if not (sessions := TradingCalendar.sessions_between(range_start, end)):
             logger.info(f"[nav] 用户 {user.pk} 无待计算交易日")
@@ -104,14 +113,18 @@ class NavAnalysis:
             if price_windows
             else {}
         )
-        hkd_cny_rate = CacheRepository.get_hkd_cny_rate(codes) if codes else 0.86
+        hkd_cny_rates = (
+            CacheRepository.ensure_hkd_cny_rates(event_cutoff or range_start, end)
+            if _needs_hk_fx(start_holdings, price_windows)
+            else {}
+        )
 
         rows = compute_nav_rows(
             operation_list=operation_list,
             cash_flow_list=cash_flow_list,
             sessions=sessions,
             prices=prices,
-            hkd_cny_rate=hkd_cny_rate,
+            hkd_cny_rates=hkd_cny_rates,
             event_cutoff=event_cutoff,
             start_nav=start_nav,
             start_units=start_units,
@@ -131,6 +144,8 @@ class NavAnalysis:
             for row in rows
         ]
         with transaction.atomic():
+            if mode == 'full':
+                PortfolioNavDaily.objects.filter(user=user).delete()
             PortfolioNavDaily.objects.bulk_create(
                 objs,
                 update_conflicts=True,

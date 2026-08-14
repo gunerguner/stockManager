@@ -24,7 +24,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | HTTP 装饰器/响应 | `stockManager/backend/common/web/`（`decorators`、`response`、`auth_user`） |
 | 缓存门面 | `stockManager/backend/services/cache/repository.py`（`CacheRepository`） |
 | 缓存 key/TTL | `stockManager/backend/services/cache/keys.py` |
-| 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`daily_price_store.py`、`refresh_policy.py`、`operation_codec.py` |
+| 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`daily_price_store.py`、`daily_fx_store.py`、`refresh_policy.py`、`operation_codec.py` |
 | 缓存工具 | `stockManager/backend/common/cache.py`（`Cache` 类） |
 | 市场抽象（CN/HK） | `stockManager/backend/common/domain/market.py` |
 | 交易日历（CN/HK） | `stockManager/backend/common/domain/calendar.py` |
@@ -43,8 +43,8 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 ## 数据库与迁移
 
 - 引擎：SQLite；路径 `SQLITE_PATH` 或默认 `stockManager/db.sqlite3`
-- 模型：`Operation`、`Info`、`CashFlow`、`StockMeta`、`WatchItem`、`PortfolioNavDaily`、`StockDailyPrice`（FK 到 Django `User`；`StockMeta` 全局共享）
-- 迁移目录：`backend/migrations/`（0001 初始 → … → 0015 Operation.amount（港股通实际 CNY 成交额）→ 0016 PortfolioNavDaily / StockDailyPrice）
+- 模型：`Operation`、`Info`、`CashFlow`、`StockMeta`、`WatchItem`、`PortfolioNavDaily`、`StockDailyPrice`、`HkdCnyDailyRate`（FK 到 Django `User`；`StockMeta` / 日频价 / 日频汇率全局共享）
+- 迁移目录：`backend/migrations/`（0001 初始 → … → 0017 Operation 金额 Decimal → 0018 HkdCnyDailyRate）
 - 命令：`python manage.py makemigrations` / `migrate`
 - Docker 默认 `RUN_MIGRATIONS_ON_START=false`，需时 `docker compose exec backend python manage.py migrate`
 

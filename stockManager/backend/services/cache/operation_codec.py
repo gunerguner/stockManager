@@ -74,10 +74,9 @@ def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
     for field in _OPERATION_FIELDS:
         if field == "sortOrder":
             setattr(op, field, op_data.get(field, 0))
-        elif field == "amount":
-            setattr(op, field, _deserialize_value(field, op_data.get(field)))
-        else:
-            setattr(op, field, _deserialize_value(field, op_data[field]))
+            continue
+        # 其余字段必须有键（amount 值可为 null）；缺键留给调用方当缓存 miss 回源。
+        setattr(op, field, _deserialize_value(field, op_data[field]))
     return op
 
 

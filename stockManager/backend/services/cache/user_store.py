@@ -20,7 +20,13 @@ from backend.services.cache import refresh_policy
 def get_user_operations_cache(user: User) -> OperationDict | None:
     key = keys.KEY_USER_OPERATIONS.format(user_id=user.pk)
     data = cache.get(key)
-    return operation_codec.deserialize_operations(data, user) if data else None
+    if not data:
+        return None
+    try:
+        return operation_codec.deserialize_operations(data, user)
+    except Exception:
+        logger.warning("用户操作缓存反序列化失败，回源数据库 user_id=%s", user.pk, exc_info=True)
+        return None
 
 
 def set_user_operations_cache(user: User, operations: OperationDict) -> None:

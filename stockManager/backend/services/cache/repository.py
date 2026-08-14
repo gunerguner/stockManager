@@ -1,6 +1,7 @@
 """缓存仓库门面：对外统一入口，聚合多 store 的编排调用"""
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
+from datetime import date
 from typing import Iterable
 
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from backend.common.types import (
     CalculatedResult,
     CashFlowList,
     DailyCloseByCode,
+    DailyFxSeries,
     HoldingWindows,
     MarketsData,
     NavAnalysisResult,
@@ -20,6 +22,7 @@ from backend.common.types import (
     WatchItemDict,
 )
 from backend.models import StockMeta as StockMetaModel
+from backend.services.cache import daily_fx_store
 from backend.services.cache import daily_price_store
 from backend.services.cache import fx_store
 from backend.services.cache import hist_high_store
@@ -92,6 +95,10 @@ class CacheRepository:
     @classmethod
     def ensure_daily_prices_for_windows(cls, windows: HoldingWindows) -> DailyCloseByCode:
         return daily_price_store.ensure_daily_prices_for_windows(windows)
+
+    @classmethod
+    def ensure_hkd_cny_rates(cls, start: date, end: date) -> DailyFxSeries:
+        return daily_fx_store.ensure_hkd_cny_rates(start, end)
 
     @classmethod
     def get_stock_meta_dict(cls) -> dict[str, StockMetaModel]:

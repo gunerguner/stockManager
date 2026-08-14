@@ -5,7 +5,7 @@ from typing import NamedTuple
 from backend.common import logger
 from backend.common.domain.market import is_hk_code
 from backend.common.domain.operations import apply_operation_to_hold, operation_cash_delta_cny
-from backend.common.types import CashFlowList, DailyCloseByCode, OperationDict
+from backend.common.types import CashFlowList, DailyCloseByCode, DailyFxSeries, OperationDict
 from backend.models import Operation
 from backend.common.thresholds import EPS, MIN_MONEY, MIN_QTY
 from backend.services.calculation.nav.events import (
@@ -73,7 +73,7 @@ def _mark_to_market(
     prices: DailyCloseByCode,
     last_closes: dict[str, float],
     day: date,
-    hkd_cny_rate: float,
+    last_fx: float | None,
     missing_logged: set[str] | None = None,
 ) -> float:
     mv = 0.0
@@ -90,7 +90,12 @@ def _mark_to_market(
                 )
             continue
         last_closes[code] = px
-        fx = hkd_cny_rate if is_hk_code(code) else 1.0
+        if is_hk_code(code):
+            if last_fx is None or last_fx <= 0:
+                raise ValueError(f"港股 {code} 在 {day} 无可用历史 HKD/CNY 汇率")
+            fx = last_fx
+        else:
+            fx = 1.0
         mv += hold * px * fx
     return mv
 
@@ -101,7 +106,7 @@ def _compute_nav_series(
     operations_by_date: dict[date, list[Operation]],
     flows_by_date: dict[date, list[float]],
     prices: DailyCloseByCode,
-    hkd_cny_rate: float,
+    hkd_cny_rates: DailyFxSeries,
     start_nav: float = 1.0,
     start_units: float = 0.0,
     start_cash: float = 0.0,
@@ -114,6 +119,7 @@ def _compute_nav_series(
     holdings: dict[str, float] = dict(start_holdings or {})
     last_closes: dict[str, float] = {}
     missing_logged: set[str] = set()
+    last_fx: float | None = None
     for code, series in prices.items():
         if not series:
             continue
@@ -121,9 +127,17 @@ def _compute_nav_series(
             last_closes[code] = series[max(before)]
         elif sessions and sessions[0] in series:
             last_closes[code] = series[sessions[0]]
+    if sessions and hkd_cny_rates:
+        if before_fx := [d for d, rate in hkd_cny_rates.items() if d < sessions[0] and rate > 0]:
+            last_fx = hkd_cny_rates[max(before_fx)]
+        elif (rate := hkd_cny_rates.get(sessions[0])) is not None and rate > 0:
+            last_fx = rate
 
     rows: list[NavDayRow] = []
     for day in sessions:
+        if (rate := hkd_cny_rates.get(day)) is not None and rate > 0:
+            last_fx = rate
+
         for amount in flows_by_date.get(day, []):
             nav, units, cash = _apply_cash_flow(
                 amount, nav=nav, units=units, cash=cash
@@ -133,7 +147,7 @@ def _compute_nav_series(
             cash = _apply_operation_cash_and_hold(holdings, cash, operation)
 
         mv = _mark_to_market(
-            holdings, prices, last_closes, day, hkd_cny_rate, missing_logged
+            holdings, prices, last_closes, day, last_fx, missing_logged
         )
         asset = cash + mv
 
@@ -156,7 +170,7 @@ def compute_nav_rows(
     cash_flow_list: CashFlowList,
     sessions: list[date],
     prices: DailyCloseByCode,
-    hkd_cny_rate: float,
+    hkd_cny_rates: DailyFxSeries | None = None,
     event_cutoff: date | None = None,
     start_nav: float = 1.0,
     start_units: float = 0.0,
@@ -179,7 +193,7 @@ def compute_nav_rows(
         operations_by_date=_align_events_to_sessions(_after(ops_by_date), sessions),
         flows_by_date=_align_events_to_sessions(_after(flows_by_date), sessions),
         prices=prices,
-        hkd_cny_rate=hkd_cny_rate,
+        hkd_cny_rates=hkd_cny_rates or {},
         start_nav=start_nav,
         start_units=start_units,
         start_cash=start_cash,

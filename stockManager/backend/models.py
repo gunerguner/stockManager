@@ -255,3 +255,23 @@ class PortfolioNavDaily(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} {self.date} nav={self.nav}"
+
+
+class HkdCnyDailyRate(models.Model):
+    """HKD/CNY 日频汇率（中行牌价换算为 1 HKD = X CNY，全局共享）"""
+
+    date = models.DateField(verbose_name="日期", unique=True)
+    close = models.DecimalField(
+        max_digits=10,
+        decimal_places=6,
+        verbose_name="汇率",
+        help_text="1 HKD = X CNY",
+    )
+
+    class Meta:
+        verbose_name = "港币日频汇率"
+        verbose_name_plural = "港币日频汇率"
+        ordering = ["date"]
+
+    def __str__(self) -> str:
+        return f"{self.date} {self.close}"

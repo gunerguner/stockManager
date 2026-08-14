@@ -15,7 +15,8 @@
 | 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
 | 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
-| HKD/CNY 汇率 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
+| HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
+| HKD/CNY 日频 | — | sina 中行牌价历史 | `exchangeRate.fetch_hkd_cny_daily_rates` | SQLite `HkdCnyDailyRate` | 持久化 |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
 
 > watchlist 路径（估值 + 历史高）已全部走 HTTP 源（百度 / gtimg）并行拉取；**baostock 现仅用于除权除息**。
@@ -55,7 +56,8 @@ flowchart LR
 | 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
 | 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
-| HKD/CNY 汇率 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
+| HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
+| HKD/CNY 日频 | — | sina 中行牌价历史 | `exchangeRate.fetch_hkd_cny_daily_rates` | SQLite `HkdCnyDailyRate` | 持久化 |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
 
 ## 3. 各源说明
@@ -92,10 +94,10 @@ flowchart LR
 ### sina 外汇（HKD/CNY）
 
 - **文件**：`datasource/exchangeRate.py`
-- **接口**：`https://hq.sinajs.cn/list=fx_shkdcny`，须带 `Referer: https://finance.sina.com.cn/`。
-- **解析**：响应 `var hq_str_fx_shkdcny="名称,现价,..."`，第 2 字段为 HKD/CNY。
+- **即期**：`https://hq.sinajs.cn/list=fx_shkdcny`，须带 `Referer: https://finance.sina.com.cn/`。解析第 2 字段为现价。供持仓页当前市值。
+- **日频历史**：`https://biz.finance.sina.com.cn/forex/forex.php`（`money_code=HKD`，`call_type=ajax`）。中行人民币牌价按 **100 港币** 报价，入库前除以 100。取值优先级：央行中间价 → 中行折算价 → 中行汇买价。供净值历史回放，**不**用即期汇率兜底。
 - **HTTP**：经 `datasource/http_client.get_text` 共享 Session。
-- **缓存配合**：`fx_store` 非交易时段**优先读** Redis `fx:hkd_cny`（命中则不发请求）；持仓涉及任市场当前在交易时段则强制回源并回写。拉取失败异常上抛（无失败后回落缓存），由视图层 `@handle_exception` 兜底。
+- **缓存配合**：即期走 `fx_store`（Redis `fx:hkd_cny`）；日频走 `daily_fx_store`（SQLite `HkdCnyDailyRate`，按 CN 交易日缺口补拉）。两者不可互相回退。
 
 ### 港股通交易与汇率口径
 
@@ -109,7 +111,7 @@ flowchart LR
 |-----------|------|---------|
 | `GET /api/stocks` | `Integrate.get_calculated_result` | 实时价、汇率（非交易时段读缓存；持仓涉及的市场处于交易时段时回源）；港股计算还依赖 BUY/SELL 的 CNY `amount` |
 | `GET /api/watchlist` | `Integrate.get_watchlist` → `Watchlist.build` | 实时价、估值、历史高 |
-| `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `daily_price_store`）、汇率 |
+| `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `daily_price_store`）；有港股持仓时另拉日频汇率（`daily_fx_store`） |
 | `POST /api/dividend` | `Integrate.generate_dividend` | baostock 除权除息 |
 
 ## 5. 失败行为
@@ -119,7 +121,8 @@ flowchart LR
 | easyquotation | 记录 error 日志，返回空 dict，页面缺价 |
 | baostock | 记录 error 日志，单 code 返回 None |
 | 百度 / gtimg | 记录 error 日志，返回 None；hist 写 `__none__` sentinel 防重复请求 |
-| sina 外汇 | 抛异常（解析失败 / 无效汇率均 raise），由视图层 `@handle_exception` 兜底；非交易时段因优先读缓存通常不触发请求 |
+| sina 即期外汇 | 抛异常（解析失败 / 无效汇率均 raise），由视图层 `@handle_exception` 兜底；非交易时段因优先读缓存通常不触发请求 |
+| sina 中行日频牌价 | 缺口补拉失败保留 DB 已有值；净值回放向前填充；港股首个估值日仍无历史汇率则刷新失败，不回退即期 |
 
 ## 6. 依赖
 

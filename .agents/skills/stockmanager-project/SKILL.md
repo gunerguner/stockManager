@@ -93,12 +93,12 @@ flowchart LR
 | 关注列表 | `WatchItem` + `services/app/watchlist.py`（`build`/`set_hidden`）+ `cache/watch_store.py` + 前端 `pages/Watch/` |
 | 估值 PE/PB | `datasource/baiduValuation.py`（`fetch_pe_pb`）+ `cache/valuation_store.py` |
 | 历史高价 | `datasource/historicalHigh.py`（gtimg 周线 qfq）+ `cache/hist_high_store.py` |
-| 港股/汇率 | `common/domain/market.py`（CN/HK 抽象）、`common/domain/settlement.py`（CNY 资金账 + 原币展示账）、`datasource/exchangeRate.py` + `cache/fx_store.py`（`fx:hkd_cny`） |
+| 港股/汇率 | `common/domain/market.py`（CN/HK 抽象）、`common/domain/settlement.py`（CNY 资金账 + 原币展示账）、`datasource/exchangeRate.py` + `cache/fx_store.py`（即期 `fx:hkd_cny`）+ `cache/daily_fx_store.py`（净值日频牌价） |
 | 缓存 | `services/cache/` + `common/cache.py`；详见 [references/cache.md](references/cache.md) |
 
 **股票代码**：小写交易所前缀 + 代码，如 `sh600519`、`sz000001`、`bj430047`、`hk00700`。后端将港股严格识别为 `hk` + 5 位数字；录入以此规则为准。
 
-**港股通口径**：`price`、每股成本为 HKD；港股 BUY/SELL 的 `amount` 为实际 CNY 成交额、`fee` 为 CNY。市值、盈亏、组合汇总和 XIRR 均为 CNY；市值按当前 HKD/CNY 汇率换算，成交时的 CNY 金额不随汇率重算。
+**港股通口径**：`price`、每股成本为 HKD；港股 BUY/SELL 的 `amount` 为实际 CNY 成交额、`fee` 为 CNY。市值、盈亏、组合汇总和 XIRR 均为 CNY；**当前**市值按即期 HKD/CNY 换算，成交时的 CNY 金额不随汇率重算；**净值历史回放**按日频中行牌价折算港股市值。
 
 ## 修改导航（最常改哪里）
 

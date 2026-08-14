@@ -196,3 +196,4 @@ DateRangeList = list[DateRange]
 HoldingWindows = dict[str, DateRangeList]  # code -> [(start, end), ...]
 DailyCloseSeries = dict[date, float]  # date -> close
 DailyCloseByCode = dict[str, DailyCloseSeries]  # code -> series
+DailyFxSeries = dict[date, float]  # date -> HKD/CNY

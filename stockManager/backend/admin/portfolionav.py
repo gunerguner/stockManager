@@ -1,6 +1,6 @@
 """净值相关 Admin"""
 from backend.admin.base import UserScopedModelAdmin, admin
-from backend.models import PortfolioNavDaily, StockDailyPrice
+from backend.models import HkdCnyDailyRate, PortfolioNavDaily, StockDailyPrice
 
 
 @admin.register(PortfolioNavDaily)
@@ -27,6 +27,21 @@ class StockDailyPriceAdmin(admin.ModelAdmin):
     date_hierarchy = 'date'
     ordering = ['-date', 'code']
     readonly_fields = ['code', 'date', 'close']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(HkdCnyDailyRate)
+class HkdCnyDailyRateAdmin(admin.ModelAdmin):
+    list_display = ['date', 'close']
+    list_filter = ['date']
+    date_hierarchy = 'date'
+    ordering = ['-date']
+    readonly_fields = ['date', 'close']
 
     def has_add_permission(self, request):
         return False
