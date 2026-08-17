@@ -1,6 +1,6 @@
 # 外部数据获取
 
-> 范围：`stockManager/backend/datasource/` 纯拉取层 + `services/cache/` 缓存编排 + `services/app/dividend.py` 除权业务。缓存键与 TTL 详见 [cache.md](cache.md)。
+> 范围：`stockManager/backend/datasource/` 纯拉取层 + `services/cache/` Redis 编排 + `services/data_sync/` 日频 SQLite 同步 + `services/app/dividend.py` 除权业务。缓存键与 TTL 详见 [cache.md](cache.md)。
 
 ## 阅读指引
 
@@ -34,18 +34,25 @@ flowchart LR
     sina[sina 外汇]
   end
   subgraph cache [cache 编排]
-    priceStore[price_store]
-    valStore[valuation_store]
-    histStore[hist_high_store]
-    fxStore[fx_store]
+    priceStore[market/prices]
+    valStore[market/valuation]
+    histStore[market/hist_high]
+    fxStore[market/fx]
+  end
+  subgraph dataSync [data_sync]
+    dailyPrice[daily_price]
+    dailyFx[daily_fx]
   end
   Integrate --> cache
+  NavAnalysis --> dataSync
   cache --> datasource
+  dataSync --> datasource
   Dividend[app/dividend.py] --> bao
 ```
 
 - **backend/datasource/**：仅负责外部拉取与字段标准化，不含 Redis 逻辑。
-- **cache/**：按 key/TTL 做 read-through；`Integrate` 经 `CacheRepository` 门面调用。
+- **cache/**：按 key/TTL 做 Redis read-through；`Integrate` 经 `CacheRepository` 门面调用。
+- **data_sync/**：日频价格/汇率缺口补拉并写入 SQLite；`NavAnalysis.refresh` 直接调用。
 - **app/dividend.py**：除权除息业务编排（持仓判定、去重、写库），拉取委托 `datasource.baostock_source`。
 
 ## 2. 数据源 × 市场对照
@@ -69,7 +76,7 @@ flowchart LR
 - **A 股**：`use('tencent').real(codes, prefix=True)` → `currentPrice`、`yesterdayClose`。
 - **港股**：直连 `http://sqt.gtimg.cn/utf8/q=r_hkXXXXX`，只解析名称 / 现价 / 昨收。不走 easyquotation `hkquote`（其把均价等空字段 `float()`，开盘未成交时整批失败）。
 - **实例复用**：A 股 easyquotation 实例经模块级 `_quotations` 字典缓存，避免重复初始化。
-- **刷新策略**（`price_store`）：按市场 CN/HK 调用 `refresh_policy.should_refresh_market` → `TradingCalendar.is_trading_time_passed`；自上次成功拉价起，若 `[last_time, now]` 与任意交易日开收盘时段有交集则回源，否则 MGET 命中 `stock:price:{code}`。写价后 `set_price_timestamp` 并 `clear_all_calculated_targets`。详见 [cache.md](cache.md) §5.1。
+- **刷新策略**（`cache/market/prices.py`）：按市场 CN/HK 调用 `refresh.should_refresh_market` → `TradingCalendar.is_trading_time_passed`；自上次成功拉价起，若 `[last_time, now]` 与任意交易日开收盘时段有交集则回源，否则 MGET 命中 `stock:price:{code}`。写价后 `set_price_timestamp` 并 `clear_all_calculated_targets`。详见 [cache.md](cache.md) §5.1。
 
 ### baostock（仅除权除息）
 
@@ -81,7 +88,7 @@ flowchart LR
 
 - **文件**：`datasource/baiduValuation.py`
 - **统一**：`fetch_pe_pb(pure_code, market)`，A 股 `market=ab`、港股 `market=hk`；指标名 `市盈率(TTM)` / `市净率`。
-- **store**：`valuation_store` 以 `to_baidu_params(code)` 自动判定市场，`base_close` 取实时行情 `yesterdayClose`，换算 `epsTtm=close/peTTM`、`bvps=close/pbMRQ`，有界并发（8）。
+- **store**：`cache/market/valuation.py` 以 `to_baidu_params(code)` 自动判定市场，`base_close` 取实时行情 `yesterdayClose`，换算 `epsTtm=close/peTTM`、`bvps=close/pbMRQ`，有界并发（8）。
 - **HTTP**：经 `datasource/http_client.get_json` 线程本地 Session。
 
 ### 腾讯 gtimg（A 股 + 港股历史高）
@@ -89,7 +96,7 @@ flowchart LR
 - **文件**：`datasource/historicalHigh.py`
 - **A 股**：`fetch_cn_hist_high(shXXXXXX/szXXXXXX)` — 6 年周线前复权（`qfq`），endpoint `fqkline/get`。
 - **港股**：`fetch_hk_hist_high(hkXXXXX)` — 6 年周线前复权（`qfq`），**专用 endpoint `hkfqkline/get`**（注意：`fqkline/get` 对港股 `qfq` 静默忽略，仍返回不复权数据，故港股必须走 `hkfqkline/get`）。
-- **store**：`hist_high_store` 按市场分派 endpoint，统一前复权，有界并发（8）。
+- **store**：`cache/market/hist_high.py` 按市场分派 endpoint，统一前复权，有界并发（8）。
 - **HTTP**：经 `datasource/http_client.get_json` 线程本地 Session。
 
 ### sina 外汇（HKD/CNY）
@@ -98,7 +105,7 @@ flowchart LR
 - **即期**：`https://hq.sinajs.cn/list=fx_shkdcny`，须带 `Referer: https://finance.sina.com.cn/`。解析第 2 字段为现价。供持仓页当前市值。
 - **日频历史**：`https://biz.finance.sina.com.cn/forex/forex.php`（`money_code=HKD`，`call_type=ajax`）。中行人民币牌价按 **100 港币** 报价，入库前除以 100。取值优先级：央行中间价 → 中行折算价 → 中行汇买价。供净值历史回放，**不**用即期汇率兜底。
 - **HTTP**：经 `datasource/http_client.get_text` 共享 Session。
-- **缓存配合**：即期走 `fx_store`（Redis `fx:hkd_cny`）；日频走 `daily_fx_store`（SQLite `HkdCnyDailyRate`，按 CN 交易日缺口补拉）。两者不可互相回退。
+- **缓存配合**：即期走 `cache/market/fx.py`（Redis `fx:hkd_cny`）；日频走 `data_sync/daily_fx.py`（SQLite `HkdCnyDailyRate`，按 CN 交易日缺口补拉）。两者不可互相回退。
 
 ### 港股通交易与汇率口径
 
@@ -112,7 +119,7 @@ flowchart LR
 |-----------|------|---------|
 | `GET /api/stocks` | `Integrate.get_calculated_result` | 实时价、汇率（非交易时段读缓存；持仓涉及的市场处于交易时段时回源）；港股计算还依赖 BUY/SELL 的 CNY `amount` |
 | `GET /api/watchlist` | `Integrate.get_watchlist` → `Watchlist.build` | 实时价、估值、历史高 |
-| `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `daily_price_store`）；有港股持仓时另拉日频汇率（`daily_fx_store`） |
+| `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `data_sync.daily_price`）；有港股持仓时另拉日频汇率（`data_sync.daily_fx`） |
 | `POST /api/dividend` | `Integrate.generate_dividend` | baostock 除权除息 |
 
 ## 5. 失败行为

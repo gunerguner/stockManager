@@ -10,7 +10,7 @@ def trade_notional_hkd(operation: Operation) -> float:
 
 def trade_amount_cny(operation: Operation) -> float:
     """成交金额（人民币）。港股读 amount；非港股用 price×count。"""
-    if is_hk_code(operation.code):
+    if is_hk_code(operation.stock_meta.code):
         return float(operation.amount or 0)
     return trade_notional_hkd(operation)
 
@@ -32,7 +32,7 @@ def sell_inflow_cny(operation: Operation) -> float:
 
 def implied_fx(operation: Operation) -> float:
     """港股通隐含汇率 amount / (price×count)；无效时返回 0。"""
-    if not is_hk_code(operation.code):
+    if not is_hk_code(operation.stock_meta.code):
         return 1.0
     notional = trade_notional_hkd(operation)
     amount = trade_amount_cny(operation)
@@ -44,7 +44,7 @@ def implied_fx(operation: Operation) -> float:
 def fee_in_price_currency(operation: Operation) -> float:
     """佣金折算到股价币种：港股用隐含汇率折回港币，非港股原样。"""
     fee = trade_fee_cny(operation)
-    if not is_hk_code(operation.code):
+    if not is_hk_code(operation.stock_meta.code):
         return fee
     fx = implied_fx(operation)
     if fx <= 0:
@@ -70,7 +70,7 @@ def dividend_cash_cny(operation: Operation, hold: float) -> float:
 def dividend_cash_native(operation: Operation, hold: float, hkd_cny_rate: float) -> float:
     """除权现金影响（原币口径）。港股用当前汇率折回港币。"""
     cash_cny = dividend_cash_cny(operation, hold)
-    if not is_hk_code(operation.code):
+    if not is_hk_code(operation.stock_meta.code):
         return cash_cny
     if hkd_cny_rate <= 0:
         return 0.0

@@ -9,12 +9,13 @@ from backend.common.domain.market import Market
 from backend.common.types import DailyFxSeries
 from backend.datasource.exchangeRate import fetch_hkd_cny_daily_rates
 from backend.models import HkdCnyDailyRate
+from backend.services.data_sync.gaps import missing_session_gaps
 
 _GAP_FILL_ROUNDS = 2
 _SEED_LOOKBACK_DAYS = 30
 
 
-def load_rates(start: date, end: date) -> DailyFxSeries:
+def _load_rates(start: date, end: date) -> DailyFxSeries:
     """读取 [start, end] 内已有日频汇率。"""
     if start > end:
         return {}
@@ -24,7 +25,7 @@ def load_rates(start: date, end: date) -> DailyFxSeries:
     return {d: float(close) for d, close in rows}
 
 
-def load_latest_before(day: date) -> tuple[date, float] | None:
+def _load_latest_before(day: date) -> tuple[date, float] | None:
     """区间起点之前最近一条有效汇率，供向前填充。"""
     row = (
         HkdCnyDailyRate.objects.filter(date__lt=day, close__gt=0)
@@ -35,29 +36,6 @@ def load_latest_before(day: date) -> tuple[date, float] | None:
     if row is None:
         return None
     return row[0], float(row[1])
-
-
-def _missing_session_gaps(have: DailyFxSeries, start: date, end: date) -> list[tuple[date, date]]:
-    if start > end or not (
-        sessions := TradingCalendar.sessions_between(start, end, Market.CN)
-    ):
-        return []
-    gaps: list[tuple[date, date]] = []
-    gap_start: date | None = None
-    gap_end: date | None = None
-    for d in sessions:
-        if d in have and have[d] > 0:
-            if gap_start is not None and gap_end is not None:
-                gaps.append((gap_start, gap_end))
-            gap_start = None
-            gap_end = None
-        else:
-            if gap_start is None:
-                gap_start = d
-            gap_end = d
-    if gap_start is not None and gap_end is not None:
-        gaps.append((gap_start, gap_end))
-    return gaps
 
 
 def _upsert_rates(rates: DailyFxSeries) -> None:
@@ -102,8 +80,8 @@ def ensure_hkd_cny_rates(start: date, end: date) -> DailyFxSeries:
         return {}
 
     seed_start = start - timedelta(days=_SEED_LOOKBACK_DAYS)
-    existing = load_rates(seed_start, end)
-    if load_latest_before(seed_start) is None and not existing:
+    existing = _load_rates(seed_start, end)
+    if _load_latest_before(seed_start) is None and not existing:
         try:
             seeded = fetch_hkd_cny_daily_rates(seed_start, start)
             if seeded:
@@ -113,7 +91,7 @@ def ensure_hkd_cny_rates(start: date, end: date) -> DailyFxSeries:
             logger.warning(f"[daily_fx] 起点前种子 {seed_start}~{start} 拉取失败: {exc}")
 
     for round_idx in range(_GAP_FILL_ROUNDS):
-        if not (gaps := _missing_session_gaps(existing, start, end)):
+        if not (gaps := missing_session_gaps(existing, start, end, Market.CN)):
             break
         logger.info(
             f"[daily_fx] 第 {round_idx + 1} 轮补拉 {len(gaps)} 个缺口: "
@@ -122,7 +100,7 @@ def ensure_hkd_cny_rates(start: date, end: date) -> DailyFxSeries:
         )
         existing.update(_fetch_and_upsert_gaps(gaps))
     else:
-        remain = _missing_session_gaps(existing, start, end)
+        remain = missing_session_gaps(existing, start, end, Market.CN)
         if remain:
             miss_days = sum(
                 len(TradingCalendar.sessions_between(a, b, Market.CN))
@@ -133,6 +111,6 @@ def ensure_hkd_cny_rates(start: date, end: date) -> DailyFxSeries:
                 f"({remain[0][0]}~{remain[-1][1]})"
             )
 
-    if (seed := load_latest_before(start)) is not None:
+    if (seed := _load_latest_before(start)) is not None:
         existing.setdefault(seed[0], seed[1])
     return existing

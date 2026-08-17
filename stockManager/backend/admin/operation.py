@@ -111,7 +111,7 @@ class OperationAdmin(UserScopedModelAdmin):
             if max_sort is not None:
                 obj.sortOrder = max_sort + 1
 
-        if obj.stock_meta_id and is_hk_code(obj.code):
+        if obj.stock_meta_id and is_hk_code(obj.stock_meta.code):
             if obj.operationType in (OperationType.BUY, OperationType.SELL):
                 messages.info(
                     request,

@@ -36,10 +36,10 @@ def get_user_watchlist(user: User) -> list[WatchItemDict]:
     return items
 
 
-def clear_user_watchlist(user_id: int) -> None:
+def _clear_user_watchlist(user_id: int) -> None:
     cache.delete(keys.KEY_USER_WATCHLIST.format(user_id=user_id))
 
 
 @receiver([post_save, post_delete], sender=WatchItem)
 def clear_watchlist_on_change(sender, instance, **kwargs) -> None:
-    clear_user_watchlist(instance.user_id)
+    _clear_user_watchlist(instance.user_id)

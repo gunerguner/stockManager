@@ -3,16 +3,16 @@ from datetime import datetime
 
 from django.core.cache import cache
 
-from backend.common.cache import Cache
 from backend.common import logger
-from backend.common.domain.market import Market, split_codes_by_market
+from backend.common.cache import Cache
 from backend.common.domain.calendar import TZ_SHANGHAI
+from backend.common.domain.market import Market, split_codes_by_market
 from backend.common.types import MarketsData, RealtimePriceDict
 from backend.datasource.realtimePrice import fetch_prices
 from backend.services.cache import keys
-from backend.services.cache import meta_store
-from backend.services.cache import refresh_policy
-from backend.services.cache import user_store
+from backend.services.cache import refresh as refresh_policy
+from backend.services.cache.market import meta
+from backend.services.cache.user import store as user_store
 
 _PRICE_FIELDS = frozenset({
     "name",
@@ -118,5 +118,5 @@ def query_prices(code_list: list[str]) -> RealtimePriceDict:
         result = cached
 
     # 用本次可见行情回填/纠偏 StockMeta.name（空名称不受日级节流限制）
-    meta_store.sync_names_from_realtime(result)
+    meta.sync_names_from_realtime(result)
     return result

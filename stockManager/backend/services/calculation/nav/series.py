@@ -58,7 +58,7 @@ def _apply_operation_cash_and_hold(
     cash: float,
     operation: Operation,
 ) -> float:
-    code = operation.code
+    code = operation.stock_meta.code
     hold = holdings.get(code, 0.0)
     cash += operation_cash_delta_cny(operation, hold)
     if abs(new_hold := apply_operation_to_hold(hold, operation)) < MIN_QTY:

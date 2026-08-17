@@ -9,7 +9,7 @@ from backend.models import StockMeta as StockMetaModel
 from backend.services.cache import keys
 
 
-def clear_stock_meta_all() -> None:
+def _clear_stock_meta_all() -> None:
     cache.delete(keys.KEY_STOCK_META_ALL)
 
 
@@ -75,12 +75,12 @@ def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
         return 0
 
     StockMetaModel.objects.bulk_update(changed_metas, ["name"])
-    clear_stock_meta_all()
+    _clear_stock_meta_all()
     logger.debug(f"股票名称同步完成，更新 {len(changed_metas)} 条记录")
     return len(changed_metas)
 
 
 @receiver([post_save, post_delete], sender=StockMetaModel)
 def clear_stock_meta_on_model_change(sender, instance, **kwargs) -> None:
-    clear_stock_meta_all()
+    _clear_stock_meta_all()
     logger.info("清除股票元数据 Redis 缓存")

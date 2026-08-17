@@ -1,6 +1,6 @@
 # Backend 缓存机制完整分析
 
-> 范围：`stockManager/backend` 目录下实际生效的缓存相关实现（键设计、数据内容、过期策略、失效策略、调用路径、代码结构）。外部数据源详见 [external-data.md](external-data.md)。
+> 范围：`stockManager/backend` 目录下实际生效的 **Redis 缓存**（键设计、数据内容、过期策略、失效策略、调用路径、代码结构）。日频缺口补拉与 SQLite 落库已迁至 `services/data_sync/`，不属于本文件。外部数据源详见 [external-data.md](external-data.md)。
 
 ## 阅读指引
 
@@ -38,14 +38,14 @@ flowchart LR
   end
   subgraph repo [CacheRepository facade]
     keys[keys.py]
-    refreshPolicy[refresh_policy.py]
-    userStore[user_store.py]
-    priceStore[price_store.py]
-    metaStore[meta_store.py]
-    fxStore[fx_store.py]
-    watchStore[watch_store.py]
-    valStore[valuation_store.py]
-    histStore[hist_high_store.py]
+    refreshPolicy[refresh.py]
+    userStore[user/store.py]
+    userWatch[user/watchlist.py]
+    priceStore[market/prices.py]
+    metaStore[market/meta.py]
+    fxStore[market/fx.py]
+    valStore[market/valuation.py]
+    histStore[market/hist_high.py]
   end
   subgraph datasource [datasource 数据源]
     fetchPrices[fetch_prices]
@@ -74,24 +74,25 @@ flowchart LR
 | 文件 | 职责 |
 | --- | --- |
 | `keys.py` | 逻辑 key 模板与 TTL 常量 |
-| `operation_codec.py` | Operation JSON 序列化/反序列化（含 detached ModelState） |
-| `refresh_policy.py` | 价格时间戳读写、`should_refresh_market`（`is_trading_time_passed`）、`is_in_trading_hours` |
-| `user_store.py` | 用户 operations、cash_info、calculated_target 读写与失效信号 |
-| `price_store.py` | 股价批量读写、写价后更新时间戳并清全用户计算结果 |
-| `meta_store.py` | StockMeta 全量缓存、名称日同步标记与信号 |
-| `fx_store.py` | 港币即期汇率 `fx:hkd_cny` 读写 |
-| `watch_store.py` | 用户关注列表缓存与 `WatchItem` 信号 |
-| `valuation_store.py` | 单股估值 epsTtm/bvps 缓存 |
-| `hist_high_store.py` | 单股近 6 年历史最高价缓存 |
-| `daily_price_store.py` | 日收盘价 DB 持久化与缺口补拉（净值回放） |
-| `daily_fx_store.py` | HKD/CNY 日频牌价 DB 持久化与缺口补拉（净值回放） |
+| `refresh.py` | 价格时间戳读写、`should_refresh_market`（`is_trading_time_passed`）、`is_in_trading_hours` |
+| `user/codec.py` | Operation JSON 序列化/反序列化（含 detached ModelState） |
+| `user/store.py` | 用户 operations、cash_info、calculated_target、nav_analysis 读写与失效信号 |
+| `user/watchlist.py` | 用户关注列表缓存与 `WatchItem` 信号 |
+| `market/prices.py` | 股价批量读写、写价后更新时间戳并清全用户计算结果 |
+| `market/meta.py` | StockMeta 全量缓存、名称日同步标记与信号 |
+| `market/fx.py` | 港币即期汇率 `fx:hkd_cny` 读写 |
+| `market/valuation.py` | 单股估值 epsTtm/bvps 缓存 |
+| `market/hist_high.py` | 单股近 6 年历史最高价缓存 |
 | `repository.py` | `CacheRepository` 门面，聚合各 store 编排调用 |
+
+日频收盘价 / 日频汇率（SQLite 缺口补拉）在 `services/data_sync/`，不在本包。
 
 ### 1.2 分层分组
 
 | 包 | import 示例 |
 | --- | --- |
 | `services/cache/` | `from backend.services.cache import CacheRepository` |
+| `services/data_sync/` | `from backend.services.data_sync import ensure_daily_prices_for_windows, ensure_hkd_cny_rates` |
 | `backend/datasource/` | `from backend.datasource import fetch_prices, fetch_hkd_cny_rate, fetch_pe_pb, fetch_hist_high, fetch_dividends` |
 | `services/calculation/` | `from backend.services.calculation import Calculator, StockHold` |
 | `services/app/` | `from backend.services.app import Integrate, Dividend, NavAnalysis, Watchlist` |
@@ -152,8 +153,8 @@ Redis 中实际 key 示例（由框架生成，**不要在业务里拼接**）�
   - 用途：避免反复全表读 `StockMeta`
 6. **股票实时价格（单票）**
   - Key：`stock:price:{code}`
-  - 内容：`RealtimePriceData`（name / currentPrice / priceOffset / offsetRatio / yesterdayClose / yearHigh）
-  - 用途：持仓计算、关注列表展示；由 `price_store.query_prices` 经 `load_calculation_inputs` / `load_watchlist_market_data` 间接使用
+  - 内容：`RealtimePriceData`（name / currentPrice / priceOffset / offsetRatio / yesterdayClose）
+  - 用途：持仓计算、关注列表展示；由 `market/prices.query_prices` 经 `load_calculation_inputs` / `load_watchlist_market_data` 间接使用
 7. **股票价格时间戳（分市场）**
   - Key：`stock:price:timestamp:cn`、`stock:price:timestamp:hk`
   - 内容：上海时区 ISO 时间字符串
@@ -199,7 +200,7 @@ Redis 中实际 key 示例（由框架生成，**不要在业务里拼接**）�
 
 ### 5.1 交易时段驱动的逻辑失效（分市场 CN / HK）
 
-核心：`refresh_policy.should_refresh_market(market)`，按本批代码涉及的市场独立判断。**唯一规则**：自上次成功拉价起，若区间 `[last_time, now]` 与任意**交易日**的开收盘时段有交集，则该市场视为需刷新；否则走缓存。
+核心：`refresh.should_refresh_market(market)`，按本批代码涉及的市场独立判断。**唯一规则**：自上次成功拉价起，若区间 `[last_time, now]` 与任意**交易日**的开收盘时段有交集，则该市场视为需刷新；否则走缓存。
 
 #### 判定流程
 
@@ -238,17 +239,17 @@ should_refresh_market(market)
 | 港股节前最后交易日 16:00 → 国庆当日 10:00 | ❌ |
 | 节前最后交易日 16:00 → 节后首个交易日 10:00 | ✅ |
 
-`price_store._get_cached_prices` 仅对本批 `code_list` 中出现的市场做上述判断；CN/HK 独立。
+`market/prices._get_cached_prices` 仅对本批 `code_list` 中出现的市场做上述判断；CN/HK 独立。
 
 #### 关联行为
 
 | 模块 | 行为 |
 | --- | --- |
-| `price_store.query_prices` | `should_refresh_market` 为 False 时 MGET 命中 `stock:price:{code}` |
-| `user_store.get_calculated_target` | 持仓涉及任市场 `should_refresh_market` 为 True → 返回 `None`（强制重算） |
-| `user_store.set_calculated_target` | 持仓涉及**所有**市场当前均不在交易时段（`is_in_trading_hours_at(now)`）才写入 |
-| `fx_store.get_hkd_cny_rate` | 持仓涉及任市场**当前**在交易时段 → 跳过读缓存、强制回源 |
-| `price_store.get_markets_metadata` | 返回各市场 `inTradingHours`、`priceUpdatedAt` 供前端展示 |
+| `market/prices.query_prices` | `should_refresh_market` 为 False 时 MGET 命中 `stock:price:{code}` |
+| `user/store.get_calculated_target` | 持仓涉及任市场 `should_refresh_market` 为 True → 返回 `None`（强制重算） |
+| `user/store.set_calculated_target` | 持仓涉及**所有**市场当前均不在交易时段（`is_in_trading_hours_at(now)`）才写入 |
+| `market/fx.get_hkd_cny_rate` | 持仓涉及任市场**当前**在交易时段 → 跳过读缓存、强制回源 |
+| `market/prices.get_markets_metadata` | 返回各市场 `inTradingHours`、`priceUpdatedAt` 供前端展示 |
 
 纯 A 股用户不受港股 15:00–16:00 时段影响；反之亦然。
 
@@ -258,24 +259,24 @@ should_refresh_market(market)
 
 | 触发源 | 行为 |
 | --- | --- |
-| `Operation` / `CashFlow` / `Info(INCOME_CASH)` 的 `post_save` / `post_delete`（`user_store.py` 信号） | `clear_user_cache`（operations、cash_info、calculated_target） |
+| `Operation` / `CashFlow` / `Info(INCOME_CASH)` 的 `post_save` / `post_delete`（`user/store.py` 信号） | `clear_user_cache`（operations、cash_info、calculated_target） |
 | `Integrate.update_income_cash` | 更新 `Info` 后由上述 `Info` 信号触发，无需手动清缓存 |
-| `StockMeta` 的 `post_save` / `post_delete`（`meta_store.py` 信号） | `clear_stock_meta_all` |
-| `WatchItem` 的 `post_save` / `post_delete`（`watch_store.py` 信号） | `clear_user_watchlist` |
-| `price_store._set_prices_batch` 写价后 | `refresh_policy.set_price_timestamp` + `user_store.clear_all_calculated_targets`（pattern `user:*:calculated_target`） |
-| `meta_store.sync_names_from_realtime` 有名称变更并 `bulk_update` 后 | `clear_stock_meta_all` + 写入 `stock:name:sync:mark` |
+| `StockMeta` 的 `post_save` / `post_delete`（`market/meta.py` 信号） | `clear_stock_meta_all` |
+| `WatchItem` 的 `post_save` / `post_delete`（`user/watchlist.py` 信号） | `clear_user_watchlist` |
+| `market/prices._set_prices_batch` 写价后 | `refresh.set_price_timestamp` + `user/store.clear_all_calculated_targets`（pattern `user:*:calculated_target`） |
+| `market/meta.sync_names_from_realtime` 有名称变更并 `bulk_update` 后 | `clear_stock_meta_all` + 写入 `stock:name:sync:mark` |
 | `POST /api/clearCache` | `CacheRepository.clear_all()` → `delete_pattern("*")` 删除本应用命名空间下全部 key |
 
 ### 5.3 失效链示意（价格更新）
 
 ```text
-price_store.query_prices → _get_cached_prices（逻辑失效检查）
+market/prices.query_prices → _get_cached_prices（逻辑失效检查）
   → missing 走 datasource.fetch_prices（A 股 tencent / 港股 sqt）
   → _set_prices_batch
        → Cache.set_many(各 stock:price:{code})
-       → refresh_policy.set_price_timestamp（涉及市场）
-       → user_store.clear_all_calculated_targets（所有用户的 calculated_target）
-       → meta_store.sync_names_from_realtime（可选名称回写）
+       → refresh.set_price_timestamp（涉及市场）
+       → user/store.clear_all_calculated_targets（所有用户的 calculated_target）
+       → market/meta.sync_names_from_realtime（可选名称回写）
 ```
 
 保证价格变更后不会继续返回基于旧价的聚合收益缓存。
@@ -290,10 +291,10 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 2. `get_calculated_target(user, user_codes)`（内含 `should_invalidate_calculated_cache` / 交易时段判断）
 3. 未命中 → `CacheRepository.load_calculation_inputs` 聚合：
    - `get_user_cash_info`
-   - `fx_store.get_hkd_cny_rate`
-   - `price_store.query_prices`
-   - `meta_store.get_stock_meta_dict`
-   - `price_store.get_markets_metadata`
+   - `market/fx.get_hkd_cny_rate`
+   - `market/prices.query_prices`
+   - `market/meta.get_stock_meta_dict`
+   - `market/prices.get_markets_metadata`
 4. `Calculator.calculate_stock_list(prices=...)` / `calculate_overall`
 5. `set_calculated_target`（当前不在交易时段才写入；见 §5.1）
 
@@ -303,20 +304,20 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 ### 6.2 实时价格（批量读 + 写）
 
-`price_store.query_prices(code_list)`：
+`market/prices.query_prices(code_list)`：
 
-1. `_get_cached_prices` → 按市场调用 `refresh_policy.should_refresh_market`；若需刷新则先 `_evict_market_prices`（清该市场全部 `stock:price:*`）再整批 miss
-2. 不需刷新时 `Cache.get_many`；缓存数据须包含完整 `_PRICE_FIELDS`（含 `yearHigh`），否则视为 miss
+1. `_get_cached_prices` → 按市场调用 `refresh.should_refresh_market`；若需刷新则先 `_evict_market_prices`（清该市场全部 `stock:price:*`）再整批 miss
+2. 不需刷新时 `Cache.get_many`；缓存数据须包含完整 `_PRICE_FIELDS`，否则视为 miss
 3. 命中部分直接返回；`missing` 走 `datasource.fetch_prices`（A 股 easyquotation tencent；港股腾讯 sqt）
 4. `_set_prices_batch` 回写价格；**仅当该市场本次 missing 全部回源成功**才推进 `stock:price:timestamp:{market}` 并清全用户 `calculated_target`；再触发 `sync_names_from_realtime`
 
-**批量读**：`Cache.get_many(逻辑 keys)` → `make_key` + Redis `MGET` + `client.decode`；未命中为 `None`；异常时降级为逐 key `cache.get`（`price_store` 记录 `logger.error`）。
+**批量读**：`Cache.get_many(逻辑 keys)` → `make_key` + Redis `MGET` + `client.decode`；未命中为 `None`；异常时降级为逐 key `cache.get`（`market/prices` 记录 `logger.error`）。
 
 **批量写**：`Cache.set_many(逻辑 key 映射)` → Pipeline 内逐条走 `cache.client.set`（与单条 `cache.set` 相同的 `make_key`、JSON 序列化、`px` 超时）；异常时降级为逐 key `cache.set`。
 
 ### 6.3 股票名称同步
 
-`price_store.query_prices` 回源写价后 → `meta_store.sync_names_from_realtime`：
+`market/prices.query_prices` 回源写价后 → `market/meta.sync_names_from_realtime`：
 
 - 24 小时内已同步（`stock:name:sync:mark` 存在）→ 跳过
 - 无名称变更 → 仅写入 `stock:name:sync:mark`
@@ -326,11 +327,11 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 `views/stock.py` → `Integrate.get_watchlist`：
 
-1. `watch_store.get_user_watchlist`（cache-aside）
+1. `user/watchlist.get_user_watchlist`（cache-aside）
 2. `CacheRepository.load_watchlist_market_data(codes)` 聚合（估值与历史高两组并行，各自内部有界并发 8）：
-   - `price_store.query_prices`（共用 §6.2 逻辑失效）
-   - `valuation_store.fetch_and_cache_valuations`（miss 回源百度 opendata：A 股 ab / 港股 hk）
-   - `hist_high_store.fetch_and_cache_hist_highs`（miss 回源 gtimg 周线：A 股与港股均 qfq）
+   - `market/prices.query_prices`（共用 §6.2 逻辑失效）
+   - `market/valuation.fetch_and_cache_valuations`（miss 回源百度 opendata：A 股 ab / 港股 hk）
+   - `market/hist_high.fetch_and_cache_hist_highs`（miss 回源 gtimg 周线：A 股与港股均 qfq）
    - 不再依赖 baostock（baostock 仅用于除权除息）
 3. 与持仓状态、用户配置合并后返回
 
@@ -338,7 +339,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 ### 6.5 计算器与行情
 
-`Calculator.calculate_stock_list` 接收 `load_calculation_inputs` 预取的 `prices`，**不再自行调用行情 API**。计算链路依赖 `price_store` 缓存与 §5.1 的逻辑失效，**不单独维护**计算器级缓存。
+`Calculator.calculate_stock_list` 接收 `load_calculation_inputs` 预取的 `prices`，**不再自行调用行情 API**。计算链路依赖 `market/prices` 缓存与 §5.1 的逻辑失效，**不单独维护**计算器级缓存。
 
 ## 7. 底层工具与健壮性
 
@@ -353,7 +354,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 注意：`KEYS` 在 key 数量极大时可能阻塞 Redis；当前规模可接受，规模增大时可改为 `SCAN` 分批删除。
 
-仓库层 `price_store._get_cached_prices` 在 `get_many` 异常时有 `logger.error` 降级日志；工具层其余失败路径静默回退。
+仓库层 `market/prices._get_cached_prices` 在 `get_many` 异常时有 `logger.error` 降级日志；工具层其余失败路径静默回退。
 
 ## 8. 评估：优点与待改进点
 
@@ -368,7 +369,7 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 ### 8.2 待改进点（非阻塞，日常改动可跳过）
 
 1. **pattern 删除使用 KEYS** — 数据量大时改 `SCAN`。
-2. **Operation 反序列化** — `operation_codec` 用 `Operation.__new__` + `ModelState`，与 ORM 内部结构耦合；可考虑缓存 DTO，在上层再转模型。
+2. **Operation 反序列化** — `user/codec.py` 用 `Operation.__new__` + `ModelState`，与 ORM 内部结构耦合；可考虑缓存 DTO，在上层再转模型。
 3. **异常与监控** — 工具层大量吞异常；可对回退次数、pattern 删除失败做指标/告警。
 4. **估值/历史高价无主动失效** — 目前仅 TTL；若数据源更新频率需更细控制，可补充失效策略。
 
@@ -376,11 +377,11 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 | 缓存项 | 逻辑 Key | TTL | 读取策略 | 失效策略 |
 | --- | --- | --- | --- | --- |
-| 用户操作 | `user:{id}:operations` | 10h | miss 查 DB 并写缓存 | `user_store` 信号（Operation/CashFlow/Info） |
+| 用户操作 | `user:{id}:operations` | 10h | miss 查 DB 并写缓存 | `user/store` 信号（Operation/CashFlow/Info） |
 | 用户现金 | `user:{id}:cash_info` | 10h | 同上 | 同上 |
 | 计算结果 | `user:{id}:calculated_target` | 24h | 持仓涉及市场 `should_refresh_market` 为 True 则失效；否则命中 | 用户数据变更；分市场价格时间戳更新后 pattern 清全用户 |
-| 关注列表 | `user:{id}:watchlist` | 10h | miss 查 DB 并写缓存 | `watch_store` 信号（WatchItem） |
-| 元数据全量 | `stock:meta:all` | 24h | miss 全表加载并缓存 | `meta_store` 信号；名称同步有变更 |
+| 关注列表 | `user:{id}:watchlist` | 10h | miss 查 DB 并写缓存 | `user/watchlist` 信号（WatchItem） |
+| 元数据全量 | `stock:meta:all` | 24h | miss 全表加载并缓存 | `market/meta` 信号；名称同步有变更 |
 | 实时价格 | `stock:price:{code}` | 24h | 批量 MGET；`should_refresh_market` 为 False 且字段完整则命中 | §5.1 按市场逻辑失效；TTL 自然过期 |
 | 价格时间戳 | `stock:price:timestamp:cn` / `:hk` | 24h | 记录上次成功拉价时间，供 `is_trading_time_passed` | 批量写价时更新涉及市场 |
 | 港币汇率 | `fx:hkd_cny` | 24h | 当前不在交易时段读缓存 | `clear_all()`；当前在交易时段强制 API 更新 |
@@ -390,9 +391,9 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 
 ## 10. 新增缓存时的检查清单
 
-1. 在 `backend/services/cache/keys.py` 增加逻辑 key 与 `TTL_*`（如需）；读写逻辑放在对应 `*_store.py`，对外 API 经 `repository.CacheRepository` 暴露。
+1. 在 `backend/services/cache/keys.py` 增加逻辑 key 与 `TTL_*`（如需）；读写逻辑放在对应 `user/` 或 `market/` 模块，对外 API 经 `repository.CacheRepository` 暴露。
 2. 单条读写用 `cache.get/set/delete`；批量读写用 `Cache.get_many` / `Cache.set_many`；模式删除用 `Cache.delete_pattern`。
-3. 明确是否需要接入 `refresh_policy.should_refresh_market` 或 Django 信号失效（参考 `user_store` / `meta_store` / `watch_store`）。
+3. 明确是否需要接入 `refresh.should_refresh_market` 或 Django 信号失效（参考 `user/store` / `market/meta` / `user/watchlist`）。
 4. 勿在业务代码手写 `stockmanager:1:`；调试时用 `Cache.make_key`。
 5. 同步更新本文档（`references/cache.md`）第 3、9 节表格。
 
@@ -401,8 +402,10 @@ price_store.query_prices → _get_cached_prices（逻辑失效检查）
 - 缓存配置：`stockManager/stockManager/settings.py`（`CACHES`）
 - 缓存仓库：`backend/services/cache/repository.py`（`CacheRepository`）
 - 逻辑 key / TTL：`backend/services/cache/keys.py`
-- 刷新策略：`backend/services/cache/refresh_policy.py`
-- 各 store：`user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`watch_store.py`、`valuation_store.py`、`hist_high_store.py`、`daily_price_store.py`、`daily_fx_store.py`
+- 刷新策略：`backend/services/cache/refresh.py`
+- 用户域：`cache/user/store.py`、`cache/user/codec.py`、`cache/user/watchlist.py`
+- 行情域：`cache/market/prices.py`、`fx.py`、`valuation.py`、`hist_high.py`、`meta.py`
+- 日频同步：`backend/services/data_sync/`（`daily_price.py`、`daily_fx.py`、`gaps.py`）
 - Redis 工具：`backend/common/cache.py`
 - 交易时段：`backend/common/domain/calendar.py`
 - 市场抽象：`backend/common/domain/market.py`（CN/HK 分市场）

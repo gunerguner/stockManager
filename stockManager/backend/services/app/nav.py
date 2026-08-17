@@ -20,6 +20,7 @@ from backend.services.calculation.nav import (
     holdings_at,
     resolve_start_date,
 )
+from backend.services.data_sync import ensure_daily_prices_for_windows, ensure_hkd_cny_rates
 
 
 def _needs_hk_fx(start_holdings: dict[str, float], price_windows: dict) -> bool:
@@ -109,12 +110,12 @@ class NavAnalysis:
             seed_date=event_cutoff,
         )
         prices = (
-            CacheRepository.ensure_daily_prices_for_windows(price_windows)
+            ensure_daily_prices_for_windows(price_windows)
             if price_windows
             else {}
         )
         hkd_cny_rates = (
-            CacheRepository.ensure_hkd_cny_rates(event_cutoff or range_start, end)
+            ensure_hkd_cny_rates(event_cutoff or range_start, end)
             if _needs_hk_fx(start_holdings, price_windows)
             else {}
         )

@@ -6,18 +6,18 @@ from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from backend.common.cache import Cache
 from backend.common import logger
+from backend.common.cache import Cache
 from backend.common.domain.market import markets_in_codes
-from backend.common.utils import format_operations
 from backend.common.types import CalculatedResult, CashFlowData, CashFlowList, NavAnalysisResult, OperationDict
-from backend.models import Operation, Info, CashFlow
+from backend.common.utils import format_operations
+from backend.models import CashFlow, Info, Operation
 from backend.services.cache import keys
-from backend.services.cache import operation_codec
-from backend.services.cache import refresh_policy
+from backend.services.cache import refresh as refresh_policy
+from backend.services.cache.user import codec as operation_codec
 
 
-def get_user_operations_cache(user: User) -> OperationDict | None:
+def _get_user_operations_cache(user: User) -> OperationDict | None:
     key = keys.KEY_USER_OPERATIONS.format(user_id=user.pk)
     data = cache.get(key)
     if not data:
@@ -29,23 +29,23 @@ def get_user_operations_cache(user: User) -> OperationDict | None:
         return None
 
 
-def set_user_operations_cache(user: User, operations: OperationDict) -> None:
+def _set_user_operations_cache(user: User, operations: OperationDict) -> None:
     key = keys.KEY_USER_OPERATIONS.format(user_id=user.pk)
     data = operation_codec.serialize_operations(operations)
     cache.set(key, data, keys.TTL_USER_DATA)
 
 
-def clear_user_operations(user_id: int) -> None:
+def _clear_user_operations(user_id: int) -> None:
     cache.delete(keys.KEY_USER_OPERATIONS.format(user_id=user_id))
 
 
-def get_user_cash_info_cache(user: User) -> tuple | None:
+def _get_user_cash_info_cache(user: User) -> tuple | None:
     key = keys.KEY_USER_CASH_INFO.format(user_id=user.pk)
     data = cache.get(key)
     return (data['income_cash'], data['cash_flow_list']) if data else None
 
 
-def set_user_cash_info_cache(user: User, income_cash: float, cash_flow_list: CashFlowList) -> None:
+def _set_user_cash_info_cache(user: User, income_cash: float, cash_flow_list: CashFlowList) -> None:
     cache.set(
         keys.KEY_USER_CASH_INFO.format(user_id=user.pk),
         {'income_cash': income_cash, 'cash_flow_list': cash_flow_list},
@@ -53,11 +53,11 @@ def set_user_cash_info_cache(user: User, income_cash: float, cash_flow_list: Cas
     )
 
 
-def clear_user_cash_info(user_id: int) -> None:
+def _clear_user_cash_info(user_id: int) -> None:
     cache.delete(keys.KEY_USER_CASH_INFO.format(user_id=user_id))
 
 
-def should_invalidate_calculated_cache(user_codes: Iterable[str]) -> bool:
+def _should_invalidate_calculated_cache(user_codes: Iterable[str]) -> bool:
     return any(
         refresh_policy.should_refresh_market(market)
         for market in markets_in_codes(user_codes)
@@ -71,7 +71,7 @@ def get_calculated_target(
     codes = list(user_codes) if user_codes is not None else list(get_user_operations(user).keys())
     if (
         not (cached := cache.get(keys.KEY_CALCULATED_TARGET.format(user_id=user.pk)))
-        or should_invalidate_calculated_cache(codes)
+        or _should_invalidate_calculated_cache(codes)
     ):
         return None
     return cached
@@ -88,7 +88,7 @@ def set_calculated_target(
     cache.set(keys.KEY_CALCULATED_TARGET.format(user_id=user_id), result, keys.TTL_CALCULATED_TARGET)
 
 
-def clear_calculated_target(user_id: int) -> None:
+def _clear_calculated_target(user_id: int) -> None:
     cache.delete(keys.KEY_CALCULATED_TARGET.format(user_id=user_id))
 
 
@@ -110,22 +110,22 @@ def set_nav_analysis(user_id: int, result: NavAnalysisResult) -> None:
     )
 
 
-def clear_nav_analysis(user_id: int) -> None:
+def _clear_nav_analysis(user_id: int) -> None:
     cache.delete(keys.KEY_NAV_ANALYSIS.format(user_id=user_id))
 
 
 def get_user_operations(user: User) -> OperationDict:
-    if (cached := get_user_operations_cache(user)) is not None:
+    if (cached := _get_user_operations_cache(user)) is not None:
         return cached
     operations = format_operations(
         Operation.objects.filter(user=user).select_related('stock_meta').order_by('date', 'sortOrder', 'id')
     )
-    set_user_operations_cache(user, operations)
+    _set_user_operations_cache(user, operations)
     return operations
 
 
 def get_user_cash_info(user: User) -> tuple[float, CashFlowList]:
-    if (cached := get_user_cash_info_cache(user)) is not None:
+    if (cached := _get_user_cash_info_cache(user)) is not None:
         return cached
     income_info = Info.objects.filter(user=user, info_type=Info.InfoType.INCOME_CASH).first()
     income_cash = float(income_info.value) if income_info else 0.0
@@ -136,15 +136,15 @@ def get_user_cash_info(user: User) -> tuple[float, CashFlowList]:
         )
         for flow in CashFlow.objects.filter(user=user).order_by('-transaction_date')
     ]
-    set_user_cash_info_cache(user, income_cash, cash_flow_list)
+    _set_user_cash_info_cache(user, income_cash, cash_flow_list)
     return income_cash, cash_flow_list
 
 
 def clear_user_cache(user_id: int) -> None:
-    clear_user_operations(user_id)
-    clear_user_cash_info(user_id)
-    clear_calculated_target(user_id)
-    clear_nav_analysis(user_id)
+    _clear_user_operations(user_id)
+    _clear_user_cash_info(user_id)
+    _clear_calculated_target(user_id)
+    _clear_nav_analysis(user_id)
 
 
 @receiver([post_save, post_delete], sender=Operation)

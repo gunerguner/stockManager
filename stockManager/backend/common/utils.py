@@ -63,7 +63,7 @@ def format_operations(operation_list: Iterable[Operation]) -> dict[str, list[Ope
     """按股票代码分组操作记录"""
     grouped: defaultdict[str, list[Operation]] = defaultdict(list)
     for operation in operation_list:
-        grouped[operation.code].append(operation)
+        grouped[operation.stock_meta.code].append(operation)
     return dict(grouped)
 
 

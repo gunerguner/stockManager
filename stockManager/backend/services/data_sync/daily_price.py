@@ -5,22 +5,23 @@ from datetime import date
 from django.db import close_old_connections, transaction
 
 from backend.common import logger
-from backend.common.domain.market import Market, code_to_market
 from backend.common.domain.calendar import TradingCalendar
+from backend.common.domain.market import Market, code_to_market
 from backend.common.types import (
     DailyCloseByCode,
     DailyCloseSeries,
     DateRangeList,
     HoldingWindows,
 )
-from backend.models import StockDailyPrice
 from backend.datasource.historicalDaily import fetch_daily_closes
+from backend.models import StockDailyPrice
+from backend.services.data_sync.gaps import merge_windows, missing_session_gaps
 
 _MAX_WORKERS = 6
 _GAP_FILL_ROUNDS = 2
 
 
-def load_closes(
+def _load_closes(
     codes: list[str],
     start: date,
     end: date,
@@ -37,49 +38,6 @@ def load_closes(
     for code, d, close in rows:
         result.setdefault(code, {})[d] = float(close)
     return result
-
-
-def _merge_windows(windows: DateRangeList) -> DateRangeList:
-    if not windows:
-        return []
-    ordered = sorted(windows, key=lambda w: (w[0], w[1]))
-    merged: DateRangeList = [ordered[0]]
-    for start, end in ordered[1:]:
-        prev_start, prev_end = merged[-1]
-        if start <= prev_end or (start - prev_end).days <= 1:
-            merged[-1] = (prev_start, max(prev_end, end))
-        else:
-            merged.append((start, end))
-    return merged
-
-
-def _missing_session_gaps(
-    have: DailyCloseSeries,
-    start: date,
-    end: date,
-    market: Market = Market.CN,
-) -> DateRangeList:
-    """在 [start, end] 的对应市场交易日中，找出缺失收盘价的连续区间。"""
-    if start > end or not (
-        sessions := TradingCalendar.sessions_between(start, end, market)
-    ):
-        return []
-    gaps: DateRangeList = []
-    gap_start: date | None = None
-    gap_end: date | None = None
-    for d in sessions:
-        if d in have and have[d] > 0:
-            if gap_start is not None and gap_end is not None:
-                gaps.append((gap_start, gap_end))
-            gap_start = None
-            gap_end = None
-        else:
-            if gap_start is None:
-                gap_start = d
-            gap_end = d
-    if gap_start is not None and gap_end is not None:
-        gaps.append((gap_start, gap_end))
-    return gaps
 
 
 def _fetch_and_upsert_gaps(code: str, gaps: DateRangeList) -> DailyCloseSeries:
@@ -102,8 +60,8 @@ def _gaps_in_windows(
 ) -> DateRangeList:
     gaps: DateRangeList = []
     for start, end in windows:
-        gaps.extend(_missing_session_gaps(existing, start, end, market))
-    return _merge_windows(gaps)
+        gaps.extend(missing_session_gaps(existing, start, end, market))
+    return merge_windows(gaps)
 
 
 def _ensure_one_code_windows(
@@ -112,11 +70,11 @@ def _ensure_one_code_windows(
 ) -> DailyCloseSeries:
     close_old_connections()
     market = code_to_market(code)
-    if not (merged := _merge_windows([(s, e) for s, e in windows if s <= e])):
+    if not (merged := merge_windows([(s, e) for s, e in windows if s <= e])):
         return {}
     overall_start = merged[0][0]
     overall_end = max(e for _, e in merged)
-    existing = load_closes([code], overall_start, overall_end).get(code) or {}
+    existing = _load_closes([code], overall_start, overall_end).get(code) or {}
 
     for round_idx in range(_GAP_FILL_ROUNDS):
         if not (gaps := _gaps_in_windows(existing, merged, market)):

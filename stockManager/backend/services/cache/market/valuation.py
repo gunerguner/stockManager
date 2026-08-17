@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from django.core.cache import cache
 
-from backend.common.cache import Cache
 from backend.common import logger
+from backend.common.cache import Cache
 from backend.common.domain.market import to_baidu_params
 from backend.common.types import RealtimePriceDict, ValuationData
 from backend.datasource import fetch_pe_pb

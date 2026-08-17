@@ -7,8 +7,8 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.db.models.base import ModelState
 
-from backend.models import Operation
 from backend.common.types import OperationDict
+from backend.models import Operation, StockMeta
 
 _OPERATION_FIELDS = (
     "id",
@@ -60,7 +60,7 @@ def serialize_operations(operations: OperationDict) -> str:
     })
 
 
-def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
+def _operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
     op = Operation.__new__(Operation)
 
     state = ModelState()
@@ -69,7 +69,7 @@ def operation_from_cache(code: str, op_data: dict, user_id: int) -> Operation:
 
     op._state = state
     setattr(op, "user_id", user_id)
-    op.code = code
+    op.stock_meta = StockMeta(code=code)
     op.date = datetime.strptime(op_data["date"], "%Y-%m-%d").date()
     for field in _OPERATION_FIELDS:
         if field == "sortOrder":
@@ -84,6 +84,6 @@ def deserialize_operations(data: str, user: User) -> OperationDict:
     operations_dict = json.loads(data)
     user_id = int(user.pk)
     return {
-        code: [operation_from_cache(code, op_data, user_id) for op_data in op_list]
+        code: [_operation_from_cache(code, op_data, user_id) for op_data in op_list]
         for code, op_list in operations_dict.items()
     }

@@ -15,7 +15,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | Django 配置 | `stockManager/stockManager/settings.py` |
 | 根路由 | `stockManager/stockManager/urls.py`（`^api/` → backend） |
 | API 路由 | `stockManager/backend/urls.py` |
-| 模型 | `stockManager/backend/models.py` |
+| 模型 | `stockManager/backend/models/` |
 | 盈亏引擎 | `stockManager/backend/services/calculation/holdings/`（`calculator`、`overall`、`single_stock`、`single_metrics`、`money_weighted`、`stock_hold`） |
 | 净值算法 | `stockManager/backend/services/calculation/nav/`（`replay`、`metrics`）；编排在 `services/app/nav.py` |
 | 关注列表用例 | `stockManager/backend/services/app/watchlist.py`（`Watchlist.build` / `set_hidden`） |
@@ -24,7 +24,8 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | HTTP 装饰器/响应 | `stockManager/backend/common/web/`（`decorators`、`response`、`auth_user`） |
 | 缓存门面 | `stockManager/backend/services/cache/repository.py`（`CacheRepository`） |
 | 缓存 key/TTL | `stockManager/backend/services/cache/keys.py` |
-| 缓存各 store | `cache/user_store.py`、`price_store.py`、`meta_store.py`、`fx_store.py`、`valuation_store.py`、`hist_high_store.py`、`watch_store.py`、`daily_price_store.py`、`daily_fx_store.py`、`refresh_policy.py`、`operation_codec.py` |
+| 缓存各 store（Redis） | `cache/user/store.py`、`user/codec.py`、`user/watchlist.py`、`cache/market/prices.py`、`fx.py`、`valuation.py`、`hist_high.py`、`meta.py`、`cache/refresh.py` |
+| 日频数据同步 | `services/data_sync/`（`daily_price.py`、`daily_fx.py`、`gaps.py`；外部源 → SQLite） |
 | 缓存工具 | `stockManager/backend/common/cache.py`（`Cache` 类） |
 | 市场抽象（CN/HK） | `stockManager/backend/common/domain/market.py` |
 | 交易日历（CN/HK） | `stockManager/backend/common/domain/calendar.py` |
@@ -103,14 +104,14 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 
 | 你改了什么 | 还要联动检查 |
 |-----------|----------------|
-| `models.py` | 迁移文件、Admin 展示、缓存失效信号（`cache/user_store.py`、`cache/meta_store.py`、`cache/watch_store.py`） |
+| `models/` | 迁移文件、Admin 展示、缓存失效信号（`cache/user/store.py`、`cache/market/meta.py`、`cache/user/watchlist.py`） |
 | `calculation/holdings/`（`calculator` / `overall` / `single_*`） | `common/types.py`、`/api/stocks` 输出、`/list`/`/profit-analysis`/`/transaction` 前端展示；港股结算同时检查 `common/domain/settlement.py` |
-| `calculation/nav/` / `app/nav.py` | `/api/nav`、`/api/nav/refresh`、前端 `pages/NavAnalysis/`、`daily_price_store` |
+| `calculation/nav/` / `app/nav.py` | `/api/nav`、`/api/nav/refresh`、前端 `pages/NavAnalysis/`、`services/data_sync/` |
 | `app/watchlist.py` | `/api/watchlist`、`/api/watchlist/hidden`、前端 `pages/Watch/` |
-| `backend/datasource/realtimePrice.py` | `price_store`/`refresh_policy` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
-| `common/domain/calendar.py` | `refresh_policy.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
-| `common/domain/market.py`（CN/HK 抽象） | `price_store`/`fx_store`/`valuation_store`、估值与汇率换算口径 |
-| `WatchItem` / `watch_store.py` | `/api/watchlist`、前端 `pages/Watch/`、`valuation_store`/`hist_high_store` |
+| `backend/datasource/realtimePrice.py` | `cache/market/prices.py` / `cache/refresh.py` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
+| `common/domain/calendar.py` | `refresh.should_refresh_market`、`is_in_trading_hours`、`get_trading_time_statuses`（`/api/tradingStatus`）；交易时段/日历逻辑改动前后端自动一致 |
+| `common/domain/market.py`（CN/HK 抽象） | `cache/market/prices.py` / `fx.py` / `valuation.py`、估值与汇率换算口径 |
+| `WatchItem` / `cache/user/watchlist.py` | `/api/watchlist`、前端 `pages/Watch/`、`market/valuation.py` / `hist_high.py` |
 | `front/config/routes.ts` | 权限 `access.ts`、菜单展示、默认重定向 |
 | `docker/nginx.conf` | `/api` 转发、静态资源路径、frontend 重建 |
 
