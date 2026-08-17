@@ -39,7 +39,7 @@ stockManager/                 # Git 根
 | 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
-| 行情 | `easyquotation` **tencent/hkquote**（沪深+港股实时）；`baostock`（仅 A 股除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高，统一 qfq）；sina 外汇（HKD/CNY） |
+| 行情 | `easyquotation` **tencent**（沪深实时）+ 腾讯 `sqt.gtimg.cn`（港股实时）；`baostock`（仅 A 股除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高，统一 qfq）；sina 外汇（HKD/CNY） |
 | 日历 | `exchange_calendars` **XSHG / XHKG**（`common/domain/calendar.py`，CN/HK 分市场；前端右上角交易状态 Tag 走 `/api/tradingStatus`，后端统一计算） |
 
 ## 架构要点
@@ -72,7 +72,7 @@ flowchart LR
   Umi[Umi :8001] -->|proxy /api| Django[Django :8000]
   Django --> SQLite[(SQLite)]
   Django --> Redis[(Redis)]
-  Django --> Quote[easyquotation tencent/hkquote]
+  Django --> Quote[tencent A股 + sqt 港股]
   Django --> Baostock[baostock 除权除息]
   Django --> Baidu[百度 opendata PE/PB]
   Django --> FX[港股 HKD/CNY 汇率]

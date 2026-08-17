@@ -1,4 +1,5 @@
-"""股票实时价格外部数据源（easyquotation tencent / hkquote）"""
+"""股票实时价格外部数据源（A 股 easyquotation tencent；港股直连腾讯 sqt）"""
+import re
 from typing import Protocol, cast
 
 from easyquotation import use as eq_use
@@ -6,6 +7,14 @@ from easyquotation import use as eq_use
 from backend.common import logger
 from backend.common.domain.market import hk_api_code, split_codes_by_market
 from backend.common.types import RealtimePriceData, RealtimePriceDict
+from backend.common.utils import safe_float
+from backend.datasource.http_client import get_text
+
+HK_QUOTE_URL = "http://sqt.gtimg.cn/utf8/q="
+_HK_QUOTE_RE = re.compile(r'v_r_hk(\d+)="(.*?)"')
+_HK_NAME_IDX = 1
+_HK_PRICE_IDX = 3
+_HK_CLOSE_IDX = 4
 
 
 class _EasyQuotation(Protocol):
@@ -57,14 +66,46 @@ def _fetch_cn(code_list: list[str]) -> RealtimePriceDict:
         return {}
 
 
+def _parse_hk_quote(payload: str) -> RealtimePriceData | None:
+    """只取名称/现价/昨收。腾讯港股均价等字段常为空，不能整行 float。"""
+    fields = payload.split("~")
+    if len(fields) <= _HK_CLOSE_IDX:
+        return None
+    price_raw = fields[_HK_PRICE_IDX]
+    close_raw = fields[_HK_CLOSE_IDX]
+    if not price_raw or not close_raw:
+        return None
+    return _build_price(
+        {
+            "name": fields[_HK_NAME_IDX],
+            "price": safe_float(price_raw),
+            "lastPrice": safe_float(close_raw),
+        },
+        "price",
+        "lastPrice",
+    )
+
+
 def _fetch_hk(code_list: list[str]) -> RealtimePriceDict:
     try:
-        raw = _quotation("hkquote").real([hk_api_code(code) for code in code_list])
-        return {
-            code: _build_price(raw[hk_api_code(code)], "price", "lastPrice")
-            for code in code_list
-            if raw.get(hk_api_code(code))
-        }
+        params = ",".join(f"r_hk{hk_api_code(code)}" for code in code_list)
+        text = get_text(HK_QUOTE_URL + params)
     except Exception as e:
         logger.error(f"获取港股价格失败: {e}")
         return {}
+
+    parsed: dict[str, RealtimePriceData] = {}
+    for match in _HK_QUOTE_RE.finditer(text):
+        api_code, payload = match.group(1), match.group(2)
+        data = _parse_hk_quote(payload)
+        if data is None:
+            logger.warning(f"港股 {api_code} 行情字段无效，已跳过")
+            continue
+        parsed[api_code] = data
+
+    result: RealtimePriceDict = {}
+    for code in code_list:
+        data = parsed.get(hk_api_code(code))
+        if data:
+            result[code] = data
+    return result

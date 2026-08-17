@@ -19,7 +19,7 @@ def is_hk_code(code: str) -> bool:
 
 
 def hk_api_code(code: str) -> str:
-    """转换为 easyquotation hkquote 使用的不带 hk 前缀的 5 位代码。"""
+    """转换为腾讯港股接口使用的不带 hk 前缀的 5 位代码。"""
     return code[2:] if is_hk_code(code) else code
 
 

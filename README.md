@@ -43,7 +43,7 @@ I had not written much frontend before, so I spent time learning the framework a
 
 ## Data sources
 
-**Live quotes** come from Tencent via [easyquotation](https://github.com/shidenggui/easyquotation): A-shares use `tencent`; Hong Kong stocks use `hkquote`. HKD/CNY spot rates come from Sina Finance. 
+**Live quotes** come from Tencent: A-shares via [easyquotation](https://github.com/shidenggui/easyquotation) `tencent`; Hong Kong stocks via Tencent `sqt.gtimg.cn`. HKD/CNY spot rates come from Sina Finance. 
 
 **Historical corporate actions** use [BaoStock](http://baostock.com/baostock/index.php) for dividend and rights-adjustment history (A-shares only; not available for HK). Valuation (PE/PB) and historical highs use Baidu opendata and Tencent gtimg instead of BaoStock.
 

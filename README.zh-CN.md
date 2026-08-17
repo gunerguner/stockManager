@@ -47,7 +47,7 @@ image.png
 
 ## 数据源
 
-实时交易指标通过 [easyquotation](https://github.com/shidenggui/easyquotation) 获取：A 股使用腾讯 `tencent`，港股使用 `hkquote`；港币兑人民币即期汇率来自新浪外汇。
+实时交易指标通过腾讯行情获取：A 股走 [easyquotation](https://github.com/shidenggui/easyquotation) `tencent`，港股直连 `sqt.gtimg.cn`；港币兑人民币即期汇率来自新浪外汇。
 
 历史除权除息数据来自 [BaoStock](http://baostock.com/baostock/index.php)（仅 A 股；港股不支持）。估值 PE/PB、历史高价等已改用百度 opendata 与腾讯 gtimg，不再经 baostock。
 

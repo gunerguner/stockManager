@@ -12,7 +12,7 @@
 
 | 数据类型 | A 股 | 港股 | datasource 模块 | 缓存 key | TTL |
 |---------|------|------|-------------|----------|-----|
-| 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
+| 实时价 | easyquotation `tencent` | 腾讯 `sqt.gtimg.cn`（`r_hk`） | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
 | 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
 | HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
@@ -26,7 +26,8 @@
 ```mermaid
 flowchart LR
   subgraph datasource [datasource 纯拉取]
-    eq[easyquotation]
+    eq[easyquotation A股]
+    sqt[腾讯 sqt 港股]
     bao[baostock]
     gtimg[腾讯 gtimg]
     bd[百度 opendata]
@@ -53,7 +54,7 @@ flowchart LR
 
 | 数据类型 | A 股 | 港股 | datasource 模块 | 缓存 key | TTL |
 |---------|------|------|-------------|----------|-----|
-| 实时价 | easyquotation `tencent` | easyquotation `hkquote` | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
+| 实时价 | easyquotation `tencent` | 腾讯 `sqt.gtimg.cn`（`r_hk`） | `realtimePrice.fetch_prices` | `stock:price:{code}` | 86400s |
 | PE/PB（epsTtm/bvps） | 百度 opendata `market=ab` | 百度 opendata `market=hk` | `baiduValuation` | `stock:valuation:{code}` | 604800s（7 天） |
 | 6 年历史最高 | 腾讯 gtimg 周线前复权（qfq） | 腾讯 gtimg 周线前复权（qfq） | `historicalHigh` | `stock:hist_high:{code}` | 2592000s（30 天） |
 | HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
@@ -62,12 +63,12 @@ flowchart LR
 
 ## 3. 各源说明
 
-### easyquotation（实时价）
+### 实时价（A 股 easyquotation / 港股腾讯 sqt）
 
 - **文件**：`datasource/realtimePrice.py`
-- **A 股**：`use('tencent').real(codes, prefix=True)` → `currentPrice`、`yesterdayClose`；`yearHigh` 取自 `high_2` 字段。
-- **港股**：`use('hkquote').real([5位代码])`；`yearHigh` 取自 `year_high` 字段。
-- **实例复用**：easyquotation 实例经模块级 `_quotations` 字典缓存，避免重复初始化。
+- **A 股**：`use('tencent').real(codes, prefix=True)` → `currentPrice`、`yesterdayClose`。
+- **港股**：直连 `http://sqt.gtimg.cn/utf8/q=r_hkXXXXX`，只解析名称 / 现价 / 昨收。不走 easyquotation `hkquote`（其把均价等空字段 `float()`，开盘未成交时整批失败）。
+- **实例复用**：A 股 easyquotation 实例经模块级 `_quotations` 字典缓存，避免重复初始化。
 - **刷新策略**（`price_store`）：按市场 CN/HK 调用 `refresh_policy.should_refresh_market` → `TradingCalendar.is_trading_time_passed`；自上次成功拉价起，若 `[last_time, now]` 与任意交易日开收盘时段有交集则回源，否则 MGET 命中 `stock:price:{code}`。写价后 `set_price_timestamp` 并 `clear_all_calculated_targets`。详见 [cache.md](cache.md) §5.1。
 
 ### baostock（仅除权除息）
@@ -118,7 +119,7 @@ flowchart LR
 
 | 源 | 失败时 |
 |----|--------|
-| easyquotation | 记录 error 日志，返回空 dict，页面缺价 |
+| 实时价 | 记录 error 日志，返回空 dict，页面缺价；港股按票解析，单票空字段不影响其余 |
 | baostock | 记录 error 日志，单 code 返回 None |
 | 百度 / gtimg | 记录 error 日志，返回 None；hist 写 `__none__` sentinel 防重复请求 |
 | sina 即期外汇 | 抛异常（解析失败 / 无效汇率均 raise），由视图层 `@handle_exception` 兜底；非交易时段因优先读缓存通常不触发请求 |
@@ -128,8 +129,8 @@ flowchart LR
 
 | 库 | 用途 |
 |----|------|
-| easyquotation | A/H 实时价 |
+| easyquotation | A 股实时价 |
 | baostock | 仅除权除息 |
-| requests | `http_client`（百度、gtimg、sina） |
+| requests | `http_client`（百度、gtimg、sina、港股 sqt） |
 
 已移除：**akshare**（汇率改 sina）。
