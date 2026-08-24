@@ -43,6 +43,7 @@ def get_text(
     params: dict | None = None,
     headers: dict | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
+    encoding: str | None = None,
 ) -> str:
     session = _get_session()
     merged = dict(session.headers)
@@ -50,4 +51,6 @@ def get_text(
         merged.update(headers)
     resp = session.get(url, params=params, headers=merged, timeout=timeout)
     resp.raise_for_status()
+    if encoding:
+        resp.encoding = encoding
     return resp.text

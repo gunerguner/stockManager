@@ -50,7 +50,7 @@ stockManager/                 # Git 根
 
 | 层 | 包 | 说明 |
 |----|----|------|
-| Infra | `backend/datasource/` | 外部数据源适配（`realtimePrice`/`baostock_source`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`historicalDaily`/`http_client`）；仅拉取与标准化 |
+| Infra | `backend/datasource/` | 外部数据源适配（`realtimePrice`/`baostock_source`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`historicalDaily`/`sw_industry`/`http_client`）；仅拉取与标准化 |
 | L2 | `services/cache/` | Redis：`repository` 门面 + `keys` + `refresh` + `user/` + `market/`；逻辑 key、TTL、失效、回源 `datasource` |
 | L2 | `services/data_sync/` | 日频缺口补拉并写入 SQLite（`StockDailyPrice` / `HkdCnyDailyRate`）；**不**碰 Redis |
 | L3 | `services/calculation/` | 纯计算：`holdings/`（盈亏）、`nav/`（净值回放/指标）；**不**依赖 cache / data_sync / datasource |
@@ -88,7 +88,7 @@ flowchart LR
 | 净值分析 | `calculation/nav/`（纯回放）+ `services/data_sync/`（日频价/汇率补拉）+ `services/app/nav.py`（编排写库）+ `GET/POST /api/nav*` |
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
-| 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER） |
+| 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER）+ `SwIndustry`（申万行业） |
 | 除权除息 | `backend/services/app/dividend.py` + `POST /api/dividend`（仅 A 股自动生成；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
 | 实时价 | `backend/datasource/realtimePrice.py`（`fetch_prices`，沪深+港股） |
 | 关注列表 | `WatchItem` + `services/app/watchlist.py`（`build`/`set_hidden`）+ `cache/user/watchlist.py` + 前端 `pages/Watch/` |
@@ -108,7 +108,7 @@ flowchart LR
 | 新 API | `backend/views/`（仅 `stock.py` / `user.py`）→ `backend/urls.py` → `front/src/services/api.ts` |
 | 新计算字段 | `calculation/holdings/`（`calculator`/`overall`/`single_stock`/`single_metrics`）+ `common/types.py` → `StockList` / `ProfitAnalysis` / `Transaction` 页面；港股结算口径同时检查 `common/domain/settlement.py` |
 | 缓存逻辑 | `services/cache/`（`repository` 门面 + `user/` + `market/`）；先读 [references/cache.md](references/cache.md)；失效信号在 `cache/user/store.py`、`cache/market/meta.py`、`cache/user/watchlist.py` |
-| 行情/估值/汇率 | `backend/datasource/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`），缓存编排在 `cache/market/`；日频补拉在 `services/data_sync/` |
+| 行情/估值/汇率 | `backend/datasource/`（`realtimePrice`/`baiduValuation`/`exchangeRate`/`historicalHigh`/`baostock_source`/`sw_industry`），缓存编排在 `cache/market/`；日频补拉在 `services/data_sync/` |
 | 关注列表 | `models.WatchItem` → `cache/user/watchlist.py` → `app/watchlist.py` → `views/stock.watchlist` → 前端 `pages/Watch/` |
 | 净值 | `calculation/nav/` + `data_sync/` + `app/nav.py` → `/api/nav`、`/api/nav/refresh` → 前端 `pages/NavAnalysis/` |
 | 数据库 | `models/` → `makemigrations` → `migrate` → `backend/admin/` |

@@ -79,7 +79,7 @@ flowchart LR
 | `user/store.py` | 用户 operations、cash_info、calculated_target、nav_analysis 读写与失效信号 |
 | `user/watchlist.py` | 用户关注列表缓存与 `WatchItem` 信号 |
 | `market/prices.py` | 股价批量读写、写价后更新时间戳并清全用户计算结果 |
-| `market/meta.py` | StockMeta 全量缓存、名称日同步标记与信号 |
+| `market/meta.py` | StockMeta 全量缓存（含 `swIndustry`）、名称日同步标记与信号 |
 | `market/fx.py` | 港币即期汇率 `fx:hkd_cny` 读写 |
 | `market/valuation.py` | 单股估值 epsTtm/bvps 缓存 |
 | `market/hist_high.py` | 单股近 6 年历史最高价缓存 |
@@ -149,7 +149,7 @@ Redis 中实际 key 示例（由框架生成，**不要在业务里拼接**）�
   - 用途：`/api/watchlist` 读 DB 配置项；行情/估值/历史高由 `load_watchlist_market_data` 另行聚合
 5. **股票元数据全量字典**
   - Key：`stock:meta:all`
-  - 内容：`{code: {code, name, isNew, stockType}}`
+  - 内容：`{code: {code, name, isNew, stockType, swIndustry}}`，`swIndustry` 为 `{code, name}` 或 `null`
   - 用途：避免反复全表读 `StockMeta`
 6. **股票实时价格（单票）**
   - Key：`stock:price:{code}`
@@ -262,6 +262,7 @@ should_refresh_market(market)
 | `Operation` / `CashFlow` / `Info(INCOME_CASH)` 的 `post_save` / `post_delete`（`user/store.py` 信号） | `clear_user_cache`（operations、cash_info、calculated_target） |
 | `Integrate.update_income_cash` | 更新 `Info` 后由上述 `Info` 信号触发，无需手动清缓存 |
 | `StockMeta` 的 `post_save` / `post_delete`（`market/meta.py` 信号） | `clear_stock_meta_all` |
+| `SwIndustry` 的 `post_save` / `post_delete`（`market/meta.py` 信号） | `clear_stock_meta_all`（行业名变更会影响挂接的 meta） |
 | `WatchItem` 的 `post_save` / `post_delete`（`user/watchlist.py` 信号） | `clear_user_watchlist` |
 | `market/prices._set_prices_batch` 写价后 | `refresh.set_price_timestamp` + `user/store.clear_all_calculated_targets`（pattern `user:*:calculated_target`） |
 | `market/meta.sync_names_from_realtime` 有名称变更并 `bulk_update` 后 | `clear_stock_meta_all` + 写入 `stock:name:sync:mark` |

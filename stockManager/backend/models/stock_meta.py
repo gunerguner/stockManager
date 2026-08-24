@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .sw_industry import SwIndustry
+
 
 class StockMeta(models.Model):
     """股票元数据模型（全局共享）"""
@@ -25,6 +27,14 @@ class StockMeta(models.Model):
         choices=StockType.choices,
         default=StockType.OTHER,
         verbose_name="股票类型"
+    )
+    swIndustry = models.ForeignKey(
+        SwIndustry,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stocks",
+        verbose_name="申万行业",
     )
 
     class Meta:

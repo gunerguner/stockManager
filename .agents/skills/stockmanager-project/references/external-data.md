@@ -18,6 +18,7 @@
 | HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
 | HKD/CNY 日频 | — | sina 中行牌价历史 | `exchangeRate.fetch_hkd_cny_daily_rates` | SQLite `HkdCnyDailyRate` | 持久化 |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
+| 申万一级行业 | 同花顺 F10 `field.html`（Admin 保存补全） | 不自动同步 | `sw_industry.fetch_sw_industry_name` | 无（写 `StockMeta.swIndustry`） | — |
 
 > watchlist 路径（估值 + 历史高）已全部走 HTTP 源（百度 / gtimg）并行拉取；**baostock 现仅用于除权除息**。
 
@@ -32,6 +33,7 @@ flowchart LR
     gtimg[腾讯 gtimg]
     bd[百度 opendata]
     sina[sina 外汇]
+    ths[同花顺 F10 申万一级]
   end
   subgraph cache [cache 编排]
     priceStore[market/prices]
@@ -48,12 +50,14 @@ flowchart LR
   cache --> datasource
   dataSync --> datasource
   Dividend[app/dividend.py] --> bao
+  MetaAdmin[StockMetaAdmin.save_model] --> ths
 ```
 
 - **backend/datasource/**：仅负责外部拉取与字段标准化，不含 Redis 逻辑。
 - **cache/**：按 key/TTL 做 Redis read-through；`Integrate` 经 `CacheRepository` 门面调用。
 - **data_sync/**：日频价格/汇率缺口补拉并写入 SQLite；`NavAnalysis.refresh` 直接调用。
 - **app/dividend.py**：除权除息业务编排（持仓判定、去重、写库），拉取委托 `datasource.baostock_source`。
+- **`StockMetaAdmin.save_model`**：A 股且 `swIndustry` 为空时按同花顺 F10 补申万一级，拉取委托 `datasource.sw_industry`。
 
 ## 2. 数据源 × 市场对照
 
@@ -67,6 +71,7 @@ flowchart LR
 | HKD/CNY 即期 | — | sina `fx_shkdcny` | `exchangeRate.fetch_hkd_cny_rate` | `fx:hkd_cny` | 86400s |
 | HKD/CNY 日频 | — | sina 中行牌价历史 | `exchangeRate.fetch_hkd_cny_daily_rates` | SQLite `HkdCnyDailyRate` | 持久化 |
 | 除权除息 | baostock `query_dividend_data` | 不支持 | `baostock_source.fetch_dividends` | 无（直写 DB） | — |
+| 申万一级行业 | 同花顺 F10 `field.html`（Admin 保存补全） | 不自动同步 | `sw_industry.fetch_sw_industry_name` | 无（写 `StockMeta.swIndustry`） | — |
 
 ## 3. 各源说明
 
@@ -107,6 +112,14 @@ flowchart LR
 - **HTTP**：经 `datasource/http_client.get_text` 共享 Session。
 - **缓存配合**：即期走 `cache/market/fx.py`（Redis `fx:hkd_cny`）；日频走 `data_sync/daily_fx.py`（SQLite `HkdCnyDailyRate`，按 CN 交易日缺口补拉）。两者不可互相回退。
 
+### 同花顺 F10（申万一级行业）
+
+- **文件**：`datasource/sw_industry.py`
+- **A 股**：`https://basic.10jqka.com.cn/{6位代码}/field.html`（GBK），解析 `三级行业分类：一级 -- 二级 -- 三级` 的第一段。
+- **港股**：不支持（同花顺港股 F10 是港股行业，不是申万）。Admin 补全跳过 `HK` / 基金 / 可转债。
+- **HTTP**：经 `datasource/http_client.get_text`，`Referer: https://basic.10jqka.com.cn/`，页面 `charset=gbk`。
+- **落库**：`StockMetaAdmin.save_model` 按名称匹配 `SwIndustry` 后写 `StockMeta.swIndustry`；已选手动行业不覆盖。不走 Redis 热路径。
+
 ### 港股通交易与汇率口径
 
 - **录入**：`Operation.price` 为港币；港股 BUY/SELL 的 `Operation.amount` 是实际人民币成交额，`fee` 也是人民币。应优先录入实际结算值，避免按当前汇率反推历史成交。
@@ -121,6 +134,7 @@ flowchart LR
 | `GET /api/watchlist` | `Integrate.get_watchlist` → `Watchlist.build` | 实时价、估值、历史高 |
 | `POST /api/nav/refresh` | `Integrate.refresh_nav` → `NavAnalysis` | 日收盘价（`historicalDaily` / `data_sync.daily_price`）；有港股持仓时另拉日频汇率（`data_sync.daily_fx`） |
 | `POST /api/dividend` | `Integrate.generate_dividend` | baostock 除权除息 |
+| Admin 新建/保存 A 股 `StockMeta` | `StockMetaAdmin.save_model` 写 `swIndustry` | 同花顺 F10 申万一级名称 |
 
 ## 5. 失败行为
 
@@ -131,6 +145,7 @@ flowchart LR
 | 百度 / gtimg | 记录 error 日志，返回 None；hist 写 `__none__` sentinel 防重复请求 |
 | sina 即期外汇 | 抛异常（解析失败 / 无效汇率均 raise），由视图层 `@handle_exception` 兜底；非交易时段因优先读缓存通常不触发请求 |
 | sina 中行日频牌价 | 缺口补拉失败保留 DB 已有值；净值回放向前填充；港股首个估值日仍无历史汇率则刷新失败，不回退即期 |
+| 同花顺申万一级 | 记录 error/warning，返回 None；Admin 不写入、保留空 `swIndustry`；已有 `swIndustry` 不覆盖 |
 
 ## 6. 依赖
 
@@ -138,6 +153,6 @@ flowchart LR
 |----|------|
 | easyquotation | A 股实时价 |
 | baostock | 仅除权除息 |
-| requests | `http_client`（百度、gtimg、sina、港股 sqt） |
+| requests | `http_client`（百度、gtimg、sina、港股 sqt、同花顺 F10） |
 
 已移除：**akshare**（汇率改 sina）。

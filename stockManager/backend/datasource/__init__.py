@@ -5,6 +5,7 @@ from backend.datasource.exchangeRate import fetch_hkd_cny_daily_rates, fetch_hkd
 from backend.datasource.historicalDaily import fetch_daily_closes
 from backend.datasource.historicalHigh import fetch_hist_high
 from backend.datasource.realtimePrice import fetch_prices
+from backend.datasource.sw_industry import fetch_sw_industry_name
 
 __all__ = [
     "baostock_session",
@@ -15,4 +16,5 @@ __all__ = [
     "fetch_hkd_cny_rate",
     "fetch_pe_pb",
     "fetch_prices",
+    "fetch_sw_industry_name",
 ]

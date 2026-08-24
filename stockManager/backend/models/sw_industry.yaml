@@ -1,0 +1,64 @@
+version: SW2021
+industries:
+  - code: "801010"
+    name: 农林牧渔
+  - code: "801030"
+    name: 基础化工
+  - code: "801040"
+    name: 钢铁
+  - code: "801050"
+    name: 有色金属
+  - code: "801080"
+    name: 电子
+  - code: "801880"
+    name: 汽车
+  - code: "801110"
+    name: 家用电器
+  - code: "801120"
+    name: 食品饮料
+  - code: "801130"
+    name: 纺织服饰
+  - code: "801140"
+    name: 轻工制造
+  - code: "801150"
+    name: 医药生物
+  - code: "801160"
+    name: 公用事业
+  - code: "801170"
+    name: 交通运输
+  - code: "801180"
+    name: 房地产
+  - code: "801200"
+    name: 商贸零售
+  - code: "801210"
+    name: 社会服务
+  - code: "801780"
+    name: 银行
+  - code: "801790"
+    name: 非银金融
+  - code: "801230"
+    name: 综合
+  - code: "801710"
+    name: 建筑材料
+  - code: "801720"
+    name: 建筑装饰
+  - code: "801730"
+    name: 电力设备
+  - code: "801890"
+    name: 机械设备
+  - code: "801740"
+    name: 国防军工
+  - code: "801750"
+    name: 计算机
+  - code: "801760"
+    name: 传媒
+  - code: "801770"
+    name: 通信
+  - code: "801950"
+    name: 煤炭
+  - code: "801960"
+    name: 石油石化
+  - code: "801970"
+    name: 环保
+  - code: "801980"
+    name: 美容护理

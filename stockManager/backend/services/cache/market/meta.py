@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from backend.common import logger
 from backend.common.types import RealtimePriceDict
 from backend.models import StockMeta as StockMetaModel
+from backend.models import SwIndustry as SwIndustryModel
 from backend.services.cache import keys
 
 
@@ -13,18 +14,39 @@ def _clear_stock_meta_all() -> None:
     cache.delete(keys.KEY_STOCK_META_ALL)
 
 
+def _sw_industry_payload(industry: SwIndustryModel | None) -> dict | None:
+    if industry is None:
+        return None
+    return {"code": industry.code, "name": industry.name}
+
+
+def _sw_industry_from_payload(data: dict | None) -> SwIndustryModel | None:
+    if not data:
+        return None
+    return SwIndustryModel(code=data["code"], name=data["name"])
+
+
+def _meta_from_payload(data: dict) -> StockMetaModel:
+    meta = StockMetaModel(
+        code=data["code"],
+        name=data.get("name", ""),
+        isNew=data["isNew"],
+        stockType=data["stockType"],
+    )
+    payload = data.get("swIndustry")
+    if payload is None:
+        payload = data.get("tag")
+    meta.swIndustry = _sw_industry_from_payload(payload)
+    return meta
+
+
 def get_stock_meta_dict() -> dict[str, StockMetaModel]:
     if cached := cache.get(keys.KEY_STOCK_META_ALL):
-        return {
-            code: StockMetaModel(
-                code=data["code"],
-                name=data.get("name", ""),
-                isNew=data["isNew"],
-                stockType=data["stockType"],
-            )
-            for code, data in cached.items()
-        }
-    meta_dict = {meta.code: meta for meta in StockMetaModel.objects.all()}
+        return {code: _meta_from_payload(data) for code, data in cached.items()}
+    meta_dict = {
+        meta.code: meta
+        for meta in StockMetaModel.objects.select_related("swIndustry")
+    }
     cache.set(
         keys.KEY_STOCK_META_ALL,
         {
@@ -33,6 +55,7 @@ def get_stock_meta_dict() -> dict[str, StockMetaModel]:
                 "name": meta.name,
                 "isNew": meta.isNew,
                 "stockType": meta.stockType,
+                "swIndustry": _sw_industry_payload(meta.swIndustry),
             }
             for code, meta in meta_dict.items()
         },
@@ -84,3 +107,9 @@ def sync_names_from_realtime(prices: RealtimePriceDict) -> int:
 def clear_stock_meta_on_model_change(sender, instance, **kwargs) -> None:
     _clear_stock_meta_all()
     logger.info("清除股票元数据 Redis 缓存")
+
+
+@receiver([post_save, post_delete], sender=SwIndustryModel)
+def clear_stock_meta_on_sw_industry_change(sender, instance, **kwargs) -> None:
+    _clear_stock_meta_all()
+    logger.info("申万行业变更，清除股票元数据 Redis 缓存")

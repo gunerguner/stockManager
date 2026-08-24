@@ -7,6 +7,7 @@ from backend.admin import operation  # noqa: F401
 from backend.admin import info  # noqa: F401
 from backend.admin import cashflow  # noqa: F401
 from backend.admin import stockmeta  # noqa: F401
+from backend.admin import sw_industry  # noqa: F401
 from backend.admin import session  # noqa: F401
 from backend.admin import watchitem  # noqa: F401
 from backend.admin import portfolionav  # noqa: F401
@@ -16,6 +17,7 @@ __all__ = [
     'info',
     'cashflow',
     'stockmeta',
+    'sw_industry',
     'session',
     'watchitem',
     'portfolionav',
