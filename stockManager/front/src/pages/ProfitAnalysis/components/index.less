@@ -1,6 +1,22 @@
-// 盈亏归因表格容器
+.profit-analysis-page {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+// 盈亏归因表格容器（覆盖通用 table-list-wrapper 的 overflow-x，避免与表格双重横向滚动条）
 .analysis-list-wrapper {
+  overflow-x: hidden;
+  max-width: 100%;
+
+  .analysis-dimension-switch {
+    margin-bottom: 16px;
+  }
+
   @media (max-width: @screen-md) {
+    .analysis-dimension-switch {
+      margin-bottom: 12px;
+    }
+
     .ant-table {
       &-thead > tr > th,
       &-tbody > tr > td {

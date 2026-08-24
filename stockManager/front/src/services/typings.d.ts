@@ -93,6 +93,7 @@ declare namespace API {
     isNew: boolean;
     stockType: string;
     holdingDuration: number;
+    swIndustry?: { code: string; name: string } | null;
   };
 
   type Operation = {

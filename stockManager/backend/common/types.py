@@ -34,6 +34,12 @@ class OperationData(TypedDict):
     reserve: float
 
 
+class SwIndustryData(TypedDict):
+    """申万一级行业"""
+    code: str
+    name: str
+
+
 class StockData(TypedDict):
     """单只股票的计算指标（不含 operationList）
 
@@ -59,6 +65,7 @@ class StockData(TypedDict):
     holdingDuration: int
     stockType: str
     isNew: bool
+    swIndustry: SwIndustryData | None
 
 
 class MarketStatusData(TypedDict):

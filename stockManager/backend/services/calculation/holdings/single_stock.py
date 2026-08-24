@@ -36,6 +36,13 @@ def _default_realtime_price() -> RealtimePriceData:
     })
 
 
+def _sw_industry_data(stock_meta: StockMetaModel | None) -> dict | None:
+    industry = getattr(stock_meta, "swIndustry", None) if stock_meta else None
+    if industry is None:
+        return None
+    return {"code": industry.code, "name": industry.name}
+
+
 def attach_price_fields(
     code: str,
     single_real_time: RealtimePriceData,
@@ -44,7 +51,15 @@ def attach_price_fields(
     current_price = single_real_time["currentPrice"]
     return {
         "code": code,
-        **({"stockType": stock_meta.stockType, "isNew": stock_meta.isNew} if stock_meta else {}),
+        **(
+            {
+                "stockType": stock_meta.stockType,
+                "isNew": stock_meta.isNew,
+                "swIndustry": _sw_industry_data(stock_meta),
+            }
+            if stock_meta
+            else {}
+        ),
         "name": _resolve_stock_name(code, single_real_time, stock_meta),
         "priceNow": current_price,
         **(
