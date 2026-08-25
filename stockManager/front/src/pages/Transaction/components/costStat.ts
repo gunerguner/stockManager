@@ -35,25 +35,19 @@ const createEmptyRecord = (id: string, type: CostPeriodType): CostListModel => (
   subList: type === 'year' ? [] : undefined,
 });
 
-/** 取或建年份记录 */
 const getOrCreateYear = (yearMap: Map<string, CostListModel>, year: string) => {
   let record = yearMap.get(year);
-  if (!record) {
-    record = createEmptyRecord(year, 'year');
-    yearMap.set(year, record);
-  }
+  if (!record) yearMap.set(year, (record = createEmptyRecord(year, 'year')));
   return record;
 };
 
-/** 取或建月份记录 */
 const getOrCreateMonth = (yearRecord: CostListModel, month: string) => {
   let record = yearRecord.subList!.find((m) => m.id === month);
-  if (!record) {
-    record = createEmptyRecord(month, 'month');
-    yearRecord.subList!.push(record);
-  }
+  if (!record) yearRecord.subList!.push((record = createEmptyRecord(month, 'month')));
   return record;
 };
+
+const byIdDesc = (a: CostListModel, b: CostListModel) => Number(b.id) - Number(a.id);
 
 /** 统计交易数据（买卖金额、手续费一律按人民币口径累加） */
 export const buildCostListByPeriod = (
@@ -64,7 +58,7 @@ export const buildCostListByPeriod = (
   const yearMap = new Map<string, CostListModel>();
 
   for (const stock of data) {
-    for (const op of operations[stock.code] || []) {
+    for (const op of operations[stock.code] ?? []) {
       const { year, month } = parseYearMonth(op.date);
       const yearRecord = getOrCreateYear(yearMap, year);
       const records = [yearRecord, getOrCreateMonth(yearRecord, month)];
@@ -85,7 +79,6 @@ export const buildCostListByPeriod = (
     }
   }
 
-  // 出入金按年月合并（与交易同口径）
   for (const cf of cashFlowList ?? []) {
     const { year, month } = parseYearMonth(cf.date);
     if (!year) continue;
@@ -94,7 +87,8 @@ export const buildCostListByPeriod = (
     getOrCreateMonth(yearRecord, month).cashFlow += cf.amount;
   }
 
-  const result = [...yearMap.values()].sort((a, b) => Number(b.id) - Number(a.id));
-  result.forEach((year) => year.subList?.sort((a, b) => Number(b.id) - Number(a.id)));
-  return result;
+  return [...yearMap.values()].toSorted(byIdDesc).map((year) => ({
+    ...year,
+    subList: year.subList?.toSorted(byIdDesc),
+  }));
 };

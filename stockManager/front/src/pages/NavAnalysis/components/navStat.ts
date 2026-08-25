@@ -48,8 +48,8 @@ export function downsampleNavPoints(
   for (let i = 0; i < points.length; i += step) {
     sampled.push(points[i]);
   }
-  const last = points[points.length - 1];
-  if (sampled[sampled.length - 1]?.date !== last.date) {
+  const last = points.at(-1)!;
+  if (sampled.at(-1)?.date !== last.date) {
     sampled.push(last);
   }
   return insertKeepDates(points, sampled, keepDates);

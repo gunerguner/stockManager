@@ -1,16 +1,22 @@
 import { formatMarketPrice } from '@/utils/format/stock';
 
+const inRange = (
+  priceNow: number | null,
+  point: number | null,
+  cmp: (price: number, p: number) => boolean,
+) => priceNow != null && point != null && point > 0 && cmp(priceNow, point);
+
 export const isBuyPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow <= point;
+  inRange(priceNow, point, (price, p) => price <= p);
 
 export const isBuyPointWarning = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow > point && priceNow <= point * 1.05;
+  inRange(priceNow, point, (price, p) => price > p && price <= p * 1.05);
 
 export const isTrendPointTriggered = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow >= point;
+  inRange(priceNow, point, (price, p) => price >= p);
 
 export const isTrendPointWarning = (priceNow: number | null, point: number | null): boolean =>
-  priceNow != null && point != null && point > 0 && priceNow < point && priceNow >= point * 0.95;
+  inRange(priceNow, point, (price, p) => price < p && price >= p * 0.95);
 
 export const calcRoeFromPbPe = (pb: number | null, pe: number | null): number | null => {
   if (pb == null || pe == null || Number.isNaN(pb) || Number.isNaN(pe) || pe === 0) {

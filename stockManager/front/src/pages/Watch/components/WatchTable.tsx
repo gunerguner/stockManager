@@ -25,6 +25,14 @@ type WatchTableProps = {
   onToggleHidden?: (record: API.WatchItem, nextHidden: boolean) => Promise<boolean>;
 };
 
+const WATCH_PRICE_FIELDS = [
+  ['leftPoint', '左侧点'],
+  ['trendPoint', '趋势点'],
+  ['bloodPoint', '血筹点'],
+  ['priceNow', '现价'],
+  ['histHigh', '6年内最高'],
+] as const;
+
 const renderMultilineText = (text: string) => {
   if (!text) return '—';
   return <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>;
@@ -57,31 +65,11 @@ const WatchDetailContent: React.FC<{
         items={[
           { key: 'risk', label: '风险', children: renderMultilineText(record.risk) },
           { key: 'opportunity', label: '机会', children: renderMultilineText(record.opportunity) },
-          {
-            key: 'leftPoint',
-            label: '左侧点',
-            children: formatMarketPriceOrDash(record.leftPoint, record.code),
-          },
-          {
-            key: 'trendPoint',
-            label: '趋势点',
-            children: formatMarketPriceOrDash(record.trendPoint, record.code),
-          },
-          {
-            key: 'bloodPoint',
-            label: '血筹点',
-            children: formatMarketPriceOrDash(record.bloodPoint, record.code),
-          },
-          {
-            key: 'priceNow',
-            label: '现价',
-            children: formatMarketPriceOrDash(record.priceNow, record.code),
-          },
-          {
-            key: 'histHigh',
-            label: '6年内最高',
-            children: formatMarketPriceOrDash(record.histHigh, record.code),
-          },
+          ...WATCH_PRICE_FIELDS.map(([key, label]) => ({
+            key,
+            label,
+            children: formatMarketPriceOrDash(record[key], record.code),
+          })),
           { key: 'pb', label: 'PB', children: formatDecimal(record.pb) },
           { key: 'pe', label: 'PE(TTM)', children: formatDecimal(record.pe) },
           {
@@ -120,25 +108,17 @@ export const WatchTable: React.FC<WatchTableProps> = ({
     );
   };
 
-  const renderBuyPoint = (val: number | null, record: API.WatchItem) => {
+  const renderPoint = (
+    val: number | null,
+    record: API.WatchItem,
+    isHit: (price: number | null, point: number | null) => boolean,
+    isWarning: (price: number | null, point: number | null) => boolean,
+  ) => {
     if (val == null || val <= 0) {
       return <span style={{ color: token.colorTextDisabled }}>—</span>;
     }
-    const hit = isBuyPointTriggered(record.priceNow, val);
-    const warning = isBuyPointWarning(record.priceNow, val);
-    return (
-      <span style={hit ? highlightStyle : warning ? warningStyle : undefined}>
-        {formatMarketPriceOrDash(val, record.code)}
-      </span>
-    );
-  };
-
-  const renderTrendPoint = (val: number | null, record: API.WatchItem) => {
-    if (val == null || val <= 0) {
-      return <span style={{ color: token.colorTextDisabled }}>—</span>;
-    }
-    const hit = isTrendPointTriggered(record.priceNow, val);
-    const warning = isTrendPointWarning(record.priceNow, val);
+    const hit = isHit(record.priceNow, val);
+    const warning = isWarning(record.priceNow, val);
     return (
       <span style={hit ? highlightStyle : warning ? warningStyle : undefined}>
         {formatMarketPriceOrDash(val, record.code)}
@@ -238,19 +218,22 @@ export const WatchTable: React.FC<WatchTableProps> = ({
         title: '左侧点',
         dataIndex: 'leftPoint',
         width: isMobile ? 65 : 80,
-        render: (value, record) => renderBuyPoint(value, record),
+        render: (value, record) =>
+          renderPoint(value, record, isBuyPointTriggered, isBuyPointWarning),
       },
       {
         title: '趋势点',
         dataIndex: 'trendPoint',
         width: isMobile ? 65 : 80,
-        render: (value, record) => renderTrendPoint(value, record),
+        render: (value, record) =>
+          renderPoint(value, record, isTrendPointTriggered, isTrendPointWarning),
       },
       {
         title: '血筹点',
         dataIndex: 'bloodPoint',
         width: isMobile ? 65 : 80,
-        render: (value, record) => renderBuyPoint(value, record),
+        render: (value, record) =>
+          renderPoint(value, record, isBuyPointTriggered, isBuyPointWarning),
       },
     ],
     [isMobile, colorFromValue, highlightStyle, warningStyle, token.colorTextDisabled],

@@ -1,5 +1,5 @@
 import { Table, Tooltip } from 'antd';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
@@ -14,6 +14,23 @@ import { HoldingStatus } from '@/components/Common/HoldingStatus';
 import { AmountText, DailyChangeCell } from '@/utils/format/render';
 import { useTradeDetailModal } from '@/components/Common/modal/TradeDetailModal';
 import './index.less';
+
+const withHkTooltip = (
+  cell: ReactNode,
+  hkd: number | null | undefined,
+  color?: string,
+) => {
+  if (hkd == null) return cell;
+  return (
+    <Tooltip
+      title={formatAmount(hkd, { currency: 'hkd' })}
+      color={color}
+      styles={color ? { container: { color: '#fff' } } : undefined}
+    >
+      {cell}
+    </Tooltip>
+  );
+};
 
 type HoldingsListProps = {
   data: API.StockData;
@@ -36,17 +53,19 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
 
   const handleRowClick = (record: API.Stock) => {
     showTradeDetail({
-      data: [{ stock: record, operations: operations[record.code] || [] }],
+      data: [{ stock: record, operations: operations[record.code] ?? [] }],
       displayType: 'stockInfo',
     });
   };
 
-  const filteredData = useMemo(() => {
-    return data.stocks.filter(
-      (record) =>
-        !((record.totalValue < 0.1 && !showAll) || (record.stockType === 'CONV' && !showConv)),
-    );
-  }, [data.stocks, showAll, showConv]);
+  const filteredData = useMemo(
+    () =>
+      data.stocks.filter(
+        (record) =>
+          (record.totalValue >= 0.1 || showAll) && (record.stockType !== 'CONV' || showConv),
+      ),
+    [data.stocks, showAll, showConv],
+  );
 
   const columns: ColumnsType<API.Stock> = useMemo(() => {
     return [
@@ -98,10 +117,7 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
         sorter: (a, b) => a.totalValue - b.totalValue,
         render: (_, r) => {
           const cell = <div className="cell-number">{formatAmount(r.totalValue)}</div>;
-          if (!isHkCode(r.code)) return cell;
-          return (
-            <Tooltip title={formatAmount(hkNative.totalValue(r), { currency: 'hkd' })}>{cell}</Tooltip>
-          );
+          return withHkTooltip(cell, isHkCode(r.code) ? hkNative.totalValue(r) : null);
         },
       },
       {
@@ -138,17 +154,8 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
               <AmountText value={r.offsetCurrent} />
             </div>
           );
-          if (!isHkCode(r.code)) return cell;
-          const hkd = hkNative.offsetCurrent(r);
-          return (
-            <Tooltip
-              title={formatAmount(hkd, { currency: 'hkd' })}
-              color={colorFromValue(hkd)}
-              styles={{ container: { color: '#fff' } }}
-            >
-              {cell}
-            </Tooltip>
-          );
+          const hkd = isHkCode(r.code) ? hkNative.offsetCurrent(r) : null;
+          return withHkTooltip(cell, hkd, hkd == null ? undefined : colorFromValue(hkd));
         },
       },
       {
@@ -163,18 +170,8 @@ export const HoldingsList: React.FC<HoldingsListProps> = ({
               {`${formatAmount(r.offsetTotal)} (${formatDecimalRatio(r.moneyWeightedReturn)})`}
             </div>
           );
-          if (!isHkCode(r.code)) return cell;
-          const hkd = hkNative.offsetTotal(r);
-          if (hkd == null) return cell;
-          return (
-            <Tooltip
-              title={formatAmount(hkd, { currency: 'hkd' })}
-              color={colorFromValue(hkd)}
-              styles={{ container: { color: '#fff' } }}
-            >
-              {cell}
-            </Tooltip>
-          );
+          const hkd = isHkCode(r.code) ? hkNative.offsetTotal(r) : null;
+          return withHkTooltip(cell, hkd, hkd == null ? undefined : colorFromValue(hkd));
         },
       },
     ];

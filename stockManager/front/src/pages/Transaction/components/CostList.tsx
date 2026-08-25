@@ -29,7 +29,9 @@ const COUNT_METRICS: Array<{
   { key: 'dividendCount', label: '除权除息', filter: (_, op) => op.type === 'DV' },
 ];
 
-/** 单个指标单元 */
+const asButtonProps = (clickable: boolean, onClick?: () => void) =>
+  clickable ? { onClick, role: 'button' as const, tabIndex: 0 } : {};
+
 const MetricCard: React.FC<{
   label: string;
   value: React.ReactNode;
@@ -44,9 +46,7 @@ const MetricCard: React.FC<{
     <div
       className={`metric-card ${clickable ? 'metric-card--clickable' : 'metric-card--zero'}`}
       style={{ background: token.colorFillQuaternary }}
-      onClick={onClick}
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
+      {...asButtonProps(!!clickable, onClick)}
     >
       <div className="metric-card__value" style={{ color: valueColor }}>
         {value}
@@ -127,10 +127,8 @@ const MonthCard: React.FC<{
             <div
               key={key}
               className={`month-card__row ${clickable ? 'month-card__row--clickable' : ''}`}
-              style={clickable ? { color: token.colorPrimary } : { color: token.colorText }}
-              onClick={clickable ? () => onCountClick(key, parentYear, record.id) : undefined}
-              role={clickable ? 'button' : undefined}
-              tabIndex={clickable ? 0 : undefined}
+              style={{ color: clickable ? token.colorPrimary : token.colorText }}
+              {...asButtonProps(clickable, () => onCountClick(key, parentYear, record.id))}
             >
               <span>{label}</span>
               <span>{value}</span>
@@ -215,7 +213,7 @@ export const CostList: React.FC<CostListProps> = ({
     if (hasInitRef.current) return;
     if (costList.length === 0) return;
     hasInitRef.current = true;
-    setExpandedYears(new Set([costList[0].id]));
+    setExpandedYears(new Set([costList.at(0)!.id]));
   }, [costList]);
 
   const handleCountClick = (dataIndex: CountType, year: string, month?: string) => {
@@ -225,7 +223,7 @@ export const CostList: React.FC<CostListProps> = ({
     const filteredData = data.stocks
       .map((stock) => ({
         stock,
-        operations: (operations[stock.code] || []).filter((op) => {
+        operations: (operations[stock.code] ?? []).filter((op) => {
           const { year: opYear, month: opMonth } = parseYearMonth(op.date);
           return opYear === year && (!month || opMonth === month) && metric.filter(stock, op);
         }),

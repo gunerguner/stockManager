@@ -34,9 +34,7 @@ export const NavContent: React.FC<NavContentProps> = ({
     () => filterNavPoints(data?.points ?? [], range, keepDates),
     [data?.points, range, keepDates],
   );
-  const latestNav = data?.points?.length
-    ? data.points[data.points.length - 1].navDisplay
-    : null;
+  const latestNav = data?.points?.at(-1)?.navDisplay ?? null;
 
   return (
     <Spin spinning={loading || refreshing}>

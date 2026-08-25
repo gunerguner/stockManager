@@ -9,6 +9,7 @@ import {
   computeOverallProfitLoss,
   sortAnalysisList,
   type AnalysisModel,
+  type SortField,
 } from './analysisStat';
 import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import { formatSharePercent } from '@/utils/format/stock';
@@ -23,7 +24,6 @@ export type AnalysisListProps = {
 };
 
 type AnalysisDimension = 'market' | 'industry';
-type SortField = 'profit' | 'loss' | 'netIncome';
 type SortState = { field: SortField; order: 'ascend' | 'descend' };
 
 const DIMENSION_OPTIONS: Array<{ value: AnalysisDimension; label: string }> = [
@@ -56,8 +56,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
   const analysisList = useMemo(
     () =>
       dimension === 'industry'
-        ? buildAnalysisByIndustry(data.stocks, { incomeCash })
-        : buildAnalysisByStockType(data.stocks, { incomeCash }),
+        ? buildAnalysisByIndustry(data.stocks, incomeCash)
+        : buildAnalysisByStockType(data.stocks, incomeCash),
     [data.stocks, incomeCash, dimension],
   );
 
@@ -91,8 +91,19 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
     setSortState(DEFAULT_SORT);
   };
 
-  const columns: ColumnsType<AnalysisModel> = useMemo(
-    () => [
+  const columns: ColumnsType<AnalysisModel> = useMemo(() => {
+    const amountCols: Array<{
+      title: string;
+      field: SortField;
+      total?: number;
+      color?: string;
+    }> = [
+      { title: '获利', field: 'profit', total: totalProfit, color: profitColor },
+      { title: '亏损', field: 'loss', total: totalLoss, color: lossColor },
+      { title: '净收益', field: 'netIncome' },
+    ];
+
+    return [
       {
         title: dimension === 'industry' ? '行业' : '类型',
         dataIndex: 'type',
@@ -102,46 +113,26 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         title: '数量',
         dataIndex: 'count',
       },
-      {
-        title: '获利',
-        dataIndex: 'profit',
-        sorter: true,
-        sortOrder: sortState.field === 'profit' ? sortState.order : undefined,
-        render: (value: number) => (
-          <Tooltip
-            title={formatSharePercent(value, totalProfit)}
-            color={profitColor}
-            styles={{ container: { color: '#fff' } }}
-          >
+      ...amountCols.map(({ title, field, total, color }) => ({
+        title,
+        dataIndex: field,
+        sorter: true as const,
+        sortOrder: sortState.field === field ? sortState.order : undefined,
+        render: (value: number) =>
+          total != null && color ? (
+            <Tooltip
+              title={formatSharePercent(value, total)}
+              color={color}
+              styles={{ container: { color: '#fff' } }}
+            >
+              <AmountText value={value} />
+            </Tooltip>
+          ) : (
             <AmountText value={value} />
-          </Tooltip>
-        ),
-      },
-      {
-        title: '亏损',
-        dataIndex: 'loss',
-        sorter: true,
-        sortOrder: sortState.field === 'loss' ? sortState.order : undefined,
-        render: (value: number) => (
-          <Tooltip
-            title={formatSharePercent(value, totalLoss)}
-            color={lossColor}
-            styles={{ container: { color: '#fff' } }}
-          >
-            <AmountText value={value} />
-          </Tooltip>
-        ),
-      },
-      {
-        title: '净收益',
-        dataIndex: 'netIncome',
-        sorter: true,
-        sortOrder: sortState.field === 'netIncome' ? sortState.order : undefined,
-        render: (value: number) => <AmountText value={value} />,
-      },
-    ],
-    [dimension, sortState, totalProfit, totalLoss, profitColor, lossColor],
-  );
+          ),
+      })),
+    ];
+  }, [dimension, sortState, totalProfit, totalLoss, profitColor, lossColor]);
 
   return (
     <div className="table-list-wrapper analysis-list-wrapper">

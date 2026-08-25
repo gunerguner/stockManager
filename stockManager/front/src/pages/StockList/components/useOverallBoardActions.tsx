@@ -18,8 +18,8 @@ export const useOverallBoardActions = ({
   const { showCashFlow } = useCashFlowModal();
 
   const editIncomeCash = () => {
-    const totalAsset = data.totalAsset || 0;
-    const incomeCash = data.incomeCash || 0;
+    const totalAsset = data.totalAsset ?? 0;
+    const incomeCash = data.incomeCash ?? 0;
     const fixedPart = totalAsset - incomeCash;
 
     form.setFieldsValue({ incomeCash, totalAsset });
@@ -39,7 +39,7 @@ export const useOverallBoardActions = ({
               precision={2}
               step={0.01}
               onChange={(v) =>
-                form.setFieldsValue({ totalAsset: fixedPart + ((v as number) || 0) })
+                form.setFieldsValue({ totalAsset: fixedPart + (Number(v) || 0) })
               }
             />
           </Form.Item>
@@ -53,7 +53,7 @@ export const useOverallBoardActions = ({
               precision={2}
               step={0.01}
               onChange={(v) =>
-                form.setFieldsValue({ incomeCash: ((v as number) || 0) - fixedPart })
+                form.setFieldsValue({ incomeCash: (Number(v) || 0) - fixedPart })
               }
             />
           </Form.Item>
@@ -69,8 +69,8 @@ export const useOverallBoardActions = ({
 
   const showOriginCashFlow = () =>
     showCashFlow({
-      totalCashIn: data.originCash || 0,
-      cashFlowList: data.cashFlowList || [],
+      totalCashIn: data.originCash ?? 0,
+      cashFlowList: data.cashFlowList ?? [],
     });
 
   return {

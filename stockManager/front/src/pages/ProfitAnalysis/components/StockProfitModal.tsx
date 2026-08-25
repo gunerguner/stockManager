@@ -84,7 +84,7 @@ export const useStockProfitModal = () => {
         return;
       }
 
-      const sortedData = [...data].sort((a, b) => b.netIncome - a.netIncome);
+      const sortedData = data.toSorted((a, b) => b.netIncome - a.netIncome);
 
       const columns: ColumnsType<StockProfitData> = [
         {
