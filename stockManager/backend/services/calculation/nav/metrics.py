@@ -156,17 +156,35 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
     }
 
 
+def _point_date(point: NavPointData) -> date:
+    return datetime.strptime(point['date'], '%Y-%m-%d').date()
+
+
+def _slice_with_prev_close(
+    points: list[NavPointData],
+    window_start: date,
+) -> list[NavPointData]:
+    """以上一周期最后交易日收盘为起点，计入窗口首日涨跌。"""
+    split = next(
+        (i for i, p in enumerate(points) if _point_date(p) >= window_start),
+        len(points),
+    )
+    if split == 0:
+        return points
+    return points[split - 1 :]
+
+
 def _slice_by_range(points: list[NavPointData], range_key: str) -> list[NavPointData]:
     if not points or range_key == 'all':
         return points
     today = date.today()
     if range_key == 'ytd':
-        start = date(today.year, 1, 1)
+        window_start = date(today.year, 1, 1)
     elif range_key == 'oneYear':
-        start = today - timedelta(days=365)
+        window_start = today - timedelta(days=365)
     else:
         return points
-    return [p for p in points if datetime.strptime(p['date'], '%Y-%m-%d').date() >= start]
+    return _slice_with_prev_close(points, window_start)
 
 
 def compute_metrics_by_range(points: list[NavPointData]) -> NavMetricsByRange:

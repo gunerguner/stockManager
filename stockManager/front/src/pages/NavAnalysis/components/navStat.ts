@@ -55,16 +55,21 @@ export function downsampleNavPoints(
   return insertKeepDates(points, sampled, keepDates);
 }
 
-/** 仅按区间切日期，不降采样 */
+/** 仅按区间切日期，不降采样。以上一周期最后交易日收盘为起点，计入窗口首日涨跌。 */
 export function sliceNavPointsByRange(
   points: API.NavPoint[],
   range: NavRangeKey,
 ): API.NavPoint[] {
   if (!points.length || range === 'all') return points;
   const today = dayjs();
-  const start =
+  const windowStart =
     range === 'ytd' ? today.startOf('year') : today.subtract(1, 'year');
-  return points.filter((p) => !dayjs(p.date).isBefore(start, 'day'));
+  const split = points.findIndex(
+    (p) => !dayjs(p.date).isBefore(windowStart, 'day'),
+  );
+  if (split === -1) return points.slice(-1);
+  if (split === 0) return points;
+  return points.slice(split - 1);
 }
 
 /** 按快筛切片展示点（不重算摊入；指标直接取后端 metrics[range]） */
