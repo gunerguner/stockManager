@@ -5,7 +5,7 @@ export const isHkCode = (code?: string): boolean =>
   !!code && code.toLowerCase().startsWith('hk');
 
 export const toXueqiuStockUrl = (code: string): string =>
-  `https://xueqiu.com/S/${isHkCode(code) ? `HK${code.slice(2)}` : code}`;
+  `https://xueqiu.com/S/${isHkCode(code) ? code.slice(2) : code}`;
 
 // ==================== 数字格式化 ====================
 const formatNumber = (value: number, precision: number = 2, grouped = false): string =>
