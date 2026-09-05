@@ -24,6 +24,7 @@
     "start:no-mock": "cross-env MOCK=none max dev",
     "start:pre": "cross-env UMI_ENV=pre max dev",
     "start:test": "cross-env UMI_ENV=test MOCK=none max dev",
+    "test": "jest",
     "tsc": "tsc --noEmit",
     "clean": "rimraf dist node_modules/.cache",
     "reinstall": "rimraf node_modules package-lock.json && ut install",
@@ -65,7 +66,10 @@
     "prettier": "^3.8.3",
     "rimraf": "^5.0.10",
     "stylelint": "^16.26.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "jest": "29.7.0",
+    "ts-node": "^10.9.2",
+    "@types/jest": "29.5.14"
   },
   "engines": {
     "node": ">=20.0.0"

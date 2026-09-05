@@ -1,5 +1,5 @@
 {
-  "include": ["stockManager/backend", "stockManager/stockManager"],
+  "include": ["stockManager/backend", "stockManager/stockManager", "stockManager/tests"],
   "exclude": [
     "**/__pycache__",
     "**/node_modules",
@@ -11,7 +11,7 @@
     "**/build"
   ],
   "extraPaths": ["stockManager"],
-  "pythonVersion": "3.13",
+  "pythonVersion": "3.14",
   "pythonPlatform": "All",
   "venvPath": ".",
   "venv": ".venv",

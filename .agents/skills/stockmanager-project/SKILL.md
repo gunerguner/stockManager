@@ -14,6 +14,8 @@ disable-model-invocation: false
 stockManager/                 # Git 根
 ├── README.md / README.zh-CN.md
 ├── install.sh
+├── scripts/test.sh           # 前后端全量测试
+├── .cursor/hooks.json        # Agent 结束后按改动跑测试
 ├── docker/
 └── stockManager/             # 应用根（注意嵌套同名目录）
     ├── manage.py
@@ -24,8 +26,12 @@ stockManager/                 # Git 根
     │   ├── services/         # app/ + cache/ + calculation/ + data_sync/
     │   ├── views/ / admin/ / models/
     │   └── ...
+    ├── tests/                # 后端 pytest（不进 backend/）
     ├── front/                # Umi 4 + Ant Design Pro
+    │   ├── src/
+    │   └── tests/            # 前端 Jest（不进 src/）
     ├── requirements.txt
+    ├── requirements-dev.txt
     └── db.sqlite3
 ```
 
@@ -174,13 +180,9 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 ## 测试
 
-**无自动化单元测试**。改完后手动验证：登录 → `/list` 持仓 → `/profit-analysis` 盈亏归因 → `/transaction` 交易数据 → `/nav-analysis` 净值 → 除权刷新 →（管理员）清缓存。前端可跑 `ut run lint`、`ut run type-check`。
+自动化回归见 [references/testing.md](references/testing.md)。改完 `backend/` 或 `front/src/` 后跑 `./scripts/test.sh`（后端 pytest + 前端 Jest）。用例不进业务目录：后端 `stockManager/tests/`，前端 `stockManager/front/tests/`。
 
-建议最小检查集（改动后至少执行其一）：
-
-1. 仅后端改动：`python manage.py check`
-2. 仅前端改动：`ut run type-check`
-3. API/计算改动：手动走通 `/list` + `/profit-analysis` + `/transaction` + `/nav-analysis` + `/api/clearCache`
+补充人工抽查（测试未覆盖的外网路径）：登录 → `/list` → `/profit-analysis` → `/transaction` → `/nav-analysis` → 除权刷新 →（管理员）清缓存。前端类型：`ut run type-check`。
 
 ## 编码约定
 
@@ -195,7 +197,7 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 - 是否新增/修改 API：`backend/urls.py` 与 `front/src/services/api.ts` 是否同时更新
 - 是否修改模型：是否完成 `makemigrations` 与 `migrate`，并检查 admin 展示
-- 是否修改计算字段：`common/types.py`、`calculation/holdings/`、前端页面字段是否三处一致
+- 是否修改计算字段：`common/types.py`、`calculation/holdings/`、前端页面字段是否三处一致；跑 `./scripts/test.sh`
 - 是否修改缓存：是否覆盖写后失效路径（`Operation` / `Info` / `CashFlow` / `StockMeta` / `WatchItem`）
 - 是否修改前端路由或静态资源：是否验证 Docker frontend 重建流程
 
@@ -204,6 +206,7 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 | 场景 | 文档 |
 |------|------|
 | 路径索引 / 部署 / 迁移 / 排障 | [references/reference.md](references/reference.md) |
+| 自动化测试 / 回归命令 / stop hook | [references/testing.md](references/testing.md) |
 | 缓存 key / TTL / 失效 / 交易时段刷新 | [references/cache.md](references/cache.md) |
 | 外部数据源 / datasource 层 / 失败行为 | [references/external-data.md](references/external-data.md) |
 | 前端主题 / 明暗切换 / 盈亏颜色 / less | [references/theme.md](references/theme.md) |

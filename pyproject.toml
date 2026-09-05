@@ -1,5 +1,14 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.django_settings"
+pythonpath = ["stockManager"]
+testpaths = ["stockManager/tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
 [tool.ruff.lint.isort]
-known-first-party = ["backend", "stockManager"]
+known-first-party = ["backend", "stockManager", "tests"]
 
 [tool.ruff.lint]
 select = ["I"]
@@ -13,7 +22,7 @@ select = ["I"]
 # 但须能解析 backend.* 导入（依赖 extraPaths）。
 # ---------------------------------------------------------------------------
 [tool.pyright]
-include = ["stockManager/backend", "stockManager/stockManager"]
+include = ["stockManager/backend", "stockManager/stockManager", "stockManager/tests"]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
@@ -25,7 +34,7 @@ exclude = [
     "**/build",
 ]
 extraPaths = ["stockManager"]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 pythonPlatform = "All"
 venvPath = "."
 venv = ".venv"
@@ -33,7 +42,7 @@ typeCheckingMode = "standard"
 reportMissingImports = "error"
 
 [tool.basedpyright]
-include = ["stockManager/backend", "stockManager/stockManager"]
+include = ["stockManager/backend", "stockManager/stockManager", "stockManager/tests"]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
@@ -46,7 +55,7 @@ exclude = [
     "**/admin",
 ]
 extraPaths = ["stockManager"]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 pythonPlatform = "All"
 venvPath = "."
 venv = ".venv"

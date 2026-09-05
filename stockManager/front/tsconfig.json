@@ -5,12 +5,11 @@
     "target": "esnext",
     "lib": ["esnext", "dom"],
     "sourceMap": true,
-    "baseUrl": ".",
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
@@ -23,10 +22,9 @@
     "types": [],
     "isolatedModules": true,
     "incremental": true,
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./src/*"],
-      "@@/*": ["./src/.umi/*"]
+      "@@/*": ["./src/.umi/*", "./src/.umi-test/*"]
     }
   },
   "include": [
@@ -38,5 +36,5 @@
     ".stylelintrc.js",
     ".prettierrc.js"
   ],
-  "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack"]
+  "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "src/.umi-test/*", "webpack"]
 }

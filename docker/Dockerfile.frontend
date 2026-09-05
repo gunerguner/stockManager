@@ -7,7 +7,7 @@ ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV TZ=Asia/Shanghai
 ENV UTOO_REGISTRY=https://registry.npmmirror.com
 
-RUN npm install -g utoo@1.0.32
+RUN npm install -g utoo@1.1.8
 
 WORKDIR /app
 

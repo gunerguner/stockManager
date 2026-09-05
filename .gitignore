@@ -19,7 +19,11 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
-.cursor/
+.cursor/*
+!.cursor/hooks.json
+!.cursor/hooks/
+!.cursor/hooks/**
+.cursor/skip-test-loop
 .trae/
 
 # Package manager caches
@@ -72,9 +76,16 @@ db.sqlite3
 **/log/
 log/
 
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
 # Frontend build
 stockManager/front/dist/
 stockManager/front/docs/
 .umi
 .umi-production
+.umi-test
 .turbopack

@@ -94,6 +94,9 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 ## 常用排障命令（按场景）
 
 - Django 配置体检：`cd stockManager && python manage.py check`
+- 全量测试：仓库根 `./scripts/test.sh`（详见 [testing.md](testing.md)）
+- 后端单测：仓库根 `.venv/bin/python -m pytest`
+- 前端单测：`cd stockManager/front && ut run test`
 - 查看 URL 映射：`cd stockManager && python manage.py show_urls`（若安装 django-extensions）
 - 前端类型检查：`cd stockManager/front && ut run type-check`
 - 前端代理确认：`cd stockManager/front && cat config/proxy.ts`
@@ -105,7 +108,8 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | 你改了什么 | 还要联动检查 |
 |-----------|----------------|
 | `models/` | 迁移文件、Admin 展示、缓存失效信号（`cache/user/store.py`、`cache/market/meta.py`、`cache/user/watchlist.py`） |
-| `calculation/holdings/`（`calculator` / `overall` / `single_*`） | `common/types.py`、`/api/stocks` 输出、`/list`/`/profit-analysis`/`/transaction` 前端展示；港股结算同时检查 `common/domain/settlement.py` |
+| `calculation/holdings/`（`calculator` / `overall` / `single_*`） | `common/types.py`、`/api/stocks` 输出、前端展示；港股同时查 `settlement.py`；跑 `./scripts/test.sh` |
+| `front/src/utils/format/`、`*Stat.ts`、`watchHelpers.ts` | 对应 `front/tests/` 用例；跑 `ut run test` |
 | `calculation/nav/` / `app/nav.py` | `/api/nav`、`/api/nav/refresh`、前端 `pages/NavAnalysis/`、`services/data_sync/` |
 | `app/watchlist.py` | `/api/watchlist`、`/api/watchlist/hidden`、前端 `pages/Watch/` |
 | `backend/datasource/realtimePrice.py` | `cache/market/prices.py` / `cache/refresh.py` 缓存时间戳与分市场判断、CN/HK 拆分、失败兜底 |
