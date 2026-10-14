@@ -1,6 +1,6 @@
 """金额 Decimal 量化约定（Operation 存储层）"""
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any
+from typing import Any, overload
 
 # price: 覆盖港股 0.001、场内基金 4 位
 PRICE_QUANT = Decimal("0.0001")
@@ -36,6 +36,14 @@ def quantize_money(value: Any) -> Decimal:
 
 def quantize_cash(value: Any) -> Decimal:
     return to_decimal(value).quantize(CASH_QUANT, rounding=ROUND_HALF_UP)
+
+
+@overload
+def decimal_to_float(value: None) -> None: ...
+
+
+@overload
+def decimal_to_float(value: Decimal | int | float | str) -> float: ...
 
 
 def decimal_to_float(value: Any | None) -> float | None:

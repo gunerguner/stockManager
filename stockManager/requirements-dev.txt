@@ -2,3 +2,4 @@
 
 pytest>=8.4
 pytest-django>=4.11
+django-types>=0.20  # PEP 561 stubs：Pyright/Pylance 识别模型字段的实例类型

@@ -22,7 +22,7 @@ class StockMeta(models.Model):
     code = models.CharField(max_length=200, unique=True, verbose_name="股票代码")
     name = models.CharField(max_length=64, blank=True, default="", verbose_name="股票名称")
     isNew = models.BooleanField(default=False, verbose_name="是否新股")
-    stockType = models.CharField(  # type: ignore[misc]
+    stockType = models.CharField(
         max_length=6,
         choices=StockType.choices,
         default=StockType.OTHER,
@@ -43,4 +43,4 @@ class StockMeta(models.Model):
 
     def __str__(self) -> str:
         display_name = self.name or self.code
-        return f"{self.code} ({display_name}) - {self.get_stockType_display()}"  # type: ignore[attr-defined]
+        return f"{self.code} ({display_name}) - {self.StockType(self.stockType).label}"

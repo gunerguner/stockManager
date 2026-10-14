@@ -24,7 +24,7 @@ class Operation(models.Model):
     )
     date = models.DateField(verbose_name="交易日期")
     sortOrder = models.PositiveIntegerField(default=0, verbose_name="同日顺序")
-    operationType = models.CharField(  # type: ignore[misc]
+    operationType = models.CharField(
         max_length=4,
         choices=OperationType.choices,
         default=OperationType.BUY,

@@ -1,8 +1,8 @@
 """公共工具函数模块"""
 from collections import defaultdict
 from collections.abc import Iterable
-from enum import Enum
 
+from backend.common.money import decimal_to_float
 from backend.common.thresholds import MIN_QTY
 from backend.common.types import CashFlowList, OperationData, RealtimePriceData
 from backend.models import Operation
@@ -36,19 +36,16 @@ def sum_origin_cash(cash_flow_list: CashFlowList) -> float:
 
 
 def operation_to_api(op: Operation) -> OperationData:
-    """API 边界：Decimal 转 float，避免 JsonResponse 把金额编成字符串。"""
-    raw_type = op.operationType
-    op_type = raw_type.value if isinstance(raw_type, Enum) else str(raw_type)
-    amount = op.amount
+    """API 边界：日期转字符串，Decimal 转 float，避免 JsonResponse 把金额编成字符串。"""
     return {
-        "date": str(op.date),
-        "type": op_type,
-        "price": float(op.price),
+        "date": op.date.isoformat(),
+        "type": op.operationType,
+        "price": decimal_to_float(op.price),
         "count": op.count,
-        "fee": float(op.fee),
-        "amount": float(amount) if amount is not None else None,
+        "fee": decimal_to_float(op.fee),
+        "amount": decimal_to_float(op.amount),
         "comment": op.comment,
-        "cash": float(op.cash),
+        "cash": decimal_to_float(op.cash),
         "stock": op.stock,
         "reserve": op.reserve,
     }
