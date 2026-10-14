@@ -1,6 +1,7 @@
-import { Button, Row, Col, Checkbox, Space } from 'antd';
+import { Button, Checkbox } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import './index.less';
 
 type StockListToolbarProps = {
   showAll: boolean;
@@ -19,53 +20,26 @@ export const StockListToolbar: React.FC<StockListToolbarProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  if (isMobile) {
-    return (
-      <Row align="middle" gutter={[8, 8]} style={{ marginTop: 12, marginBottom: 12 }}>
-        <Col span={8}>
-          <Button type="primary" ghost onClick={onRefresh} icon={<ReloadOutlined />} block size="small">
-            刷新
-          </Button>
-        </Col>
-        <Col span={16}>
-          <Space wrap size={[8, 4]}>
-            <Checkbox
-              checked={showAll}
-              onChange={(e) => onShowAllChange(e.target.checked)}
-              style={{ fontSize: 12 }}
-            >
-              显示市值为零
-            </Checkbox>
-            <Checkbox
-              checked={showConv}
-              onChange={(e) => onShowConvChange(e.target.checked)}
-              style={{ fontSize: 12 }}
-            >
-              显示可转债
-            </Checkbox>
-          </Space>
-        </Col>
-      </Row>
-    );
-  }
-
   return (
-    <Row align="middle" gutter={[16, 16]} style={{ marginTop: 16, marginBottom: 16 }}>
-      <Col sm={4} md={2}>
-        <Button type="primary" ghost onClick={onRefresh} icon={<ReloadOutlined />} block>
-          刷新
-        </Button>
-      </Col>
-      <Col sm={20} md={{ offset: 14, span: 8 }}>
-        <Space wrap size={[16, 8]}>
-          <Checkbox checked={showAll} onChange={(e) => onShowAllChange(e.target.checked)}>
-            显示市值为零的股票
-          </Checkbox>
-          <Checkbox checked={showConv} onChange={(e) => onShowConvChange(e.target.checked)}>
-            显示可转债
-          </Checkbox>
-        </Space>
-      </Col>
-    </Row>
+    <div className="stock-list-toolbar">
+      <Button
+        className="stock-list-toolbar-refresh"
+        type="primary"
+        ghost
+        onClick={onRefresh}
+        icon={<ReloadOutlined />}
+        size={isMobile ? 'small' : 'middle'}
+      >
+        刷新
+      </Button>
+      <div className="stock-list-toolbar-filters">
+        <Checkbox checked={showAll} onChange={(e) => onShowAllChange(e.target.checked)}>
+          {isMobile ? '显示市值为零' : '显示市值为零的股票'}
+        </Checkbox>
+        <Checkbox checked={showConv} onChange={(e) => onShowConvChange(e.target.checked)}>
+          显示可转债
+        </Checkbox>
+      </div>
+    </div>
   );
 };

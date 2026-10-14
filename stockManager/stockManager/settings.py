@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 _PROJECT_DIR = Path(__file__).resolve().parent
@@ -12,7 +13,12 @@ _dotenv = _PROJECT_DIR / '.env'
 if _dotenv.exists():
     load_dotenv(_dotenv)
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+SECRET_KEY = (os.environ.get('DJANGO_SECRET_KEY') or '').strip()
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        '环境变量 DJANGO_SECRET_KEY 为空。请在 stockManager/stockManager/.env 中设置'
+        '（可复制 .env.example，并用 django.core.management.utils.get_random_secret_key 生成）。'
+    )
 DEBUG = os.environ.get('DJANGO_DEBUG') == 'true'
 ALLOWED_HOSTS = ['*']
 

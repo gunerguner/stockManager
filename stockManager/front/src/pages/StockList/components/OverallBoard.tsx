@@ -1,4 +1,4 @@
-import { Statistic, Row, Col, Divider, theme } from 'antd';
+import { Statistic, Divider, theme } from 'antd';
 import { useState } from 'react';
 import { UpOutlined, DownOutlined } from '@ant-design/icons';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
@@ -53,9 +53,6 @@ const getBoardStatisticStyles = (
       color: token.colorTextSecondary,
     },
     content: {
-      fontWeight: isMain ? 600 : ('normal' as const),
-      fontSize: isMobile ? (isMain ? 20 : 15) : isMain ? 32 : 20,
-      lineHeight: 1.2,
       fontVariantNumeric: 'tabular-nums' as const,
       ...(showColor &&
         numericValue !== undefined &&
@@ -90,9 +87,9 @@ const StatisticItem: React.FC<StatisticItemProps> = ({
   });
 
   return (
-    <Col span={isMobile ? 12 : 6} onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
+    <div className="overall-stat" onClick={onClick} style={clickable ? { cursor: 'pointer' } : undefined}>
       <Statistic title={title} value={value} styles={styles} />
-    </Col>
+    </div>
   );
 };
 
@@ -139,9 +136,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
 
   return (
     <div className="overall-board-wrapper">
-      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
+      <div className="overall-stats is-main">
         {renderStatistics(MAIN_STATISTICS, data, actions, colorProps, true)}
-      </Row>
+      </div>
 
       <div
         className={`expand-divider-wrapper ${isExpanded ? 'expanded' : 'collapsed'}`}
@@ -165,9 +162,9 @@ export const OverallBoard: React.FC<OverallBoardProps> = ({ data, onModifySucces
       </div>
 
       {isExpanded && (
-        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginTop: isMobile ? 12 : 24 }}>
+        <div className="overall-stats" style={{ marginTop: isMobile ? 12 : 24 }}>
           {renderStatistics(EXPANDED_STATISTICS, data, actions, colorProps)}
-        </Row>
+        </div>
       )}
     </div>
   );
