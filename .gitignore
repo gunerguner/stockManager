@@ -19,12 +19,11 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
-.cursor/*
-!.cursor/hooks.json
-!.cursor/hooks/
-!.cursor/hooks/**
-.cursor/skip-test-loop
+.cursor/
 .trae/
+
+# 本地一次跳过结束前测试，不要提交
+.agents/skip-test-loop
 
 # Package manager caches
 .pnpm-store/

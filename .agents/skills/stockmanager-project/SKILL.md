@@ -14,8 +14,8 @@ disable-model-invocation: false
 stockManager/                 # Git 根
 ├── README.md / README.zh-CN.md
 ├── install.sh
-├── scripts/test.sh           # 前后端全量测试
-├── .cursor/hooks.json        # Agent 结束后按改动跑测试
+├── scripts/test.sh           # 全量测试；--if-dirty 有改动才跑
+├── .agents/                  # 项目 skill
 ├── docker/
 └── stockManager/             # 应用根（注意嵌套同名目录）
     ├── manage.py
@@ -180,7 +180,13 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 ## 测试
 
-自动化回归见 [references/testing.md](references/testing.md)。改完 `backend/` 或 `front/src/` 后跑 `./scripts/test.sh`（后端 pytest + 前端 Jest）。用例不进业务目录：后端 `stockManager/tests/`，前端 `stockManager/front/tests/`。
+自动化回归见 [references/testing.md](references/testing.md)。改完 `backend/`、`front/src/` 或测试后，结束前执行：
+
+```bash
+./scripts/test.sh --if-dirty
+```
+
+工作树命中业务或测试路径时跑后端 pytest 和前端 Jest；失败则修好再跑一轮。用例不进业务目录：后端 `stockManager/tests/`，前端 `stockManager/front/tests/`。
 
 补充人工抽查（测试未覆盖的外网路径）：登录 → `/list` → `/profit-analysis` → `/transaction` → `/nav-analysis` → 除权刷新 →（管理员）清缓存。前端类型：`ut run type-check`。
 
@@ -206,7 +212,7 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 | 场景 | 文档 |
 |------|------|
 | 路径索引 / 部署 / 迁移 / 排障 | [references/reference.md](references/reference.md) |
-| 自动化测试 / 回归命令 / stop hook | [references/testing.md](references/testing.md) |
+| 自动化测试 / 回归命令 / 结束前跑测试 | [references/testing.md](references/testing.md) |
 | 缓存 key / TTL / 失效 / 交易时段刷新 | [references/cache.md](references/cache.md) |
 | 外部数据源 / datasource 层 / 失败行为 | [references/external-data.md](references/external-data.md) |
 | 前端主题 / 明暗切换 / 盈亏颜色 / less | [references/theme.md](references/theme.md) |

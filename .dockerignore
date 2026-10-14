@@ -6,6 +6,7 @@ dist
 .umi*
 docker/.env
 .cursor
+.agents/skip-test-loop
 *.sqlite3
 .env
 .env.*

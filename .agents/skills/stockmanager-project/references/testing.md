@@ -12,6 +12,9 @@
 
 # 全量（无 Redis、无外网）
 ./scripts/test.sh
+
+# 仅当 backend / front/src / tests 有改动时跑全量
+./scripts/test.sh --if-dirty
 ```
 
 分开跑：
@@ -54,10 +57,16 @@ cd stockManager/front && ut run test
 
 不要测（依赖外网或时钟）：baostock 除权、`nav/refresh` 日频补拉、真实 Redis TTL、「此刻是否开盘」。
 
-## Cursor stop hook
+## 结束前跑测试
 
-仓库根 `.cursor/hooks.json` 在 Agent 本轮 `status=completed` 且工作树命中上述路径时，**自己执行** `./scripts/test.sh`。失败则 `followup_message` 交回 Agent（`loop_limit: 2`）。
+改完代码、准备结束前执行（无匹配改动时脚本自己退出，不跑测试）：
 
-临时跳过：创建 `.cursor/skip-test-loop`（已 gitignore，不要提交）。
+```bash
+./scripts/test.sh --if-dirty
+```
+
+失败则读输出、修根因，再跑一次。仍失败就停下来说明原因。
+
+临时跳过：创建 `.agents/skip-test-loop`（已 gitignore，不要提交）。
 
 没有 GitHub Actions。
