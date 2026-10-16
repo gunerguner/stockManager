@@ -233,7 +233,7 @@ log_success "Node.js 版本：$NODE_VERSION"
 # 安装 utoo
 if ! command -v ut &> /dev/null; then
     log_info "正在安装 utoo..."
-    npm install -g utoo@1.1.8
+    npm install -g utoo@1.1.12
 fi
 log_success "utoo 已安装：$(ut --version 2>/dev/null || echo unknown)"
 

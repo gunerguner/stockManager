@@ -7,7 +7,7 @@ ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV TZ=Asia/Shanghai
 ENV UTOO_REGISTRY=https://mirrors.cloud.tencent.com/npm/
 
-RUN npm install -g utoo@1.1.8 --registry=https://mirrors.cloud.tencent.com/npm/
+RUN npm install -g utoo@1.1.12 --registry=https://mirrors.cloud.tencent.com/npm/
 
 WORKDIR /app
 
