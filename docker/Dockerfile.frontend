@@ -9,7 +9,11 @@ ENV UTOO_REGISTRY=https://mirrors.cloud.tencent.com/npm/
 
 # utoo(Rust/rustls) 依赖系统 CA 证书库验证 HTTPS；node:22-slim 默认不带，缺了会报
 # "invalid peer certificate: UnknownIssuer"，所有 HTTPS 下载全部失败。必须先装。
-RUN apt-get update \
+# apt 换阿里云源（deb822 与经典格式都覆盖），否则 deb.debian.org 国内极慢。
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g; s|security.debian.org|mirrors.aliyun.com|g' \
+        /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list \
+        2>/dev/null || true \
+    && apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g utoo@1.1.12 --registry=https://mirrors.cloud.tencent.com/npm/
