@@ -154,10 +154,26 @@ declare namespace API {
     data?: TradingTimeStatus[];
   };
 
+  type NavBenchmarkKey = 'hs300' | 'cyb' | 'kc50';
+
+  type NavBenchmarkCloses = {
+    hs300: number | null;
+    cyb: number | null;
+    kc50: number | null;
+  };
+
+  type NavBenchmarkMeta = {
+    key: NavBenchmarkKey;
+    code: string;
+    name: string;
+    availableFrom: string;
+  };
+
   type NavPoint = {
     date: string;
     nav: number;
     navDisplay: number;
+    benchmarks?: NavBenchmarkCloses;
   };
 
   type NavMaxNavMarker = {
@@ -174,6 +190,7 @@ declare namespace API {
   };
 
   type NavMetrics = {
+    totalReturn: number;
     annualizedReturn: number;
     sharpeRatio: number;
     maxDrawdown: number;
@@ -191,6 +208,7 @@ declare namespace API {
   type NavAnalysisData = {
     points: NavPoint[];
     metrics: NavMetricsByRange;
+    benchmarks?: NavBenchmarkMeta[];
     incomeCash: number;
     originCash: number;
     lastDate: string | null;

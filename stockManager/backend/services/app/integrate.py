@@ -16,6 +16,7 @@ from backend.services.app.nav import NavAnalysis
 from backend.services.app.watchlist import Watchlist
 from backend.services.cache import CacheRepository
 from backend.services.calculation import Calculator
+from backend.services.calculation.nav import nav_cache_has_benchmarks
 
 
 class Integrate:
@@ -59,7 +60,9 @@ class Integrate:
 
     @classmethod
     def get_nav_analysis(cls, user: User) -> NavAnalysisResult:
-        if (cached := CacheRepository.get_nav_analysis(user.pk)) is not None:
+        cached = CacheRepository.get_nav_analysis(user.pk)
+        all_metrics = ((cached or {}).get('metrics') or {}).get('all') or {}
+        if cached is not None and nav_cache_has_benchmarks(cached) and 'totalReturn' in all_metrics:
             return cached
         result = NavAnalysis.build(user)
         CacheRepository.set_nav_analysis(user.pk, result)

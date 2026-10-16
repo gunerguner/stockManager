@@ -31,6 +31,43 @@
 
 .nav-chart {
   margin-top: 16px;
+
+  .nav-chart__note {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+}
+
+.nav-excess {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+
+  .nav-excess__label {
+    font-size: 12px;
+  }
+
+  .nav-excess__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-excess__swatch {
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  strong {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @media (max-width: @screen-md) {

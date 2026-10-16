@@ -100,6 +100,15 @@ def _ensure_one_code_windows(
     return existing
 
 
+def load_daily_closes(
+    codes: list[str],
+    start: date,
+    end: date,
+) -> DailyCloseByCode:
+    """只读已落库的日频收盘，不访问外网。"""
+    return _load_closes(codes, start, end)
+
+
 def ensure_daily_prices_for_windows(windows: HoldingWindows) -> DailyCloseByCode:
     """按持仓窗口确保日 K：只补交易日缺口，多股票并发拉取。"""
     if not (

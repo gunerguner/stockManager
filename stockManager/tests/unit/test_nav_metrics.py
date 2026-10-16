@@ -6,6 +6,7 @@ from backend.services.calculation.nav.metrics import apply_income_cash_display, 
 def test_empty_points_yield_empty_display_and_zero_metrics():
     assert apply_income_cash_display([], 10.0, 100.0) == []
     metrics = compute_metrics([])
+    assert metrics["totalReturn"] == 0.0
     assert metrics["annualizedReturn"] == 0.0
     assert metrics["maxDrawdown"] == 0.0
     assert metrics["maxNav"] is None
@@ -41,6 +42,7 @@ def test_max_drawdown_from_peak_to_trough():
     metrics = compute_metrics(points)
     max_nav = metrics["maxNav"]
     drawdown = metrics["drawdown"]
+    assert metrics["totalReturn"] == 1.12 / 1.0 - 1.0
     assert metrics["maxDrawdown"] == 0.88 / 1.1 - 1.0
     assert max_nav is not None
     assert drawdown is not None

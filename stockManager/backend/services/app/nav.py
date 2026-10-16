@@ -1,5 +1,5 @@
 """组合净值用例：刷新回放写库与展示指标组装"""
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -13,6 +13,7 @@ from backend.models import PortfolioNavDaily
 from backend.services.cache import CacheRepository
 from backend.services.calculation.nav import (
     assemble_nav_analysis,
+    benchmark_windows,
     clip_windows_to_range,
     compute_nav_rows,
     group_operations,
@@ -20,7 +21,12 @@ from backend.services.calculation.nav import (
     holdings_at,
     resolve_start_date,
 )
-from backend.services.data_sync import ensure_daily_prices_for_windows, ensure_hkd_cny_rates
+from backend.services.calculation.nav.benchmarks import BENCHMARKS
+from backend.services.data_sync import (
+    ensure_daily_prices_for_windows,
+    ensure_hkd_cny_rates,
+    load_daily_closes,
+)
 
 
 def _needs_hk_fx(start_holdings: dict[str, float], price_windows: dict) -> bool:
@@ -41,12 +47,38 @@ class NavAnalysis:
             .values_list('date', 'nav')
         )
         income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
+        closes = (
+            load_daily_closes(
+                [spec.code for spec in BENCHMARKS],
+                rows[0][0],
+                rows[-1][0],
+            )
+            if rows
+            else {}
+        )
         return assemble_nav_analysis(
             list(rows),
             income_cash,
             sum_origin_cash(cash_flow_list),
             updated_at=datetime.now(timezone.utc).isoformat(),
+            benchmark_closes=closes,
         )
+
+    @classmethod
+    def _sync_benchmarks(cls, user: User, end: date) -> None:
+        """把三条指数收盘补到用户净值区间。失败只留空点，不中断净值刷新。"""
+        first = (
+            PortfolioNavDaily.objects.filter(user=user)
+            .order_by('date')
+            .values_list('date', flat=True)
+            .first()
+        )
+        if first is None or not (windows := benchmark_windows(first, end)):
+            return
+        try:
+            ensure_daily_prices_for_windows(windows)
+        except Exception:
+            logger.exception(f"[nav] 用户 {user.pk} 指数收盘补拉失败")
 
     @classmethod
     def refresh(cls, user: User, *, mode: str = 'incremental') -> int:
@@ -76,6 +108,7 @@ class NavAnalysis:
                 nxt = TradingCalendar.next_session(last.date)
                 if nxt is None or nxt > end:
                     logger.info(f"[nav] 用户 {user.pk} 净值已是最新 {last.date}")
+                    cls._sync_benchmarks(user, end)
                     return 0
                 range_start = nxt
                 start_nav = last.nav
@@ -100,6 +133,7 @@ class NavAnalysis:
 
         if not (sessions := TradingCalendar.sessions_between(range_start, end)):
             logger.info(f"[nav] 用户 {user.pk} 无待计算交易日")
+            cls._sync_benchmarks(user, end)
             return 0
 
         windows = holding_windows(operation_list, end)
@@ -154,6 +188,7 @@ class NavAnalysis:
                 update_fields=['nav', 'units', 'asset', 'cash'],
             )
 
+        cls._sync_benchmarks(user, end)
         logger.info(
             f"[nav] 用户 {user.pk} {mode} 刷新完成: {len(rows)} 天 "
             f"({sessions[0]} ~ {sessions[-1]}), 取价股票 {len(price_windows)}"

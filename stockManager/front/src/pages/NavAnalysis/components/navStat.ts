@@ -72,6 +72,33 @@ export function sliceNavPointsByRange(
   return points.slice(split - 1);
 }
 
+/** 相对某指数的累计超额：(组合区间涨跌+1) / (指数区间涨跌+1) - 1。锚点当天没有指数收盘时返回 null。 */
+export function excessReturnVs(
+  points: API.NavPoint[],
+  range: NavRangeKey,
+  key: API.NavBenchmarkKey,
+): number | null {
+  const sliced = sliceNavPointsByRange(points, range);
+  if (sliced.length < 2) return null;
+  const start = sliced[0];
+  const end = sliced[sliced.length - 1];
+  const navStart = start.navDisplay;
+  const navEnd = end.navDisplay;
+  const idxStart = start.benchmarks?.[key];
+  const idxEnd = end.benchmarks?.[key];
+  if (
+    !(navStart > 0) ||
+    !(navEnd > 0) ||
+    idxStart == null ||
+    idxEnd == null ||
+    !(idxStart > 0) ||
+    !(idxEnd > 0)
+  ) {
+    return null;
+  }
+  return navEnd / navStart / (idxEnd / idxStart) - 1;
+}
+
 /** 按快筛切片展示点（不重算摊入；指标直接取后端 metrics[range]） */
 export function filterNavPoints(
   points: API.NavPoint[],
@@ -88,6 +115,7 @@ export function filterNavPoints(
 
 export function emptyNavMetrics(): API.NavMetrics {
   return {
+    totalReturn: 0,
     annualizedReturn: 0,
     sharpeRatio: 0,
     maxDrawdown: 0,
@@ -95,6 +123,96 @@ export function emptyNavMetrics(): API.NavMetrics {
     maxNav: null,
     drawdown: null,
   };
+}
+
+const BENCHMARK_KEYS = ['hs300', 'cyb', 'kc50'] as const;
+
+export const BENCHMARK_LINE_COLOR: Record<API.NavBenchmarkKey, string> = {
+  hs300: '#8B5CF6',
+  cyb: '#F6BD16',
+  kc50: '#5AD8A6',
+};
+
+function isBenchmarkKey(key: string): key is API.NavBenchmarkKey {
+  return (BENCHMARK_KEYS as readonly string[]).includes(key);
+}
+
+function positiveClose(value: number | null | undefined): value is number {
+  return value != null && value > 0;
+}
+
+export type RebasedBenchmarkLine = {
+  key: API.NavBenchmarkKey;
+  name: string;
+  sharedAnchor: boolean;
+  startDate: string | null;
+  values: (number | null)[];
+};
+
+/** 组合与指数都相对当前序列第一个点归一。指数在锚点无收盘时改用自身首个有效点。 */
+export function rebaseNavPoints(
+  points: API.NavPoint[],
+  metas: API.NavBenchmarkMeta[],
+): { portfolio: number[]; lines: RebasedBenchmarkLine[] } {
+  const displays = points.map((point) => point.navDisplay);
+  const base = displays[0];
+  const portfolio =
+    base != null && base > 0 ? displays.map((value) => value / base) : displays;
+
+  const lines = metas.flatMap((meta): RebasedBenchmarkLine[] => {
+    if (!isBenchmarkKey(meta.key)) return [];
+    const closes = points.map((point) => point.benchmarks?.[meta.key] ?? null);
+    const anchorClose = closes[0];
+    if (positiveClose(anchorClose)) {
+      return [
+        {
+          key: meta.key,
+          name: meta.name,
+          sharedAnchor: true,
+          startDate: points[0]?.date ?? null,
+          values: closes.map((close) =>
+            positiveClose(close) ? close / anchorClose : null,
+          ),
+        },
+      ];
+    }
+    const firstIdx = closes.findIndex((close) => positiveClose(close));
+    if (firstIdx < 0) {
+      return [
+        {
+          key: meta.key,
+          name: meta.name,
+          sharedAnchor: false,
+          startDate: null,
+          values: closes.map(() => null),
+        },
+      ];
+    }
+    const ownBase = closes[firstIdx] as number;
+    return [
+      {
+        key: meta.key,
+        name: meta.name,
+        sharedAnchor: false,
+        startDate: points[firstIdx]?.date ?? null,
+        values: closes.map((close, index) =>
+          index >= firstIdx && positiveClose(close) ? close / ownBase : null,
+        ),
+      },
+    ];
+  });
+
+  return { portfolio, lines };
+}
+
+export function navHasBenchmarkClose(points: API.NavPoint[]): boolean {
+  return points.some((point) => {
+    const closes = point.benchmarks;
+    if (!closes) return false;
+    return (
+      closes.hs300 != null || closes.cyb != null || closes.kc50 != null
+    );
+  });
 }
 
 export function navKeepDates(metrics: API.NavMetrics): string[] {

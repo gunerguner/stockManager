@@ -2,7 +2,9 @@
 import math
 from datetime import date, datetime, timedelta
 
+from backend.common.thresholds import EPS
 from backend.common.types import (
+    DailyCloseByCode,
     NavAnalysisResult,
     NavDrawdownPeriod,
     NavMaxNavMarker,
@@ -10,7 +12,10 @@ from backend.common.types import (
     NavMetricsData,
     NavPointData,
 )
-from backend.common.thresholds import EPS
+from backend.services.calculation.nav.benchmarks import (
+    align_benchmark_closes,
+    benchmark_metas,
+)
 
 _TRADING_DAYS_PER_YEAR = 242
 
@@ -45,6 +50,7 @@ def _daily_returns(navs: list[float]) -> list[float]:
 
 def _empty_metrics() -> NavMetricsData:
     return {
+        'totalReturn': 0.0,
         'annualizedReturn': 0.0,
         'sharpeRatio': 0.0,
         'maxDrawdown': 0.0,
@@ -110,6 +116,7 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
     if start <= 0 or days <= 0:
         return empty
 
+    total_return = end / start - 1.0
     annualized_return = (end / start) ** (_TRADING_DAYS_PER_YEAR / days) - 1.0
 
     rets = _daily_returns(navs)
@@ -147,6 +154,7 @@ def compute_metrics(points: list[NavPointData]) -> NavMetricsData:
         drawdown = None
 
     return {
+        'totalReturn': total_return,
         'annualizedReturn': annualized_return,
         'sharpeRatio': sharpe_ratio,
         'maxDrawdown': max_drawdown,
@@ -202,12 +210,20 @@ def assemble_nav_analysis(
     origin_cash: float,
     *,
     updated_at: str | None = None,
+    benchmark_closes: DailyCloseByCode | None = None,
 ) -> NavAnalysisResult:
     """组装 API / Redis 缓存 payload。"""
     points = apply_income_cash_display(db_points, income_cash, origin_cash)
+    aligned = align_benchmark_closes(
+        [_point_date(point) for point in points],
+        benchmark_closes or {},
+    )
+    for point, closes in zip(points, aligned, strict=True):
+        point['benchmarks'] = closes
     return {
         'points': points,
         'metrics': compute_metrics_by_range(points),
+        'benchmarks': benchmark_metas(),
         'incomeCash': income_cash,
         'originCash': origin_cash,
         'lastDate': points[-1]['date'] if points else None,

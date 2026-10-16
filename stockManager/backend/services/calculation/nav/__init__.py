@@ -1,4 +1,10 @@
 """净值算法域：回放与展示指标（纯计算）"""
+from backend.services.calculation.nav.benchmarks import (
+    align_benchmark_closes,
+    benchmark_metas,
+    benchmark_windows,
+    nav_cache_has_benchmarks,
+)
 from backend.services.calculation.nav.events import (
     group_operations,
     resolve_start_date,
@@ -17,7 +23,11 @@ from backend.services.calculation.nav.windows import (
 
 __all__ = [
     'NavDayRow',
+    'align_benchmark_closes',
     'assemble_nav_analysis',
+    'benchmark_metas',
+    'benchmark_windows',
+    'nav_cache_has_benchmarks',
     'clip_windows_to_range',
     'compute_metrics',
     'compute_metrics_by_range',

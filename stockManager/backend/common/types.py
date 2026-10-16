@@ -1,6 +1,6 @@
 """类型定义模块"""
 from datetime import date
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from backend.models import Operation
 
@@ -144,11 +144,27 @@ class ValuationData(TypedDict):
     bvps: float | None
 
 
+class NavBenchmarkCloses(TypedDict):
+    """净值日上的基准指数收盘；当天无行情为 None"""
+    hs300: float | None
+    cyb: float | None
+    kc50: float | None
+
+
+class NavBenchmarkMeta(TypedDict):
+    """基准指数说明（图例 / 发布日）"""
+    key: str
+    code: str
+    name: str
+    availableFrom: str
+
+
 class NavPointData(TypedDict):
     """净值序列点"""
     date: str
     nav: float
     navDisplay: float
+    benchmarks: NotRequired[NavBenchmarkCloses]
 
 
 class NavMaxNavMarker(TypedDict):
@@ -168,6 +184,7 @@ class NavDrawdownPeriod(TypedDict):
 
 class NavMetricsData(TypedDict):
     """净值区间指标（原始比率）+ 图表标注锚点"""
+    totalReturn: float
     annualizedReturn: float
     sharpeRatio: float
     maxDrawdown: float
@@ -186,6 +203,7 @@ class NavAnalysisResult(TypedDict):
     """净值分析 API / Redis 缓存结构"""
     points: list[NavPointData]
     metrics: NavMetricsByRange
+    benchmarks: list[NavBenchmarkMeta]
     incomeCash: float
     originCash: float
     lastDate: str | None

@@ -45,6 +45,13 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
         ]
       : []),
     {
+      title: '总收益',
+      value: metrics.totalReturn * 100,
+      precision: 2,
+      suffix: '%',
+      color: colorFromValue(metrics.totalReturn),
+    },
+    {
       title: '年化收益',
       value: metrics.annualizedReturn * 100,
       precision: 2,
@@ -125,7 +132,7 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
         })}
       </Row>
       <Typography.Paragraph type="secondary" className="nav-metrics__hint">
-        净值年化为时间加权（剔出入金），与资金加权的 XIRR 口径不同。本年度、近一年以上一周期最后交易日收盘为起点，以计入区间首日涨跌。夏普无风险利率按
+        总收益为区间累计涨跌，年化为时间加权（剔出入金），均与资金加权的 XIRR 口径不同。本年度、近一年以上一周期最后交易日收盘为起点，以计入区间首日涨跌。夏普无风险利率按
         0 计算。点击「最大回撤」可在图表标注回撤起止与收复。
       </Typography.Paragraph>
     </div>
