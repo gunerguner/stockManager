@@ -7,7 +7,12 @@ ENV NODE_OPTIONS=--max-old-space-size=8192
 ENV TZ=Asia/Shanghai
 ENV UTOO_REGISTRY=https://mirrors.cloud.tencent.com/npm/
 
-RUN npm install -g utoo@1.1.12 --registry=https://mirrors.cloud.tencent.com/npm/
+# utoo(Rust/rustls) 依赖系统 CA 证书库验证 HTTPS；node:22-slim 默认不带，缺了会报
+# "invalid peer certificate: UnknownIssuer"，所有 HTTPS 下载全部失败。必须先装。
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g utoo@1.1.12 --registry=https://mirrors.cloud.tencent.com/npm/
 
 WORKDIR /app
 

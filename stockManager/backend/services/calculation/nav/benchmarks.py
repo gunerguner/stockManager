@@ -25,6 +25,10 @@ BENCHMARKS: tuple[BenchmarkSpec, ...] = (
 )
 
 
+def empty_benchmark_closes() -> NavBenchmarkCloses:
+    return {'hs300': None, 'cyb': None, 'kc50': None}
+
+
 def benchmark_metas() -> list[NavBenchmarkMeta]:
     return [
         {
@@ -56,7 +60,7 @@ def align_benchmark_closes(
     """按净值日对齐收盘。当天没有收盘为 None，不向前填充。"""
     aligned: list[NavBenchmarkCloses] = []
     for day in dates:
-        raw: dict[str, float | None] = {spec.key: None for spec in BENCHMARKS}
+        raw = dict(empty_benchmark_closes())
         for spec in BENCHMARKS:
             close = (closes_by_code.get(spec.code) or {}).get(day)
             if close is not None and close > 0:

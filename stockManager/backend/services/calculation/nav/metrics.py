@@ -15,6 +15,7 @@ from backend.common.types import (
 from backend.services.calculation.nav.benchmarks import (
     align_benchmark_closes,
     benchmark_metas,
+    empty_benchmark_closes,
 )
 
 _TRADING_DAYS_PER_YEAR = 242
@@ -35,6 +36,7 @@ def apply_income_cash_display(
             'date': d.isoformat(),
             'nav': nav,
             'navDisplay': nav + daily_adj * (i + 1),
+            'benchmarks': empty_benchmark_closes(),
         }
         for i, (d, nav) in enumerate(points)
     ]

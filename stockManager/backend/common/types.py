@@ -1,6 +1,6 @@
 """类型定义模块"""
 from datetime import date
-from typing import NotRequired, TypedDict
+from typing import TypedDict
 
 from backend.models import Operation
 
@@ -164,7 +164,7 @@ class NavPointData(TypedDict):
     date: str
     nav: float
     navDisplay: float
-    benchmarks: NotRequired[NavBenchmarkCloses]
+    benchmarks: NavBenchmarkCloses
 
 
 class NavMaxNavMarker(TypedDict):
