@@ -239,9 +239,9 @@ log_success "utoo 已安装：$(ut --version 2>/dev/null || echo unknown)"
 
 # 设置 npm/utoo 国内镜像源
 log_info "正在设置 npm/utoo 镜像源..."
-npm config set registry https://registry.npmmirror.com
-ut config set registry https://registry.npmmirror.com --global
-log_success "npm/utoo 镜像源已配置 (npmmirror)"
+npm config set registry https://mirrors.cloud.tencent.com/npm/
+ut config set registry https://mirrors.cloud.tencent.com/npm/ --global
+log_success "npm/utoo 镜像源已配置 (腾讯云 npm 镜像)"
 
 # ===========================================
 # 第 3 步：拉取最新代码
