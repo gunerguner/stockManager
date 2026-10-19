@@ -1,12 +1,16 @@
+# 注意：Docker 的 .dockerignore 模式默认只匹配构建上下文根目录，
+# 子目录里的同名文件必须用 **/ 前缀才能排除（否则 stockManager/stockManager/.env
+# 会带着本地 DJANGO_SECRET_KEY 被 COPY 进镜像）。
 .git
-__pycache__
-*.pyc
-node_modules
-dist
-.umi*
+**/__pycache__
+**/*.py[cod]
+**/node_modules
+**/dist
+**/.umi*
+**/.venv
+**/*.sqlite3
+**/.env
+**/.env.*
 docker/.env
 .cursor
 .agents/skip-test-loop
-*.sqlite3
-.env
-.env.*

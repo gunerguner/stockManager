@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Empty, Spin, Typography } from 'antd';
+import { Empty, Spin, theme, Typography } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import { NavChart } from './NavChart';
@@ -31,11 +31,14 @@ export const NavContent: React.FC<NavContentProps> = ({
   refreshing = false,
 }) => {
   const isMobile = useIsMobile();
+  const { token } = theme.useToken();
   const { colorFromValue } = useProfitLossColors();
   const [showDrawdown, setShowDrawdown] = useState(false);
   const [hiddenKeys, setHiddenKeys] = useState<API.NavBenchmarkKey[]>([]);
-  const onHiddenKeysChange = useCallback((keys: API.NavBenchmarkKey[]) => {
-    setHiddenKeys(keys);
+  const toggleBenchmark = useCallback((key: API.NavBenchmarkKey) => {
+    setHiddenKeys((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+    );
   }, []);
 
   const metrics = data?.metrics?.[range] ?? emptyNavMetrics();
@@ -74,25 +77,41 @@ export const NavContent: React.FC<NavContentProps> = ({
           />
           <div className="nav-chart">
             {benchmarks.length > 0 ? (
-              <div className="nav-excess" aria-label="区间超额">
-                <span className="nav-excess__label">区间超额</span>
+              <div className="nav-legend" role="group" aria-label="指数显影与区间超额">
+                <span className="nav-legend__item nav-legend__item--static">
+                  <i
+                    className="nav-legend__swatch"
+                    style={{ background: token.colorPrimary }}
+                  />
+                  <span className="nav-legend__name">净值</span>
+                </span>
                 {benchmarks.map((meta) => {
                   const excess = excessByKey[meta.key];
+                  const hidden = hiddenKeys.includes(meta.key);
                   const text =
                     excess == null
                       ? '—'
                       : `${excess > 0 ? '+' : ''}${(excess * 100).toFixed(2)}%`;
                   return (
-                    <span className="nav-excess__item" key={meta.key}>
+                    <button
+                      key={meta.key}
+                      type="button"
+                      className={`nav-legend__item${hidden ? ' nav-legend__item--off' : ''}`}
+                      aria-pressed={!hidden}
+                      onClick={() => toggleBenchmark(meta.key)}
+                    >
                       <i
-                        className="nav-excess__swatch"
+                        className="nav-legend__swatch"
                         style={{ background: BENCHMARK_LINE_COLOR[meta.key] }}
                       />
-                      <span>{meta.name}</span>
-                      <strong style={{ color: excess == null ? undefined : colorFromValue(excess) }}>
+                      <span className="nav-legend__name">{meta.name}</span>
+                      <strong
+                        className="nav-legend__excess"
+                        style={{ color: excess == null ? undefined : colorFromValue(excess) }}
+                      >
                         {text}
                       </strong>
-                    </span>
+                    </button>
                   );
                 })}
               </div>
@@ -101,7 +120,6 @@ export const NavContent: React.FC<NavContentProps> = ({
               points={filteredPoints}
               benchmarks={benchmarks}
               hiddenKeys={hiddenKeys}
-              onHiddenKeysChange={onHiddenKeysChange}
               height={isMobile ? 280 : 380}
               maxNav={metrics.maxNav}
               drawdown={metrics.drawdown}

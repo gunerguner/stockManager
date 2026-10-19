@@ -3,7 +3,6 @@ import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import {
   GridComponent,
-  LegendComponent,
   MarkLineComponent,
   TooltipComponent,
 } from 'echarts/components';
@@ -19,7 +18,6 @@ import {
 echarts.use([
   LineChart,
   GridComponent,
-  LegendComponent,
   MarkLineComponent,
   TooltipComponent,
   CanvasRenderer,
@@ -29,7 +27,6 @@ type NavChartProps = {
   points: API.NavPoint[];
   benchmarks?: API.NavBenchmarkMeta[];
   hiddenKeys?: API.NavBenchmarkKey[];
-  onHiddenKeysChange?: (keys: API.NavBenchmarkKey[]) => void;
   height?: number;
   maxNav?: API.NavMaxNavMarker | null;
   drawdown?: API.NavDrawdownPeriod | null;
@@ -82,7 +79,6 @@ export const NavChart: React.FC<NavChartProps> = ({
   points,
   benchmarks = [],
   hiddenKeys = [],
-  onHiddenKeysChange,
   height = 360,
   maxNav = null,
   drawdown = null,
@@ -219,44 +215,11 @@ export const NavChart: React.FC<NavChartProps> = ({
           }
         : undefined;
 
-    const selected: Record<string, boolean> = { [PORTFOLIO_NAME]: true };
-    const legendData: {
-      name: string;
-      itemStyle: { color: string; borderWidth: number };
-      lineStyle: { color: string; width: number };
-    }[] = [
-      {
-        name: PORTFOLIO_NAME,
-        itemStyle: { color: token.colorPrimary, borderWidth: 0 },
-        lineStyle: { color: token.colorPrimary, width: 2 },
-      },
-    ];
-    for (const line of rebased.lines) {
-      selected[line.name] = !hidden.has(line.key);
-      const color = BENCHMARK_LINE_COLOR[line.key];
-      legendData.push({
-        name: line.name,
-        itemStyle: { color, borderWidth: 0 },
-        lineStyle: { color, width: 2 },
-      });
-    }
-
     chart.setOption(
       {
         animation: false,
         backgroundColor: 'transparent',
-        grid: { left: 48, right: 16, top: benchmarks.length > 0 ? 64 : 44, bottom: 32 },
-        legend: benchmarks.length
-          ? {
-              top: 0,
-              left: 0,
-              itemWidth: 22,
-              itemHeight: 12,
-              textStyle: { color: token.colorTextSecondary, fontSize: 12 },
-              data: legendData,
-              selected,
-            }
-          : undefined,
+        grid: { left: 48, right: 16, top: 36, bottom: 32 },
         tooltip: {
           trigger: 'axis',
           formatter: (raw: unknown) => {
@@ -305,7 +268,7 @@ export const NavChart: React.FC<NavChartProps> = ({
             },
             markLine,
           },
-          ...rebased.lines.map((line) => ({
+          ...visibleLines.map((line) => ({
             name: line.name,
             type: 'line' as const,
             data: line.values.map((value) =>
@@ -332,24 +295,10 @@ export const NavChart: React.FC<NavChartProps> = ({
       true,
     );
     chart.resize();
-
-    const onLegend = (raw: unknown) => {
-      const selectedMap = (raw as { selected?: Record<string, boolean> }).selected ?? {};
-      const next = rebased.lines
-        .filter((line) => selectedMap[line.name] === false)
-        .map((line) => line.key);
-      onHiddenKeysChange?.(next);
-    };
-    chart.off('legendselectchanged');
-    chart.on('legendselectchanged', onLegend);
-    return () => {
-      chart.off('legendselectchanged', onLegend);
-    };
   }, [
     points,
     benchmarks,
     hiddenKeys,
-    onHiddenKeysChange,
     token,
     actualTheme,
     maxNav,
