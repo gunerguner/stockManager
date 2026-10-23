@@ -83,15 +83,16 @@ export const totalDividendCny = (code: string, operations: API.Operation[]): num
   );
 
 /** 交易说明：除权除息用股息/送转文案，其余用备注 */
-export const operationComment = (op: API.Operation): string => {
-  if (op.type !== 'DV') return op.comment;
-
-  const parts: string[] = [];
-  if (op.cash > 0) parts.push(`每10股股息${formatFlexibleDecimals(op.cash * 10)}`);
-  if (op.reserve > 0) parts.push(`每10股转增${formatFlexibleDecimals(op.reserve * 10)}`);
-  if (op.stock > 0) parts.push(`每10股送股${formatFlexibleDecimals(op.stock * 10)}`);
-  return parts.join(', ');
-};
+export const operationComment = (op: API.Operation): string =>
+  op.type === 'DV'
+    ? [
+        op.cash > 0 && `每10股股息${formatFlexibleDecimals(op.cash * 10)}`,
+        op.reserve > 0 && `每10股转增${formatFlexibleDecimals(op.reserve * 10)}`,
+        op.stock > 0 && `每10股送股${formatFlexibleDecimals(op.stock * 10)}`,
+      ]
+        .filter((part): part is string => Boolean(part))
+        .join(', ')
+    : op.comment;
 
 /** 港币口径（由列表已有字段推导，供 tooltip） */
 export const hkNative = {

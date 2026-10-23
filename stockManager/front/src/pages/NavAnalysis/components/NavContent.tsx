@@ -7,7 +7,7 @@ import { NavMetricsPanel } from './NavMetrics';
 import {
   BENCHMARK_LINE_COLOR,
   emptyNavMetrics,
-  excessReturnVs,
+  excessByBenchmark,
   filterNavPoints,
   navHasBenchmarkClose,
   navKeepDates,
@@ -50,14 +50,10 @@ export const NavContent: React.FC<NavContentProps> = ({
   );
   const latestNav = data?.points?.at(-1)?.navDisplay ?? null;
   const benchmarks = data?.benchmarks ?? EMPTY_BENCHMARKS;
-  const excessByKey = useMemo(() => {
-    const points = data?.points ?? [];
-    return {
-      hs300: excessReturnVs(points, range, 'hs300'),
-      cyb: excessReturnVs(points, range, 'cyb'),
-      kc50: excessReturnVs(points, range, 'kc50'),
-    };
-  }, [data?.points, range]);
+  const excessByKey = useMemo(
+    () => excessByBenchmark(data?.points ?? [], range),
+    [data?.points, range],
+  );
   const benchmarkSynced = navHasBenchmarkClose(data?.points ?? []);
 
   return (

@@ -133,77 +133,48 @@ export const NavChart: React.FC<NavChartProps> = ({
       };
     };
 
-    const markData: MarkLineItem[] = [];
-
-    if (maxNav && dateSet.has(maxNav.date) && portfolioValues.length > 1) {
-      markData.push({
-        xAxis: maxNav.date,
-        label: {
-          show: true,
-          position: 'end',
-          distance: 6,
-          rotate: 0,
-          color: token.colorTextSecondary,
-          formatter: `最高 ${Number(maxNav.display).toFixed(4)}`,
-        },
-        lineStyle: {
-          type: 'dashed',
-          width: 1,
-          color: token.colorWarning,
-        },
-      });
-    }
-
-    if (showDrawdown && drawdown) {
-      const ddLabel = {
+    const dashedMark = (xAxis: string, formatter: string, color: string): MarkLineItem => ({
+      xAxis,
+      label: {
         show: true,
-        position: 'end' as const,
+        position: 'end',
         distance: 6,
         rotate: 0,
         color: token.colorTextSecondary,
-      };
-      const { peakDate, troughDate, endDate, recovered, recoverDays } = drawdown;
-      if (dateSet.has(peakDate)) {
-        markData.push({
-          xAxis: peakDate,
-          label: { ...ddLabel, formatter: '回撤起点' },
-          lineStyle: {
-            type: 'dashed',
-            width: 1,
-            color: token.colorError,
-          },
-        });
-      }
-      if (dateSet.has(troughDate)) {
-        markData.push({
-          xAxis: troughDate,
-          label: { ...ddLabel, formatter: '最大回撤' },
-          lineStyle: {
-            type: 'dashed',
-            width: 1,
-            color: token.colorError,
-          },
-        });
-      }
-      if (dateSet.has(endDate)) {
-        markData.push({
-          xAxis: endDate,
-          label: {
-            ...ddLabel,
-            formatter: recovered
-              ? `收复 · ${recoverDays ?? 0}天`
-              : '尚未收复',
-          },
-          lineStyle: {
-            type: 'dashed',
-            width: 1,
-            color: recovered
-              ? token.colorError
-              : token.colorErrorBorder || token.colorError,
-          },
-        });
-      }
-    }
+        formatter,
+      },
+      lineStyle: { type: 'dashed', width: 1, color },
+    });
+    const drawdownMarks =
+      showDrawdown && drawdown
+        ? [
+            { date: drawdown.peakDate, formatter: '回撤起点', color: token.colorError },
+            { date: drawdown.troughDate, formatter: '最大回撤', color: token.colorError },
+            {
+              date: drawdown.endDate,
+              formatter: drawdown.recovered
+                ? `收复 · ${drawdown.recoverDays ?? 0}天`
+                : '尚未收复',
+              color: drawdown.recovered
+                ? token.colorError
+                : token.colorErrorBorder || token.colorError,
+            },
+          ].flatMap((mark) =>
+            dateSet.has(mark.date) ? [dashedMark(mark.date, mark.formatter, mark.color)] : [],
+          )
+        : [];
+    const markData: MarkLineItem[] = [
+      ...(maxNav && dateSet.has(maxNav.date) && portfolioValues.length > 1
+        ? [
+            dashedMark(
+              maxNav.date,
+              `最高 ${Number(maxNav.display).toFixed(4)}`,
+              token.colorWarning,
+            ),
+          ]
+        : []),
+      ...drawdownMarks,
+    ];
 
     const markLine =
       markData.length > 0

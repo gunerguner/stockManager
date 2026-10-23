@@ -18,21 +18,16 @@ function insertKeepDates(
 ): API.NavPoint[] {
   if (!keepDates.length) return sampled;
   const byDate = new Map(points.map((p) => [p.date, p]));
-  const result = [...sampled];
-  const present = new Set(result.map((p) => p.date));
-  for (const date of keepDates) {
-    if (present.has(date)) continue;
+  const present = new Set(sampled.map((p) => p.date));
+  const extras = keepDates.flatMap((date) => {
     const point = byDate.get(date);
-    if (!point) continue;
-    const insertAt = result.findIndex((p) => p.date > date);
-    if (insertAt === -1) {
-      result.push(point);
-    } else {
-      result.splice(insertAt, 0, point);
-    }
+    if (!point || present.has(date)) return [];
     present.add(date);
-  }
-  return result;
+    return [point];
+  });
+  return extras.length
+    ? [...sampled, ...extras].toSorted((a, b) => a.date.localeCompare(b.date))
+    : sampled;
 }
 
 /** 按步长降采样；始终保留首尾，并插入 keepDates（最高/回撤锚点）。 */
@@ -44,10 +39,7 @@ export function downsampleNavPoints(
   if (points.length <= 2 || step <= 1) {
     return insertKeepDates(points, [...points], keepDates);
   }
-  const sampled: API.NavPoint[] = [];
-  for (let i = 0; i < points.length; i += step) {
-    sampled.push(points[i]);
-  }
+  const sampled = points.filter((_, i) => i % step === 0);
   const last = points.at(-1)!;
   if (sampled.at(-1)?.date !== last.date) {
     sampled.push(last);
@@ -81,18 +73,16 @@ export function excessReturnVs(
   const sliced = sliceNavPointsByRange(points, range);
   if (sliced.length < 2) return null;
   const start = sliced[0];
-  const end = sliced[sliced.length - 1];
+  const end = sliced.at(-1)!;
   const navStart = start.navDisplay;
   const navEnd = end.navDisplay;
   const idxStart = start.benchmarks?.[key];
   const idxEnd = end.benchmarks?.[key];
   if (
-    !(navStart > 0) ||
-    !(navEnd > 0) ||
-    idxStart == null ||
-    idxEnd == null ||
-    !(idxStart > 0) ||
-    !(idxEnd > 0)
+    !positiveClose(navStart) ||
+    !positiveClose(navEnd) ||
+    !positiveClose(idxStart) ||
+    !positiveClose(idxEnd)
   ) {
     return null;
   }
@@ -135,6 +125,15 @@ export const BENCHMARK_LINE_COLOR: Record<API.NavBenchmarkKey, string> = {
 
 function isBenchmarkKey(key: string): key is API.NavBenchmarkKey {
   return (BENCHMARK_KEYS as readonly string[]).includes(key);
+}
+
+export function excessByBenchmark(
+  points: API.NavPoint[],
+  range: NavRangeKey,
+): Record<API.NavBenchmarkKey, number | null> {
+  return Object.fromEntries(
+    BENCHMARK_KEYS.map((key) => [key, excessReturnVs(points, range, key)]),
+  ) as Record<API.NavBenchmarkKey, number | null>;
 }
 
 function positiveClose(value: number | null | undefined): value is number {
@@ -206,13 +205,9 @@ export function rebaseNavPoints(
 }
 
 export function navHasBenchmarkClose(points: API.NavPoint[]): boolean {
-  return points.some((point) => {
-    const closes = point.benchmarks;
-    if (!closes) return false;
-    return (
-      closes.hs300 != null || closes.cyb != null || closes.kc50 != null
-    );
-  });
+  return points.some((point) =>
+    BENCHMARK_KEYS.some((key) => point.benchmarks?.[key] != null),
+  );
 }
 
 export function navKeepDates(metrics: API.NavMetrics): string[] {

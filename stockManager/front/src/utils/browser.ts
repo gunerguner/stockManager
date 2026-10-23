@@ -26,14 +26,9 @@ export const ENV_TAG_COLORS = {
 
 export const getCsrfToken = (): string | null => {
   const name = 'csrftoken';
-  const cookies = document.cookie.split(';');
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-    if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmed.substring(name.length + 1));
-    }
-  }
-
-  return null;
+  const raw = document.cookie
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${name}=`));
+  return raw ? decodeURIComponent(raw.slice(name.length + 1)) : null;
 };

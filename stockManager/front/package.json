@@ -40,10 +40,11 @@
     ]
   },
   "browserslist": [
-    "Chrome >= 100",
-    "Firefox >= 95",
-    "Safari >= 15",
-    "Edge >= 100"
+    "Chrome >= 110",
+    "Edge >= 110",
+    "Firefox >= 115",
+    "Safari >= 16",
+    "iOS >= 16"
   ],
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
