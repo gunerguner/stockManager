@@ -35,7 +35,7 @@ stockManager/                 # Git 根
     └── db.sqlite3
 ```
 
-版本：`stockManager/stockManager/__init__.py` 与 `front/package.json`（当前 **1.0.0**）。
+版本：`stockManager/stockManager/__init__.py` 与 `front/package.json`（当前 **1.1.0**）。
 
 ## 技术栈
 
