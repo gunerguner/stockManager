@@ -22,8 +22,14 @@ const TYPE_BY_API = new Map(
   STOCK_TYPES.flatMap((t) => (t.apiType ? [[t.apiType, t] as const] : [])),
 );
 
-/** 固定垫底：分级基金 → 场内基金 → 可转债 → 港股通 → 逆回购 */
-const PINNED_TAIL = ['fundAB', 'fundIn', 'conv', 'hk', 'incomeCash'];
+/** 按市场只固定逆回购；按行业：分级基金 → 场内基金 → 可转债 → 港股通 → 逆回购 */
+const MARKET_PINNED_TAIL = ['incomeCash'] as const;
+const INDUSTRY_PINNED_TAIL = ['fundAB', 'fundIn', 'conv', 'hk', 'incomeCash'] as const;
+
+export type AnalysisDimension = 'market' | 'industry';
+
+export const pinnedTailFor = (dimension: AnalysisDimension) =>
+  dimension === 'market' ? MARKET_PINNED_TAIL : INDUSTRY_PINNED_TAIL;
 
 export type SortField = 'profit' | 'loss' | 'netIncome';
 
@@ -100,11 +106,12 @@ export const sortAnalysisList = (
   list: AnalysisModel[],
   field: SortField,
   order: 'ascend' | 'descend',
+  pinnedTail: readonly string[] = INDUSTRY_PINNED_TAIL,
 ) => {
   const dir = order === 'descend' ? -1 : 1;
   return list.toSorted((a, b) => {
-    const aPin = PINNED_TAIL.indexOf(a.key);
-    const bPin = PINNED_TAIL.indexOf(b.key);
+    const aPin = pinnedTail.indexOf(a.key);
+    const bPin = pinnedTail.indexOf(b.key);
     if (aPin >= 0 && bPin >= 0) return aPin - bPin;
     if (aPin >= 0) return 1;
     if (bPin >= 0) return -1;

@@ -2,6 +2,7 @@ import {
   buildAnalysisByIndustry,
   buildAnalysisByStockType,
   computeOverallProfitLoss,
+  pinnedTailFor,
   sortAnalysisList,
 } from '@/pages/ProfitAnalysis/components/analysisStat';
 
@@ -65,15 +66,51 @@ test('buildAnalysisByIndustry prefers swIndustry then stock type', () => {
   expect(list.find((item) => item.key === 'hk')?.netIncome).toBe(1);
 });
 
-test('sortAnalysisList pins fund bond hk and incomeCash at tail', () => {
+const row = (
+  key: string,
+  type: string,
+  profit: number,
+  loss = 0,
+): Parameters<typeof sortAnalysisList>[0][number] => ({
+  key,
+  type,
+  count: 1,
+  profit,
+  loss,
+  netIncome: profit + loss,
+  stocks: [],
+});
+
+test('sortAnalysisList by market pins only incomeCash', () => {
+  const rows = [
+    row('hk', '港股通', 9),
+    row('sh60', '沪市', 1),
+    row('incomeCash', '逆回购', 20),
+    row('fundAB', '分级基金', 3, -1),
+  ];
+  expect(
+    sortAnalysisList(rows, 'profit', 'descend', pinnedTailFor('market')).map((item) => item.key),
+  ).toEqual(['hk', 'fundAB', 'sh60', 'incomeCash']);
+  expect(
+    sortAnalysisList(rows, 'profit', 'ascend', pinnedTailFor('market')).map((item) => item.key),
+  ).toEqual(['sh60', 'fundAB', 'hk', 'incomeCash']);
+  expect(
+    sortAnalysisList(rows, 'loss', 'ascend', pinnedTailFor('market')).map((item) => item.key),
+  ).toEqual(['fundAB', 'hk', 'sh60', 'incomeCash']);
+});
+
+test('sortAnalysisList by industry pins fund bond hk and incomeCash', () => {
   const sorted = sortAnalysisList(
     [
-      { key: 'hk', type: '港股通', count: 1, profit: 9, loss: 0, netIncome: 9, stocks: [] },
-      { key: 'sh60', type: '沪市', count: 1, profit: 1, loss: 0, netIncome: 1, stocks: [] },
-      { key: 'incomeCash', type: '逆回购', count: 1, profit: 2, loss: 0, netIncome: 2, stocks: [] },
+      row('hk', '港股通', 9),
+      row('sh60', '沪市', 1),
+      row('conv', '可转债', 30),
+      row('incomeCash', '逆回购', 2),
+      row('fundIn', '场内基金', 8),
     ],
-    'profit',
-    'descend',
+    'netIncome',
+    'ascend',
+    pinnedTailFor('industry'),
   );
-  expect(sorted.map((item) => item.key)).toEqual(['sh60', 'hk', 'incomeCash']);
+  expect(sorted.map((item) => item.key)).toEqual(['sh60', 'fundIn', 'conv', 'hk', 'incomeCash']);
 });

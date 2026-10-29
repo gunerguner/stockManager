@@ -12,6 +12,11 @@
     margin-bottom: 16px;
   }
 
+  // 不参与排序的垫底组：与上方参与排序的行轻轻隔开一条底色分隔线
+  .ant-table-tbody > tr.analysis-row-tail-head > td {
+    border-top: 2px solid var(--ant-color-border-secondary);
+  }
+
   @media (max-width: @screen-md) {
     .analysis-dimension-switch {
       margin-bottom: 12px;

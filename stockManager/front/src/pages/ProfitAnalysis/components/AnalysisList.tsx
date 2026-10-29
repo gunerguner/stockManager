@@ -1,13 +1,15 @@
 import { Col, Row, Segmented, Statistic, Table, Tooltip } from 'antd';
 import React, { useMemo, useState } from 'react';
-import type { ColumnsType, TableProps } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 import { getResponsiveTableProps, useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
 import {
   buildAnalysisByIndustry,
   buildAnalysisByStockType,
   computeOverallProfitLoss,
+  pinnedTailFor,
   sortAnalysisList,
+  type AnalysisDimension,
   type AnalysisModel,
   type SortField,
 } from './analysisStat';
@@ -23,7 +25,6 @@ export type AnalysisListProps = {
   loading?: boolean;
 };
 
-type AnalysisDimension = 'market' | 'industry';
 type SortState = { field: SortField; order: 'ascend' | 'descend' };
 
 const DIMENSION_OPTIONS: Array<{ value: AnalysisDimension; label: string }> = [
@@ -33,9 +34,10 @@ const DIMENSION_OPTIONS: Array<{ value: AnalysisDimension; label: string }> = [
 
 const DEFAULT_SORT: SortState = { field: 'netIncome', order: 'descend' };
 
-const toSingleSorter = (
-  sorter: Parameters<NonNullable<TableProps<AnalysisModel>['onChange']>>[2],
-) => (Array.isArray(sorter) ? sorter[0] : sorter);
+const toggleSort = (current: SortState, field: SortField): SortState => ({
+  field,
+  order: current.field === field && current.order === 'ascend' ? 'descend' : 'ascend',
+});
 
 export const AnalysisList: React.FC<AnalysisListProps> = ({
   data,
@@ -61,10 +63,19 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
     [data.stocks, incomeCash, dimension],
   );
 
+  const pinnedTail = useMemo(() => pinnedTailFor(dimension), [dimension]);
+
   const displayList = useMemo(
-    () => sortAnalysisList(analysisList, sortState.field, sortState.order),
-    [analysisList, sortState],
+    () => sortAnalysisList(analysisList, sortState.field, sortState.order, pinnedTail),
+    [analysisList, sortState, pinnedTail],
   );
+
+  const tailHeadKey = useMemo(() => {
+    const pinned = new Set<string>(pinnedTail);
+    const headIndex = displayList.findIndex((row) => pinned.has(row.key));
+    if (headIndex <= 0) return undefined;
+    return displayList[headIndex].key;
+  }, [displayList, pinnedTail]);
 
   const handleRowClick = (record: AnalysisModel) => {
     if (record.stocks.length === 0) return;
@@ -76,19 +87,6 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
       loss: record.loss,
       netIncome: record.netIncome,
     });
-  };
-
-  const handleTableChange: TableProps<AnalysisModel>['onChange'] = (_pagination, _filters, sorter) => {
-    const current = toSingleSorter(sorter);
-    const field = current?.field;
-    if (
-      (field === 'profit' || field === 'loss' || field === 'netIncome') &&
-      (current.order === 'ascend' || current.order === 'descend')
-    ) {
-      setSortState({ field, order: current.order });
-      return;
-    }
-    setSortState(DEFAULT_SORT);
   };
 
   const columns: ColumnsType<AnalysisModel> = useMemo(() => {
@@ -116,8 +114,12 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
       ...amountCols.map(({ title, field, total, color }) => ({
         title,
         dataIndex: field,
-        sorter: true as const,
-        sortOrder: sortState.field === field ? sortState.order : undefined,
+        sorter: true,
+        showSorterTooltip: false,
+        sortOrder: sortState.field === field ? sortState.order : null,
+        onHeaderCell: () => ({
+          onClick: () => setSortState((prev) => toggleSort(prev, field)),
+        }),
         render: (value: number) =>
           total != null && color ? (
             <Tooltip
@@ -176,8 +178,8 @@ export const AnalysisList: React.FC<AnalysisListProps> = ({
         dataSource={displayList}
         loading={loading}
         pagination={false}
-        onChange={handleTableChange}
         {...getResponsiveTableProps(isMobile)}
+        rowClassName={(record) => (record.key === tailHeadKey ? 'analysis-row-tail-head' : '')}
         onRow={(record) => ({
           onClick: () => handleRowClick(record),
           style: record.stocks.length > 0 ? { cursor: 'pointer' } : undefined,
