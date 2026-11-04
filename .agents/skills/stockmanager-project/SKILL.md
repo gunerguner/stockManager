@@ -42,7 +42,7 @@ stockManager/                 # Git 根
 | 层 | 技术 |
 |----|------|
 | 后端 | Python ≥3.13，Django **6.x**，Gunicorn（Docker） |
-| 前端 | Umi Max **4.6**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
+| 前端 | Umi Max **4.7**，**Utoopack**（`utoopack: {}`，`mfsu: false`），React **19**，antd **6**，utoo（`ut`），Node ≥20 |
 | 缓存 | Redis + `django-redis`（逻辑 key 前缀由 Django 管理） |
 | 数据库 | **SQLite** 仅此一种 |
 | 行情 | `easyquotation` **tencent**（沪深实时）+ 腾讯 `sqt.gtimg.cn`（港股实时）；`baostock`（仅 A 股除权除息）；百度 opendata（PE/PB）；腾讯 gtimg（历史高，统一 qfq）；sina 外汇（HKD/CNY） |
