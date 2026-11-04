@@ -95,7 +95,7 @@ flowchart LR
 | 组合汇总 | `backend/common/types.py` → `OverallData` |
 | 资金流水 | `CashFlow`（存取）；`Info.INCOME_CASH`（如逆回购收益） |
 | 股票元数据 | `StockMeta`（SH60、SZ00、SZ300、SH688、BJ、CONV、FUNDIN、FUNDAB、HK、OTHER）+ `SwIndustry`（申万行业） |
-| 除权除息 | `backend/services/app/dividend.py` + `POST /api/dividend`（仅 A 股自动生成；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
+| 除权除息 | `backend/services/app/dividend.py` + `POST /api/dividend`（任意登录用户，只刷新本人持仓；非港股含 A 股与场内基金走 baostock；港股分红在 Admin 手动录入 DV，`cash` 为每股 CNY 到账） |
 | 实时价 | `backend/datasource/realtimePrice.py`（`fetch_prices`，沪深+港股） |
 | 关注列表 | `WatchItem` + `services/app/watchlist.py`（`build`/`set_hidden`）+ `cache/user/watchlist.py` + 前端 `pages/Watch/` |
 | 估值 PE/PB | `datasource/baiduValuation.py`（`fetch_pe_pb`）+ `cache/market/valuation.py` |
@@ -176,7 +176,7 @@ flowchart LR
 | POST | `/api/logout` | 登录用户 |
 | GET | `/api/currentUser` | 登录用户 |
 
-Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开；**无**独立 `/admin` 前端路由）。
+Django Admin：`/sys/admin/`（**无**独立 `/admin` 前端路由）。头像菜单：「更新除权信息」对所有登录用户开放；「管理」「清理缓存」仅 `canAdmin`（superuser），管理入口新窗口打开 Admin。
 
 ## 测试
 
@@ -188,7 +188,7 @@ Django Admin：`/sys/admin/`（`canAdmin` 用户从头像菜单新窗口打开�
 
 工作树命中业务或测试路径时跑后端 pytest 和前端 Jest；失败则修好再跑一轮。用例不进业务目录：后端 `stockManager/tests/`，前端 `stockManager/front/tests/`。
 
-补充人工抽查（测试未覆盖的外网路径）：登录 → `/list` → `/profit-analysis` → `/transaction` → `/nav-analysis` → 除权刷新 →（管理员）清缓存。前端类型：`ut run type-check`。
+补充人工抽查（测试未覆盖的外网路径）：登录 → `/list` → `/profit-analysis` → `/transaction` → `/watch` → `/nav-analysis` → 头像菜单除权刷新（普通用户即可）→（管理员）清缓存。前端类型：`ut run type-check`。
 
 ## 编码约定
 

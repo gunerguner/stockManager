@@ -45,7 +45,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 
 - 引擎：SQLite；路径 `SQLITE_PATH` 或默认 `stockManager/db.sqlite3`
 - 模型：`Operation`、`Info`、`CashFlow`、`StockMeta`、`WatchItem`、`PortfolioNavDaily`、`StockDailyPrice`、`HkdCnyDailyRate`（FK 到 Django `User`；`StockMeta` / 日频价 / 日频汇率全局共享）
-- 迁移目录：`backend/migrations/`（0001 初始 → … → 0017 Operation 金额 Decimal → 0018 HkdCnyDailyRate）
+- 迁移目录：`backend/migrations/`（0001 初始 → … → 0018 HkdCnyDailyRate → 0021 将 `Tag` 重命名为 `SwIndustry`）
 - 命令：`python manage.py makemigrations` / `migrate`
 - Docker 默认 `RUN_MIGRATIONS_ON_START=false`，需时 `docker compose exec backend python manage.py migrate`
 
@@ -61,7 +61,7 @@ SKILL.md 的扩展材料；改部署、查路径时按需阅读。
 | `/login` | Login | 无布局 |
 | `/account` | Account | 账户 |
 
-管理后台无前端路由；`canAdmin` 用户从头像菜单打开 Django Admin `/sys/admin/`（新窗口）。
+管理后台无前端路由。头像菜单：「更新除权信息」任意登录用户可刷新本人持仓；「管理」「清理缓存」仅 `canAdmin`，管理入口新窗口打开 Django Admin `/sys/admin/`。
 
 生产 `API_BASE_URL = ''`（同源 `/api/...`），无 carSales 式 `VITE_*` 运行时注入。
 

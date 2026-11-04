@@ -6,20 +6,35 @@ After years of trading stocks, I never found a portfolio tracker I was fully hap
 
 ## Holdings & P/L
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFACd.png)
+![pn2jt0g.png](https://s41.ax1x.com/2026/11/04/pn2jt0g.png)
 
-## P/L attribution and transactions
+![pn2jN7Q.png](https://s41.ax1x.com/2026/11/04/pn2jN7Q.png)
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFF4H.png)
+## Watchlist
+
+![pn2jdts.png](https://s41.ax1x.com/2026/11/04/pn2jdts.png)
+
+## P/L attribution
+
+![pn2jGX8.png](https://s41.ax1x.com/2026/11/04/pn2jGX8.png)
+
+## NAV analysis
+
+![pn2jYnS.png](https://s41.ax1x.com/2026/11/04/pn2jYnS.png)
+
+## Transactions
+
+![pn2j86f.png](https://s41.ax1x.com/2026/11/04/pn2j86f.png)
 
 ## Dividend / rights adjustment
 
-![image.png](https://s21.ax1x.com/2025/10/27/pVxFiUe.png)
+![pn2jakj.png](https://s41.ax1x.com/2026/11/04/pn2jakj.png)
 
 ## Highlights
 
 - **Holdings & P/L at a glance:** Per-stock and portfolio metrics follow Xueqiu formulas—floating, cumulative, and daily P/L ready when you need them.
 - **Full trade history:** Every buy, sell, and dividend is recorded per symbol and easy to review.
+- **Watchlist:** Track names you do not hold, and highlight when the price nears a level you set.
 - **Auto corporate actions:** A-share dividends and rights adjustments are generated automatically—less manual entry, fewer gaps.
 - **Hong Kong Stock Connect dual ledgers:** Quotes and per-share costs in HKD; settled amounts and portfolio P/L in CNY.
 - **P/L attribution:** Break down contribution by sector to see where you made or lost money.

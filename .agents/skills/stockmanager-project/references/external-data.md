@@ -124,7 +124,7 @@ flowchart LR
 
 - **录入**：`Operation.price` 为港币；港股 BUY/SELL 的 `Operation.amount` 是实际人民币成交额，`fee` 也是人民币。应优先录入实际结算值，避免按当前汇率反推历史成交。
 - **计算**：`common/domain/settlement.py` 维护人民币资金账与原币展示账。组合市值、盈亏与 XIRR 使用人民币；当前市值以实时港币价格和本次计算取得的 HKD/CNY 汇率换算。
-- **分红**：自动除权只覆盖 A 股。港股分红以 Admin 手动创建 DV 操作，`cash` 填每股人民币到账金额。
+- **分红**：`POST /api/dividend` 任意登录用户可调用，只写该用户持仓。自动除权覆盖非港股（A 股、场内基金等，代码不以 `hk` 开头）。港股分红以 Admin 手动创建 DV 操作，`cash` 填每股人民币到账金额。
 
 ## 4. 调用路径
 

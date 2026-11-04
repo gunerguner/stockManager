@@ -23,7 +23,7 @@ const AvatarDropdown: React.FC = () => {
   const [dividendLoading, setDividendLoading] = useState(false);
   const [cacheLoading, setCacheLoading] = useState(false);
   const { initialState, setInitialState } = useModel('@@initialState');
-  const { resetStockData } = useModel('stocks');
+  const { resetStockData, fetchStockData } = useModel('stocks');
   const { resetWatchlist } = useModel('watchlist');
   const { resetNavAnalysis } = useModel('navAnalysis');
   const { modal } = App.useApp();
@@ -65,6 +65,7 @@ const AvatarDropdown: React.FC = () => {
           });
 
           if (hasApiData(response)) {
+            await fetchStockData();
             modal.info({
               title: response.data.length > 0 ? '有更新股票' : '无更新股票',
               content: (
@@ -88,7 +89,7 @@ const AvatarDropdown: React.FC = () => {
         }
       },
     });
-  }, [modal]);
+  }, [fetchStockData, modal]);
 
   const handleOpenAdmin = useCallback(() => {
     window.open('/sys/admin/', '_blank');
@@ -146,15 +147,15 @@ const AvatarDropdown: React.FC = () => {
 
   const menuItems = [
     { key: 'account', label: '账户', icon: <UserOutlined />, onClick: () => history.push('/account') },
+    {
+      key: 'dividend',
+      label: '更新除权信息',
+      icon: dividendLoading ? <LoadingOutlined /> : <SyncOutlined />,
+      disabled: dividendLoading,
+      onClick: handleDividendUpdate,
+    },
     ...(canAdmin
       ? [
-          {
-            key: 'dividend',
-            label: '更新除权信息',
-            icon: dividendLoading ? <LoadingOutlined /> : <SyncOutlined />,
-            disabled: dividendLoading,
-            onClick: handleDividendUpdate,
-          },
           {
             key: 'admin',
             label: '管理',
