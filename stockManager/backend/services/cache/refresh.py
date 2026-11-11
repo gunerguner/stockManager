@@ -35,7 +35,7 @@ def should_refresh_market(market: Market) -> bool:
         return True
     last_time = datetime.fromisoformat(ts)
     if last_time.tzinfo is None:
-        last_time = TZ_SHANGHAI.localize(last_time)
+        last_time = last_time.replace(tzinfo=TZ_SHANGHAI)
     else:
         last_time = last_time.astimezone(TZ_SHANGHAI)
     return TradingCalendar.is_trading_time_passed(last_time, datetime.now(TZ_SHANGHAI), market)

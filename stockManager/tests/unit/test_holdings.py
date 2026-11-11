@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from backend.models import Operation
+from backend.common.constants import OperationType
 from backend.services.calculation.holdings.single_metrics import compute_single_metrics
 from tests.helpers import make_meta, make_op
 
@@ -24,7 +24,7 @@ def test_clear_then_rebuy_resets_hold_cost():
         make_op(
             meta,
             op_date=date(2024, 1, 3),
-            op_type=Operation.OperationType.SELL,
+            op_type=OperationType.SELL,
             price="12",
             count=100,
             fee="0",
@@ -44,7 +44,7 @@ def test_dividend_cash_and_bonus_shares():
         make_op(
             meta,
             op_date=date(2024, 1, 10),
-            op_type=Operation.OperationType.Dividend,
+            op_type=OperationType.DIVIDEND,
             cash="0.5",
             stock=0.1,
         ),

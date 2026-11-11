@@ -2,18 +2,14 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+
+from backend.common.constants import OperationType
 
 from .stock_meta import StockMeta
 
 
 class Operation(models.Model):
     """股票操作记录模型"""
-
-    class OperationType(models.TextChoices):
-        BUY = "BUY", _("买入")
-        SELL = "SELL", _("卖出")
-        Dividend = "DV", _("除权除息")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='operations', verbose_name="用户")
     stock_meta = models.ForeignKey(

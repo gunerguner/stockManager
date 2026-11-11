@@ -1,6 +1,6 @@
 from datetime import date
 
-from backend.common.constants import ResponseStatus
+from backend.common.constants import OperationType, ResponseStatus
 from backend.models import Operation, StockMeta
 
 
@@ -15,7 +15,7 @@ def test_stocks_returns_calculated_fields(auth_client, user):
         user=user,
         stock_meta=meta,
         date=date(2024, 1, 2),
-        operationType=Operation.OperationType.BUY,
+        operationType=OperationType.BUY,
         price="10",
         count=100,
         fee="5",

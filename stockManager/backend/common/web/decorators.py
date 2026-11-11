@@ -14,6 +14,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _unauthenticated():
+    return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
+
+
 def require_authentication(view_func):
     """
     装饰器：要求用户必须已认证，并注入 user 参数。
@@ -25,7 +29,7 @@ def require_authentication(view_func):
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
+            return _unauthenticated()
         return view_func(
             request, *args, user=authenticated_user(request), **kwargs
         )
@@ -37,7 +41,7 @@ def require_superuser(view_func):
     @functools.wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return json_response(status=ResponseStatus.UNAUTHORIZED, message="未登录")
+            return _unauthenticated()
         if not request.user.is_superuser:
             return json_response(status=ResponseStatus.UNAUTHORIZED, message="无权限")
         return view_func(

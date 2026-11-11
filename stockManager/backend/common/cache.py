@@ -69,7 +69,7 @@ class Cache:
             pattern = Cache.make_pattern(pattern)
         try:
             redis_client = Cache._redis()
-            matched = redis_client.keys(pattern)
+            matched = list(redis_client.scan_iter(match=pattern))
             if matched:
                 redis_client.delete(*matched)
                 return len(matched)

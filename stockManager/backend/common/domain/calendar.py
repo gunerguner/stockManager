@@ -7,16 +7,17 @@
 
 A 股调休上班日（补班）仍不开盘，亦不在 sessions 内。
 """
-from typing import ClassVar, cast
-from datetime import date, datetime, timedelta
 import math
-import pytz
+from datetime import date, datetime, timedelta
+from typing import ClassVar, cast
+from zoneinfo import ZoneInfo
+
 from exchange_calendars import get_calendar, ExchangeCalendar
 import pandas as pd
 
 from backend.common.domain.market import Market
 
-TZ_SHANGHAI = pytz.timezone('Asia/Shanghai')
+TZ_SHANGHAI = ZoneInfo("Asia/Shanghai")
 
 # 同日交易时段（上海时区；仅在 is_trading_day 为 True 的日期内生效）
 _MARKET_SESSION_MINUTES: dict[Market, tuple[tuple[int, int], tuple[int, int]]] = {
@@ -32,7 +33,7 @@ _EXCHANGE_CODE: dict[Market, str] = {
 
 def _to_shanghai(dt: datetime) -> datetime:
     if dt.tzinfo is None:
-        return TZ_SHANGHAI.localize(dt)
+        return dt.replace(tzinfo=TZ_SHANGHAI)
     return dt.astimezone(TZ_SHANGHAI)
 
 
@@ -79,11 +80,13 @@ class TradingCalendar:
         while check_date <= end_date:
             if cls.is_trading_day(check_date, market):
                 for start_min, end_min in _MARKET_SESSION_MINUTES[market]:
-                    session_start = TZ_SHANGHAI.localize(
-                        datetime(check_date.year, check_date.month, check_date.day, start_min // 60, start_min % 60)
+                    session_start = datetime(
+                        check_date.year, check_date.month, check_date.day,
+                        start_min // 60, start_min % 60, tzinfo=TZ_SHANGHAI,
                     )
-                    session_end = TZ_SHANGHAI.localize(
-                        datetime(check_date.year, check_date.month, check_date.day, end_min // 60, end_min % 60)
+                    session_end = datetime(
+                        check_date.year, check_date.month, check_date.day,
+                        end_min // 60, end_min % 60, tzinfo=TZ_SHANGHAI,
                     )
                     if last_time_tz <= session_end and session_start <= current_time_tz:
                         return True
@@ -112,11 +115,9 @@ class TradingCalendar:
         for _ in range(100):
             if cls.is_trading_day(check_date, market):
                 for start_min, _end_min in _MARKET_SESSION_MINUTES[market]:
-                    session_start = TZ_SHANGHAI.localize(
-                        datetime(
-                            check_date.year, check_date.month, check_date.day,
-                            start_min // 60, start_min % 60,
-                        )
+                    session_start = datetime(
+                        check_date.year, check_date.month, check_date.day,
+                        start_min // 60, start_min % 60, tzinfo=TZ_SHANGHAI,
                     )
                     if session_start > tz_now:
                         return session_start
