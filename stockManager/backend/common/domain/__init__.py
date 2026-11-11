@@ -13,6 +13,7 @@ from backend.common.domain.operations import (
     apply_net_invested,
     apply_operation_to_hold,
     dividend_multiplier,
+    hold_count_before,
     operation_cash_delta_cny,
 )
 
@@ -25,6 +26,7 @@ __all__ = [
     'code_to_market',
     'dividend_multiplier',
     'get_trading_time_statuses',
+    'hold_count_before',
     'hk_api_code',
     'is_hk_code',
     'markets_in_codes',

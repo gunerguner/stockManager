@@ -5,16 +5,20 @@ from django import forms
 from django.contrib import messages
 from django.db.models import Max
 
-from backend.admin.base import Operation, UserScopedModelAdmin, admin
+from backend.admin.base import Operation, User, UserScopedModelAdmin, admin
 from backend.admin.constants import NAV_REFRESH_HINT
 from backend.common.web.auth_user import authenticated_user
 from backend.common.constants import OperationType
 from backend.common.domain.market import is_hk_code
+from backend.common.domain.operations import hold_count_before
 from backend.common.money import quantize_money, to_decimal
 from backend.services.cache import CacheRepository
 
 
 class OperationAdminForm(forms.ModelForm):
+    # 普通用户的新增页不渲染用户字段，校验卖出上限时用当前登录用户。
+    actor: User | None = None
+
     class Meta:
         model = Operation
         fields = '__all__'
@@ -23,6 +27,8 @@ class OperationAdminForm(forms.ModelForm):
         cleaned = super().clean()
         if not cleaned:
             return cleaned
+
+        self._reject_sell_over_hold(cleaned)
 
         stock_meta = cleaned.get('stock_meta')
         op_type = cleaned.get('operationType')
@@ -56,6 +62,33 @@ class OperationAdminForm(forms.ModelForm):
         cleaned['amount'] = quantize_money(amount)
         return cleaned
 
+    def _reject_sell_over_hold(self, cleaned) -> None:
+        if cleaned.get('operationType') != OperationType.SELL or 'count' not in cleaned:
+            return
+        hold = self._hold_before(cleaned)
+        if hold is None:
+            return
+        count = cleaned.get('count') or 0
+        if count > hold:
+            self.add_error('count', f'卖出数量不能超过持股数（当前 {hold}）')
+
+    def _hold_before(self, cleaned) -> int | None:
+        stock_meta = cleaned.get('stock_meta')
+        on_date = cleaned.get('date')
+        user = cleaned.get('user') or self.actor
+        if stock_meta is None or on_date is None or user is None:
+            return None
+        sort_order = cleaned.get('sortOrder') or 0
+        creating = self.instance.pk is None
+        operations = list(Operation.objects.filter(user=user, stock_meta=stock_meta))
+        return hold_count_before(
+            operations,
+            on_date=on_date,
+            sort_order=sort_order,
+            exclude_pk=self.instance.pk,
+            append_same_day=creating and sort_order == 0,
+        )
+
 
 @admin.register(Operation)
 class OperationAdmin(UserScopedModelAdmin):
@@ -75,7 +108,7 @@ class OperationAdmin(UserScopedModelAdmin):
 
     fieldsets = (
         ('基本信息', {
-            'fields': ('user', 'stock_meta', 'date', 'sortOrder', 'operationType')
+            'fields': ('user', 'stock_meta', 'date', 'operationType')
         }),
         ('交易信息', {
             'fields': ('price', 'count', 'amount', 'fee', 'comment'),
@@ -92,12 +125,26 @@ class OperationAdmin(UserScopedModelAdmin):
                 '港股通分红按人民币到账填写。'
             ),
         }),
+        ('同日顺序', {
+            'fields': ('sortOrder',),
+            'classes': ('collapse',),
+        }),
     )
 
     @admin.display(description='股票', ordering='stock_meta__name')
     def stock_name(self, obj: Operation) -> str:
         meta = obj.stock_meta
         return (meta.name or meta.code) if meta else '-'
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        actor = authenticated_user(request)
+
+        class RequestBoundForm(OperationAdminForm):
+            pass
+
+        RequestBoundForm.actor = actor
+        kwargs["form"] = RequestBoundForm
+        return super().get_form(request, obj, change=change, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not change:

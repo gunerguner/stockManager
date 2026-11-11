@@ -1,4 +1,6 @@
 """Operation 类型相关的共享计算逻辑"""
+import datetime
+
 from backend.common.constants import OperationType
 from backend.common.domain.settlement import (
     buy_outflow_cny,
@@ -11,6 +13,55 @@ from backend.models import Operation
 def dividend_multiplier(operation: Operation) -> float:
     """除权除息送股/转增合计乘数（reserve + stock）"""
     return operation.reserve + operation.stock
+
+
+def hold_count_before(
+    operations: list[Operation],
+    *,
+    on_date: datetime.date,
+    sort_order: int,
+    exclude_pk: int | None = None,
+    append_same_day: bool = False,
+) -> int:
+    """插入点之前的持股，向 0 取整。
+
+    append_same_day 用于新建且同日顺序仍为 0：与保存时自动排到当天最后一致，
+    当天已有记录都算在本条之前。
+    """
+    hold = 0.0
+    for operation in operations:
+        if exclude_pk is not None and operation.pk == exclude_pk:
+            continue
+        if not _is_before_insertion(
+            operation,
+            on_date=on_date,
+            sort_order=sort_order,
+            exclude_pk=exclude_pk,
+            append_same_day=append_same_day,
+        ):
+            continue
+        hold = apply_operation_to_hold(hold, operation)
+    return int(hold)
+
+
+def _is_before_insertion(
+    operation: Operation,
+    *,
+    on_date: datetime.date,
+    sort_order: int,
+    exclude_pk: int | None,
+    append_same_day: bool,
+) -> bool:
+    if operation.date > on_date:
+        return False
+    if operation.date < on_date or append_same_day:
+        return True
+    if operation.sortOrder != sort_order:
+        return operation.sortOrder < sort_order
+    # 新建记录尚无主键，同顺序的已有记录会排在它前面
+    if exclude_pk is None:
+        return True
+    return (operation.pk or 0) < exclude_pk
 
 
 def apply_operation_to_hold(hold: float, operation: Operation) -> float:
