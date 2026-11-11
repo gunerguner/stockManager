@@ -17,6 +17,10 @@ import './index.less';
 
 const EMPTY_BENCHMARKS: API.NavBenchmarkMeta[] = [];
 
+function formatSignedPct(value: number): string {
+  return `${value > 0 ? '+' : ''}${(value * 100).toFixed(2)}%`;
+}
+
 type NavContentProps = {
   data: API.NavAnalysisData | null;
   range: NavRangeKey;
@@ -82,12 +86,9 @@ export const NavContent: React.FC<NavContentProps> = ({
                   <span className="nav-legend__name">净值</span>
                 </span>
                 {benchmarks.map((meta) => {
-                  const excess = excessByKey[meta.key];
+                  const excess = excessByKey[meta.key] ?? null;
                   const hidden = hiddenKeys.includes(meta.key);
-                  const text =
-                    excess == null
-                      ? '—'
-                      : `${excess > 0 ? '+' : ''}${(excess * 100).toFixed(2)}%`;
+                  const text = excess == null ? '—' : formatSignedPct(excess);
                   return (
                     <button
                       key={meta.key}
@@ -101,12 +102,14 @@ export const NavContent: React.FC<NavContentProps> = ({
                         style={{ background: BENCHMARK_LINE_COLOR[meta.key] }}
                       />
                       <span className="nav-legend__name">{meta.name}</span>
-                      <strong
-                        className="nav-legend__excess"
-                        style={{ color: excess == null ? undefined : colorFromValue(excess) }}
-                      >
-                        {text}
-                      </strong>
+                      <span className="nav-legend__excess">
+                        <span className="nav-legend__excess-label">超额</span>
+                        <strong
+                          style={{ color: excess == null ? undefined : colorFromValue(excess) }}
+                        >
+                          {text}
+                        </strong>
+                      </span>
                     </button>
                   );
                 })}

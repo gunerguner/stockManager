@@ -10,6 +10,10 @@
   .nav-metrics__item {
     border-radius: var(--ant-border-radius);
 
+    &--hint {
+      cursor: help;
+    }
+
     &--clickable {
       cursor: pointer;
     }
@@ -22,10 +26,8 @@
     }
   }
 
-  .nav-metrics__hint {
-    margin-top: 12px;
-    margin-bottom: 0;
-    font-size: 12px;
+  .nav-metrics__label {
+    border-bottom: 1px dashed var(--ant-color-text-quaternary);
   }
 }
 
@@ -75,7 +77,8 @@
 
   .nav-legend__item--off {
     .nav-legend__swatch,
-    .nav-legend__name {
+    .nav-legend__name,
+    .nav-legend__excess {
       opacity: 0.35;
     }
   }
@@ -87,8 +90,25 @@
   }
 
   .nav-legend__excess {
-    font-weight: 600;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--ant-color-fill-quaternary);
     font-variant-numeric: tabular-nums;
+    line-height: 18px;
+  }
+
+  .nav-legend__excess-label {
+    color: var(--ant-color-text-tertiary);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .nav-legend__excess strong {
+    font-size: 12px;
+    font-weight: 600;
   }
 }
 

@@ -12,6 +12,12 @@ const Settings: ProLayoutProps & {
 } = {
   navTheme: 'light',
   colorPrimary: PRIMARY_COLOR,
+  // 默认上下 32px，叠上页面容器 16px 后 navbar 到白卡片间距偏大
+  token: {
+    pageContainer: {
+      paddingBlockPageContainerContent: 12,
+    },
+  },
   layout: 'top',
   contentWidth: 'Fluid',
   fixedHeader: true,

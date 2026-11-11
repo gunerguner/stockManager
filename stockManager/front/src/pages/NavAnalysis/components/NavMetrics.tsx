@@ -1,5 +1,5 @@
 import React from 'react';
-import { Col, Row, Statistic, Typography } from 'antd';
+import { Col, Row, Statistic, Tooltip } from 'antd';
 import { getHeaderStatisticStyles } from '@/components/Common/statisticStyles';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProfitLossColors } from '@/hooks/useProfitLossColors';
@@ -33,6 +33,7 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
     suffix?: string;
     color?: string;
     clickable?: boolean;
+    hint?: string;
   }[] = [
     ...(latestNav != null
       ? [
@@ -50,6 +51,7 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
       precision: 2,
       suffix: '%',
       color: colorFromValue(metrics.totalReturn),
+      hint: '总收益为区间累计涨跌。本年度、近一年以上一周期最后交易日收盘为起点，以计入区间首日涨跌。',
     },
     {
       title: '年化收益',
@@ -57,12 +59,14 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
       precision: 2,
       suffix: '%',
       color: colorFromValue(metrics.annualizedReturn),
+      hint: '年化为时间加权（剔出入金），均与资金加权的 XIRR 口径不同。',
     },
     {
       title: '夏普比率',
       value: metrics.sharpeRatio,
       precision: 2,
       color: colorFromValue(metrics.sharpeRatio),
+      hint: '夏普无风险利率按 0 计算。',
     },
     {
       title: '最大回撤',
@@ -88,53 +92,69 @@ export const NavMetricsPanel: React.FC<NavMetricsProps> = ({
           const active = isDrawdown && showDrawdown;
           const itemClass = [
             'nav-metrics__item',
+            item.hint ? 'nav-metrics__item--hint' : '',
             item.clickable ? 'nav-metrics__item--clickable' : '',
             active ? 'nav-metrics__item--active' : '',
           ]
             .filter(Boolean)
             .join(' ');
+          const card = (
+            <div
+              className={itemClass}
+              role={item.clickable ? 'button' : undefined}
+              tabIndex={item.clickable ? 0 : undefined}
+              title={
+                item.clickable
+                  ? showDrawdown
+                    ? '点击关闭图表上回撤标注'
+                    : '点击在图表上标注回撤区间'
+                  : undefined
+              }
+              aria-pressed={item.clickable ? showDrawdown : undefined}
+              onClick={item.clickable ? onToggleDrawdown : undefined}
+              onKeyDown={
+                item.clickable
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onToggleDrawdown?.();
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <Statistic
+                title={
+                  item.hint ? (
+                    <span className="nav-metrics__label">{item.title}</span>
+                  ) : (
+                    item.title
+                  )
+                }
+                value={item.value}
+                precision={item.precision}
+                suffix={item.suffix}
+                styles={getHeaderStatisticStyles(isMobile, item.color)}
+              />
+            </div>
+          );
           return (
             <Col key={item.title} xs={12} sm={8} md={4}>
-              <div
-                className={itemClass}
-                role={item.clickable ? 'button' : undefined}
-                tabIndex={item.clickable ? 0 : undefined}
-                title={
-                  item.clickable
-                    ? showDrawdown
-                      ? '点击关闭图表上回撤标注'
-                      : '点击在图表上标注回撤区间'
-                    : undefined
-                }
-                aria-pressed={item.clickable ? showDrawdown : undefined}
-                onClick={item.clickable ? onToggleDrawdown : undefined}
-                onKeyDown={
-                  item.clickable
-                    ? (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          onToggleDrawdown?.();
-                        }
-                      }
-                    : undefined
-                }
-              >
-                <Statistic
-                  title={item.title}
-                  value={item.value}
-                  precision={item.precision}
-                  suffix={item.suffix}
-                  styles={getHeaderStatisticStyles(isMobile, item.color)}
-                />
-              </div>
+              {item.hint ? (
+                <Tooltip
+                  title={item.hint}
+                  placement="bottom"
+                  styles={{ root: { maxWidth: 360 } }}
+                >
+                  {card}
+                </Tooltip>
+              ) : (
+                card
+              )}
             </Col>
           );
         })}
       </Row>
-      <Typography.Paragraph type="secondary" className="nav-metrics__hint">
-        总收益为区间累计涨跌，年化为时间加权（剔出入金），均与资金加权的 XIRR 口径不同。本年度、近一年以上一周期最后交易日收盘为起点，以计入区间首日涨跌。夏普无风险利率按
-        0 计算。点击「最大回撤」可在图表标注回撤起止与收复。
-      </Typography.Paragraph>
     </div>
   );
 };
