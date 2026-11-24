@@ -69,8 +69,13 @@ class Integrate:
         return result
 
     @classmethod
-    def refresh_nav(cls, user: User, mode: str = 'incremental') -> dict:
-        written = NavAnalysis.refresh(user, mode=mode)
+    def refresh_nav(
+        cls,
+        user: User,
+        mode: str = 'incremental',
+        span: str | None = None,
+    ) -> dict:
+        written = NavAnalysis.refresh(user, mode=mode, span=span)
         result = NavAnalysis.build(user)
         CacheRepository.set_nav_analysis(user.pk, result)
         return {

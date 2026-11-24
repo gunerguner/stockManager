@@ -127,11 +127,17 @@ def nav(request: HttpRequest, user: User) -> JsonResponse:
 @parse_json_body
 @handle_exception
 def refresh_nav(request: HttpRequest, data: dict, user: User) -> JsonResponse:
-    """刷新净值 - POST /api/nav/refresh body: { mode: incremental|full }"""
+    """刷新净值 - POST /api/nav/refresh body: { mode, span? }
+
+    mode: incremental | recent | full。recent 时 span 为 week | month | quarter。
+    """
     mode = data.get('mode') or 'incremental'
-    logger.info(f"refresh_nav - 用户: {user.username}, mode={mode}, IP: {get_client_ip(request)}")
+    span = data.get('span')
+    logger.info(
+        f"refresh_nav - 用户: {user.username}, mode={mode}, span={span}, IP: {get_client_ip(request)}"
+    )
     try:
-        result = Integrate.refresh_nav(user, mode=mode)
+        result = Integrate.refresh_nav(user, mode=mode, span=span)
     except ValueError as exc:
         return json_response(status=ResponseStatus.ERROR, message=str(exc))
     return json_response(

@@ -105,10 +105,18 @@ export async function getNavAnalysis(options?: RequestOptions) {
   return getRequest<API.NavAnalysisResult>('/api/nav', options);
 }
 
+export type NavRefreshMode = 'incremental' | 'recent' | 'full';
+export type NavRefreshSpan = 'week' | 'month' | 'quarter';
+
 /** 刷新净值 POST /api/nav/refresh */
 export async function refreshNav(
-  mode: 'incremental' | 'full',
+  mode: NavRefreshMode,
   options?: RequestOptions,
+  span?: NavRefreshSpan,
 ) {
-  return postRequest<API.NavRefreshResult>('/api/nav/refresh', { mode }, options);
+  return postRequest<API.NavRefreshResult>(
+    '/api/nav/refresh',
+    span ? { mode, span } : { mode },
+    options,
+  );
 }

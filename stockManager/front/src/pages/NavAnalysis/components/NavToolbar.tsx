@@ -10,6 +10,7 @@ type NavToolbarProps = {
   refreshing?: boolean;
   onRangeChange: (range: NavRangeKey) => void;
   onIncrementalRefresh: () => void;
+  onRangeRefresh: () => void;
   onFullRefresh: () => void;
 };
 
@@ -19,6 +20,7 @@ export const NavToolbar: React.FC<NavToolbarProps> = ({
   refreshing = false,
   onRangeChange,
   onIncrementalRefresh,
+  onRangeRefresh,
   onFullRefresh,
 }) => {
   const isMobile = useIsMobile();
@@ -56,6 +58,13 @@ export const NavToolbar: React.FC<NavToolbarProps> = ({
           size={isMobile ? 'small' : 'middle'}
         >
           增量刷新
+        </Button>
+        <Button
+          loading={refreshing}
+          onClick={onRangeRefresh}
+          size={isMobile ? 'small' : 'middle'}
+        >
+          区间刷新
         </Button>
         <Button
           danger

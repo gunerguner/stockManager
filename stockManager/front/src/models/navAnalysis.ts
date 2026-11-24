@@ -1,6 +1,11 @@
 import { useCallback, useState } from 'react';
 import { notification } from 'antd';
-import { getNavAnalysis, refreshNav } from '@/services/api';
+import {
+  getNavAnalysis,
+  refreshNav,
+  type NavRefreshMode,
+  type NavRefreshSpan,
+} from '@/services/api';
 import { hasApiData, isApiSuccess, isUnauthorized } from '@/utils/api';
 
 export default () => {
@@ -39,20 +44,28 @@ export default () => {
   }, []);
 
   const refreshNavData = useCallback(
-    async (mode: 'incremental' | 'full') => {
+    async (mode: NavRefreshMode, span?: NavRefreshSpan) => {
       setRefreshing(true);
       try {
-        const res = await refreshNav(mode, {
-          timeout: 300000,
-          skipErrorHandler: true,
-        });
+        const res = await refreshNav(
+          mode,
+          {
+            timeout: 300000,
+            skipErrorHandler: true,
+          },
+          span,
+        );
         if (isApiSuccess(res)) {
+          const spanLabel =
+            span === 'week' ? '近一周' : span === 'quarter' ? '近三月' : '近一月';
           notification.success({
             title: '刷新成功',
             description:
               mode === 'full'
                 ? `全量刷新完成，共 ${res.data?.pointCount ?? 0} 个交易日`
-                : `增量刷新完成，写入 ${res.data?.written ?? 0} 天`,
+                : mode === 'recent'
+                  ? `${spanLabel}刷新完成，写入 ${res.data?.written ?? 0} 天`
+                  : `增量刷新完成，写入 ${res.data?.written ?? 0} 天`,
           });
           await fetchNavAnalysis();
           return true;

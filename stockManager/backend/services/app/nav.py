@@ -1,5 +1,5 @@
 """组合净值用例：刷新回放写库与展示指标组装"""
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -29,10 +29,24 @@ from backend.services.data_sync import (
 )
 
 
+RECENT_SPAN_DAYS = {
+    'week': 7,
+    'month': 31,
+    'quarter': 92,
+}
+
+
 def _needs_hk_fx(start_holdings: dict[str, float], price_windows: dict) -> bool:
     return any(is_hk_code(code) for code in start_holdings) or any(
         is_hk_code(code) for code in price_windows
     )
+
+
+def _recent_span_name(span: str | None) -> str:
+    chosen = span or 'month'
+    if chosen not in RECENT_SPAN_DAYS:
+        raise ValueError('span 须为 week、month 或 quarter')
+    return chosen
 
 
 class NavAnalysis:
@@ -81,10 +95,36 @@ class NavAnalysis:
             logger.exception(f"[nav] 用户 {user.pk} 指数收盘补拉失败")
 
     @classmethod
-    def refresh(cls, user: User, *, mode: str = 'incremental') -> int:
-        """拉取交易/出入金并刷新日净值写库。返回写入行数。mode: incremental | full。"""
-        if mode not in ('incremental', 'full'):
-            raise ValueError('mode 须为 incremental 或 full')
+    def _seed_row(
+        cls,
+        user: User,
+        mode: str,
+        end: date,
+        span_name: str | None,
+    ) -> PortfolioNavDaily | None:
+        """增量取最后一条；区间刷新取窗口起点之前的最后一条。"""
+        rows = PortfolioNavDaily.objects.filter(user=user)
+        if mode == 'recent':
+            window_start = end - timedelta(days=RECENT_SPAN_DAYS[span_name or 'month'])
+            rows = rows.filter(date__lt=window_start)
+        return rows.order_by('-date').first()
+
+    @classmethod
+    def refresh(
+        cls,
+        user: User,
+        *,
+        mode: str = 'incremental',
+        span: str | None = None,
+    ) -> int:
+        """拉取交易/出入金并刷新日净值写库。返回写入行数。
+
+        mode: incremental | recent | full。
+        recent 用 span（week | month | quarter）决定回看自然日，只覆盖种子日之后的尾部。
+        """
+        if mode not in ('incremental', 'recent', 'full'):
+            raise ValueError('mode 须为 incremental、recent 或 full')
+        span_name = _recent_span_name(span) if mode == 'recent' else None
 
         operation_list = CacheRepository.get_user_operations(user)
         _income_cash, cash_flow_list = CacheRepository.get_user_cash_info(user)
@@ -99,25 +139,22 @@ class NavAnalysis:
         range_start = None
         event_cutoff = None
 
-        if mode == 'incremental':
-            if (
-                last := PortfolioNavDaily.objects.filter(user=user)
-                .order_by('-date')
-                .first()
-            ) is not None:
-                nxt = TradingCalendar.next_session(last.date)
+        if mode in ('incremental', 'recent'):
+            if (seed := cls._seed_row(user, mode, end, span_name)) is not None:
+                nxt = TradingCalendar.next_session(seed.date)
                 if nxt is None or nxt > end:
-                    logger.info(f"[nav] 用户 {user.pk} 净值已是最新 {last.date}")
+                    logger.info(f"[nav] 用户 {user.pk} 净值已是最新 {seed.date}")
                     cls._sync_benchmarks(user, end)
                     return 0
                 range_start = nxt
-                start_nav = last.nav
-                start_units = last.units
-                start_cash = last.cash
-                start_holdings = holdings_at(operation_list, last.date)
-                event_cutoff = last.date
+                start_nav = seed.nav
+                start_units = seed.units
+                start_cash = seed.cash
+                start_holdings = holdings_at(operation_list, seed.date)
+                event_cutoff = seed.date
             else:
                 mode = 'full'
+                span_name = None
 
         if mode == 'full' or range_start is None:
             if (origin := resolve_start_date(all_ops, cash_flow_list)) is None:
@@ -189,8 +226,9 @@ class NavAnalysis:
             )
 
         cls._sync_benchmarks(user, end)
+        label = f"{mode}:{span_name}" if span_name else mode
         logger.info(
-            f"[nav] 用户 {user.pk} {mode} 刷新完成: {len(rows)} 天 "
+            f"[nav] 用户 {user.pk} {label} 刷新完成: {len(rows)} 天 "
             f"({sessions[0]} ~ {sessions[-1]}), 取价股票 {len(price_windows)}"
         )
         return len(rows)
